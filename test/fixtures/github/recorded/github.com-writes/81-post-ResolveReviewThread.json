@@ -4,12 +4,12 @@
     "url": "https://api.github.com/graphql",
     "operationName": "ResolveReviewThread",
     "variables": {
-      "id": "PRRT_kwDOVCTdtM6rIVs1"
+      "id": "PRRT_kwDOVCTdtM6rLnKn"
     },
     "body": {
       "query": "mutation ResolveReviewThread($id: ID!) {\n  resolveReviewThread(input: { threadId: $id }) { thread { isResolved } }\n}",
       "variables": {
-        "id": "PRRT_kwDOVCTdtM6rIVs1"
+        "id": "PRRT_kwDOVCTdtM6rLnKn"
       },
       "operationName": "ResolveReviewThread"
     }
@@ -18,8 +18,8 @@
     "status": 200,
     "headers": {
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4970",
-      "x-ratelimit-reset": "1791675002"
+      "x-ratelimit-remaining": "4973",
+      "x-ratelimit-reset": "1791709240"
     },
     "body": {
       "data": {

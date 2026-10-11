@@ -4,6 +4,7 @@ import type { Fixture } from '../src/testing/index.ts'
 import type { RecordingManifest, StepContext } from '../test/recording/steps.ts'
 import type { WriteContext, WriteManifest, WriteRun } from '../test/recording/write-steps.ts'
 import type { HookDelivery, WriteHarness } from './write-harness.ts'
+import { randomBytes } from 'node:crypto'
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { env, exit } from 'node:process'
 import { fileURLToPath } from 'node:url'
@@ -445,6 +446,8 @@ async function recordWrites(): Promise<void> {
     ...env[`FIXTURE_${prefix}_REVIEWER`] && { reviewer: env[`FIXTURE_${prefix}_REVIEWER`] },
     ...env[`FIXTURE_${prefix}_SCRATCH_DISCUSSION`] && { discussion: env[`FIXTURE_${prefix}_SCRATCH_DISCUSSION`] },
     ...env[`FIXTURE_${prefix}_SCRATCH_PULL`] && { pull: env[`FIXTURE_${prefix}_SCRATCH_PULL`] },
+    // Codeberg refuses a new issue or pull request when the account opened two with similar titles in the last hour.
+    ...new URL(probe.baseUrl).hostname === 'codeberg.org' && { salt: randomBytes(16).toString('hex') },
   }
   await harness.cleanUp([], undefined, [])
   for (const [index, branch] of harness.createBranch ? run.branches.entries() : []) {

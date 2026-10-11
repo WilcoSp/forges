@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/21/labels",
+    "body": {
+      "labels": [
+        2240238
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": [
+      {
+        "id": 2240238,
+        "name": "forges-fixture-20261011075808",
+        "exclusive": false,
+        "is_archived": false,
+        "color": "0e8a16",
+        "description": "Created by run 20261011075808",
+        "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/labels/2240238"
+      }
+    ]
+  }
+}

@@ -6,10 +6,10 @@
   "response": {
     "status": 200,
     "headers": {
-      "etag": "W/\"928d647b0ee36b48b03995a7f52a1efa\"",
+      "etag": "W/\"4888f07c0cee1e3c3ef717021953d96c\"",
       "ratelimit-limit": "2000",
       "ratelimit-remaining": "1931",
-      "ratelimit-reset": "1791630900"
+      "ratelimit-reset": "1791674400"
     },
     "body": {
       "id": 87428720,
@@ -26,10 +26,10 @@
       "http_url_to_repo": "https://gitlab.com/forges-fixtures/forges-fixtures.git",
       "web_url": "https://gitlab.com/forges-fixtures/forges-fixtures",
       "readme_url": "https://gitlab.com/forges-fixtures/forges-fixtures/-/blob/main/README.md",
-      "forks_count": 0,
+      "forks_count": 1,
       "avatar_url": null,
       "star_count": 0,
-      "last_activity_at": "2026-10-10T11:14:22.595Z",
+      "last_activity_at": "2026-10-10T23:18:54.436Z",
       "visibility": "public",
       "namespace": {
         "id": 144355097,
@@ -108,7 +108,7 @@
       "import_error": null,
       "open_issues_count": 2,
       "description_html": "",
-      "updated_at": "2026-10-10T11:14:22.595Z",
+      "updated_at": "2026-10-10T23:18:54.436Z",
       "ci_default_git_depth": 20,
       "ci_delete_pipelines_in_seconds": null,
       "ci_forward_deployment_enabled": true,

@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/pulls/24/merge",
+    "body": {
+      "Do": "merge",
+      "MergeTitleField": "Merge run 20261011075808",
+      "MergeMessageField": "Merged by run 20261011075808"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {}
+  }
+}

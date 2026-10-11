@@ -10,13 +10,13 @@
     },
     "body": [
       {
-        "id": 62419,
-        "name": "forges-fixture-20261010111304",
+        "id": 62517,
+        "name": "forges-fixture-20261010232102",
         "exclusive": false,
         "is_archived": false,
         "color": "0e8a16",
-        "description": "Created by run 20261010111304",
-        "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/labels/62419"
+        "description": "Created by run 20261010232102",
+        "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/labels/62517"
       }
     ]
   }

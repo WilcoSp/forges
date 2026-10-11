@@ -6,10 +6,10 @@
   "response": {
     "status": 200,
     "headers": {
-      "etag": "W/\"1ffb0d6469b82d4b5689b5c45648dd29\"",
+      "etag": "W/\"67cb6bff00da33d7ffc649d42482ec11\"",
       "ratelimit-limit": "2000",
       "ratelimit-remaining": "1999",
-      "ratelimit-reset": "1791630900"
+      "ratelimit-reset": "1791674340"
     },
     "body": {
       "id": 2179675,
@@ -33,7 +33,7 @@
       "organization": "",
       "bot": false,
       "work_information": null,
-      "local_time": "11:14 AM",
+      "local_time": "11:18 PM",
       "email": "redacted@example.invalid",
       "commit_email": "redacted@example.invalid",
       "preferred_language": "en",

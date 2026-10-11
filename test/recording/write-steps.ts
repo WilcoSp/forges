@@ -1,6 +1,7 @@
 import type { Actor, Comment, Milestone, Notification, Release, RepoRef, Review, Thread, ThreadRef, Webhook, WebhookDeliveryRecord } from '../../src/model.ts'
 import type { ForgeProvider, ForgeVerb } from '../../src/provider.ts'
 import type { RecordingManifest } from './steps.ts'
+import { createHash } from 'node:crypto'
 import { ForbiddenError, ForgeError } from '../../src/errors.ts'
 import { notificationThread } from '../../src/model.ts'
 
@@ -19,6 +20,8 @@ export interface WriteRun {
   discussion?: string
   /** A pull request in the scratch repository, from `FIXTURE_<FORGE>_SCRATCH_PULL`, for forges that cannot open one. */
   pull?: string
+  /** Where set, each thread the run opens has a title that ends with a suffix derived from it, for forges that refuse similar titles. */
+  salt?: string
 }
 
 /** A write recording: the read manifest, the scratch repository every write goes to, and the run. */
@@ -74,6 +77,12 @@ export interface WriteStep {
 
 /** The prefix of every title a write recording gives an issue or a pull request, so a later run can find leftovers. */
 export const FIXTURE_TITLE = 'forges fixture'
+
+/** The title of an issue or pull request that a write recording opens. */
+export function fixtureTitle(run: WriteRun, label: string): string {
+  const title = `${FIXTURE_TITLE} ${run.id}: ${label}`
+  return run.salt ? `${title} ${createHash('sha512').update(`${run.salt}:${label}`).digest('base64url').slice(0, 64)}` : title
+}
 
 /** Where the webhook steps point the hook they create. */
 export const FIXTURE_HOOK_URL = 'https://example.com/hook'
@@ -172,13 +181,13 @@ export const WRITE_STEPS: WriteStep[] = [
   { name: 'add collaborator', verb: 'repos.addCollaborator', run: (provider, manifest, context) => provider.repos.addCollaborator(manifest.collaborators ?? manifest.scratch, need(context.reviewer, 'the reviewer'), 'write') },
 
   { name: 'create issue', verb: 'threads.create', kind: 'issue', run: async (provider, manifest, context) => {
-    context.issue = await provider.threads.create(manifest.scratch, { kind: 'issue', title: `${FIXTURE_TITLE} ${manifest.run.id}: issue`, body: `Opened by run ${manifest.run.id}.` })
+    context.issue = await provider.threads.create(manifest.scratch, { kind: 'issue', title: fixtureTitle(manifest.run, 'issue'), body: `Opened by run ${manifest.run.id}.` })
     context.author ??= context.issue.author
     return context.issue
   } },
   ...threadWrites('issue'),
   { name: 'create duplicate issue', verb: 'threads.create', kind: 'issue', run: async (provider, manifest, context) => {
-    context.duplicate = await provider.threads.create(manifest.scratch, { kind: 'issue', title: `${FIXTURE_TITLE} ${manifest.run.id}: duplicate`, body: `Opened by run ${manifest.run.id}.` })
+    context.duplicate = await provider.threads.create(manifest.scratch, { kind: 'issue', title: fixtureTitle(manifest.run, 'duplicate'), body: `Opened by run ${manifest.run.id}.` })
     return context.duplicate
   } },
   { name: 'mark duplicate', verb: 'threads.markDuplicate', kind: 'issue', run: (provider, _manifest, context) => provider.threads.markDuplicate(need(context.duplicate, 'the duplicate issue').ref, threadOf(context, 'issue')) },
@@ -193,7 +202,7 @@ export const WRITE_STEPS: WriteStep[] = [
     run: async (provider, manifest, context) => {
       const pull = await provider.threads.create(manifest.scratch, {
         kind: 'pull_request',
-        title: `${FIXTURE_TITLE} ${manifest.run.id}: pull ${index + 1}`,
+        title: fixtureTitle(manifest.run, `pull ${index + 1}`),
         body: `Opened by run ${manifest.run.id}.`,
         head: manifest.run.branches[index],
         base: manifest.run.base,
@@ -263,10 +272,10 @@ export const WRITE_STEPS: WriteStep[] = [
     throw new Error('No finished CI check on the base branch')
   } },
   { name: 'approve', verb: 'threads.approve', kind: 'pull_request', as: 'reviewer', run: (provider, _manifest, context) => provider.threads.approve(threadOf(context, 'pull_request')) },
-  { name: 'merge', verb: 'threads.merge', kind: 'pull_request', run: (provider, manifest, context) => provider.threads.merge(threadOf(context, 'pull_request'), { method: 'merge', message: `Merged by run ${manifest.run.id}` }) },
+  { name: 'merge', verb: 'threads.merge', kind: 'pull_request', run: (provider, manifest, context) => provider.threads.merge(threadOf(context, 'pull_request'), { method: 'merge', title: `Merge run ${manifest.run.id}`, message: `Merged by run ${manifest.run.id}` }) },
   { name: 'pull close', verb: 'threads.close', kind: 'pull_request', run: (provider, _manifest, context) => provider.threads.close(need(context.pulls[2], 'the third pull request').ref) },
   { name: 'pull reopen', verb: 'threads.reopen', kind: 'pull_request', run: (provider, _manifest, context) => provider.threads.reopen(need(context.pulls[2], 'the third pull request').ref) },
-  { name: 'approve and merge', verb: 'threads.approveAndMerge', kind: 'pull_request', as: 'reviewer', run: (provider, manifest, context) => provider.threads.approveAndMerge(need(context.pulls[1], 'the second pull request').ref, { method: 'merge', message: `Merged by run ${manifest.run.id}` }) },
+  { name: 'approve and merge', verb: 'threads.approveAndMerge', kind: 'pull_request', as: 'reviewer', run: (provider, manifest, context) => provider.threads.approveAndMerge(need(context.pulls[1], 'the second pull request').ref, { method: 'merge', title: `Merge run ${manifest.run.id}`, message: `Merged by run ${manifest.run.id}` }) },
 
   // GitLab has no draft releases or prereleases.
   { name: 'create draft release', verb: 'releases.create', when: provider => provider.forge !== 'gitlab', run: async (provider, manifest, context) => {

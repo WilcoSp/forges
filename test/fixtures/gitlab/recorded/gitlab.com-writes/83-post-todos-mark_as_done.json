@@ -8,7 +8,7 @@
     "headers": {
       "ratelimit-limit": "2000",
       "ratelimit-remaining": "1918",
-      "ratelimit-reset": "1791630960"
+      "ratelimit-reset": "1791674400"
     }
   }
 }
