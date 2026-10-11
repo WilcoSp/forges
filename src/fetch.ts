@@ -112,7 +112,7 @@ export function parseLinkHeader(header: string | null | undefined): Record<strin
     return links
   }
   for (const part of header.split(',')) {
-    const match = /<([^>]+)>\s*;\s*(.+)/.exec(part.trim())
+    const match = /^<([^>]+)>\s*;\s*(.+)/.exec(part.trim())
     if (!match?.[1] || !match[2]) {
       continue
     }

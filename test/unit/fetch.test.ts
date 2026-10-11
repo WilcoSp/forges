@@ -17,6 +17,13 @@ describe('parseLinkHeader', () => {
   it('returns an empty map for a missing header', () => {
     expect(parseLinkHeader(null)).toEqual({})
   })
+
+  it('parses an unterminated header in linear time', () => {
+    const start = performance.now()
+
+    expect(parseLinkHeader('<='.repeat(50_000))).toEqual({})
+    expect(performance.now() - start).toBeLessThan(100)
+  })
 })
 
 describe('createFetcher', () => {
