@@ -130,9 +130,9 @@ export interface GitLabIssue {
   diff_refs?: { base_sha?: string, head_sha?: string, start_sha?: string } | null
   merge_commit_sha?: string | null
   squash_commit_sha?: string | null
+  changes_count?: string | null
   source_project_id?: number
   target_project_id?: number
-  /** Single merge request reads only. */
   head_pipeline?: GitLabPipeline | null
   milestone?: GitLabMilestone | null
   upvotes?: number
