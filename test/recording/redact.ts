@@ -34,8 +34,8 @@ const USER_KEYS_TO_DROP = new Set([
   'using_license_seat',
   'visibility',
 ])
-const TOKEN_PATTERN = /\b(?:gh[pousr]_\w{20,}|github_pat_\w{20,}|pun_pat_\w{20,}|eyJ[\w-]+\.eyJ[\w-]+\.[\w-]+)/g
-const SECRET_KEY = /password|secret|^(?:token|access_token|refresh_token|accessJwt|refreshJwt)$/i
+const TOKEN_PATTERN = /\b(?:gh[pousr]_\w{20,}|github_pat_\w{20,}|pun_pat_\w{20,}|gl(?:agent|cbt|dt|ffct|ft|imt|oas|pat|ptt|rtr?|soat)-[\w-]{20,}|GR1348941[\w-]{20,}|eyJ[\w-]+\.eyJ[\w-]+\.[\w-]+)/g
+const SECRET_KEY = /password|secret|^(?:token|access_token|refresh_token|runners_token|accessJwt|refreshJwt)$/i
 
 const UNATTACHED_UPLOAD = /\/attachments\/[\da-f-]{36}$/
 
