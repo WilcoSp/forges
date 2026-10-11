@@ -263,6 +263,35 @@ describe('gitlab repository licence', () => {
   })
 })
 
+describe('gitlab merge settings', () => {
+  it.each([
+    [{ merge_commit_template: null, squash_commit_template: null }, undefined],
+    [{ merge_commit_template: ' \n', squash_commit_template: '%{title}' }, { squash: { template: '%{title}' } }],
+  ])('reads the commit templates from %j', async (templates, mergeCommit) => {
+    const { instance } = provider({
+      [`GET ${P}`]: { status: 200, body: { id: 278964, path_with_namespace: 'acme/platform/widgets', remove_source_branch_after_merge: true, ...templates } },
+    })
+    const result = await instance.repos.get(repo)
+
+    expect(result.deleteBranchOnMerge).toBe(true)
+    expect(result.mergeCommit).toEqual(mergeCommit)
+  })
+
+  it.each([
+    ['rebase_merge', 'default_off', 'rebase_merge'],
+    ['ff', 'never', 'fast_forward_only'],
+    ['merge', 'default_on', 'squash'],
+    ['ff', 'always', 'squash'],
+  ])('defaults a %s project with squash %s to %s', async (merge_method, squash_option, method) => {
+    const { instance } = provider({
+      [`GET ${P}`]: { status: 200, body: { id: 278964, path_with_namespace: 'acme/platform/widgets', merge_method, squash_option } },
+    })
+    const result = await instance.repos.get(repo)
+
+    expect(result.defaultMergeMethod).toBe(method)
+  })
+})
+
 describe('gitlab merge methods', () => {
   it('rejects a method the project is not configured for', async () => {
     const { instance, calls } = provider()

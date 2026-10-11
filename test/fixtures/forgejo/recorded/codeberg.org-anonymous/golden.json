@@ -49,6 +49,8 @@
       "rebase",
       "rebase_merge"
     ],
+    "defaultMergeMethod": "squash",
+    "deleteBranchOnMerge": true,
     "features": {
       "issues": true,
       "pullRequests": true,
@@ -115,6 +117,8 @@
       "rebase",
       "rebase_merge"
     ],
+    "defaultMergeMethod": "squash",
+    "deleteBranchOnMerge": true,
     "features": {
       "issues": true,
       "pullRequests": true,
@@ -8451,6 +8455,8 @@
           "rebase",
           "rebase_merge"
         ],
+        "defaultMergeMethod": "merge",
+        "deleteBranchOnMerge": false,
         "features": {
           "issues": true,
           "pullRequests": true,
@@ -8512,6 +8518,8 @@
           "rebase_merge",
           "fast_forward_only"
         ],
+        "defaultMergeMethod": "merge",
+        "deleteBranchOnMerge": false,
         "features": {
           "issues": true,
           "pullRequests": true,
@@ -8571,6 +8579,8 @@
           "rebase_merge",
           "fast_forward_only"
         ],
+        "defaultMergeMethod": "merge",
+        "deleteBranchOnMerge": false,
         "features": {
           "issues": true,
           "pullRequests": true,

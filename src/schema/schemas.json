@@ -2195,6 +2195,44 @@
     "description": "A label that a repository defines.",
     "x-forges-type": "Label"
   },
+  "MergeCommitDefaults": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "enum": [
+          "pull_request_title",
+          "commit_or_pull_request_title",
+          "merge_message"
+        ],
+        "description": "The pull request title, the commit's own title when there's just one, or the classic `Merge pull request #1 from acme/fix`."
+      },
+      "titleRaw": {
+        "type": "string",
+        "description": "The forge's own value, which stays set when `title` is a value this library doesn't know."
+      },
+      "message": {
+        "type": "string",
+        "enum": [
+          "pull_request_body",
+          "pull_request_title",
+          "commit_messages",
+          "blank"
+        ],
+        "description": "The pull request body or title, its commit messages, or nothing at all."
+      },
+      "messageRaw": {
+        "type": "string",
+        "description": "The forge's own value, which stays set when `message` is a value this library doesn't know."
+      },
+      "template": {
+        "type": "string",
+        "description": "A template for the whole message, with placeholders such as GitLab's `%{title}`. Absent while the forge sticks to its built-in one."
+      }
+    },
+    "description": "Where the default title and message of a merge or squash commit come from.",
+    "x-forges-type": "MergeCommitDefaults"
+  },
   "MergeMethod": {
     "type": "string",
     "enum": [
@@ -2952,6 +2990,26 @@
           "$ref": "#/components/schemas/MergeMethod"
         },
         "description": "Merge methods the repository allows, where the forge reports them. Empty means the forge reported none."
+      },
+      "defaultMergeMethod": {
+        "$ref": "#/components/schemas/MergeMethod",
+        "description": "The repository's default merge method, where the forge reports one. On GitLab, a project that squashes by default reports `squash`, not its base method."
+      },
+      "deleteBranchOnMerge": {
+        "type": "boolean",
+        "description": "The repository's setting for deleting the head branch after a merge, where the forge reports it. Forgejo and Gitea before 1.25 apply it only in their web UI, so `merge()` keeps the branch there. On GitLab it seeds merge requests when they are opened."
+      },
+      "mergeCommit": {
+        "type": "object",
+        "properties": {
+          "merge": {
+            "$ref": "#/components/schemas/MergeCommitDefaults"
+          },
+          "squash": {
+            "$ref": "#/components/schemas/MergeCommitDefaults"
+          }
+        },
+        "description": "Default text of a merge commit (`merge`) and a squashed one (`squash`) as `MergeCommitDefaults`, where the forge reports it."
       },
       "features": {
         "$ref": "#/components/schemas/RepoFeatures"
