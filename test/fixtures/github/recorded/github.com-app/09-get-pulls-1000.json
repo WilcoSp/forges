@@ -6,10 +6,10 @@
   "response": {
     "status": 200,
     "headers": {
-      "etag": "W/\"02a213e79a3ae338237d32803a8863b35bf6cf4b6c19be4f3d8bef1bb9e6cdcb\"",
+      "etag": "W/\"d3f67b6e808ac811fbe1108916dbd9953edc89dfbcf041b5c0ed2db985336cf3\"",
       "x-ratelimit-limit": "5000",
       "x-ratelimit-remaining": "4992",
-      "x-ratelimit-reset": "1791728727"
+      "x-ratelimit-reset": "1791738326"
     },
     "body": {
       "url": "https://api.github.com/repos/h3js/h3/pulls/1000",
@@ -328,11 +328,11 @@
           "has_wiki": false,
           "has_pages": false,
           "has_discussions": true,
-          "forks_count": 372,
+          "forks_count": 374,
           "mirror_url": null,
           "archived": false,
           "disabled": false,
-          "open_issues_count": 62,
+          "open_issues_count": 66,
           "license": {
             "key": "mit",
             "name": "MIT License",
@@ -347,8 +347,8 @@
           "pull_request_creation_policy": "all",
           "topics": [],
           "visibility": "public",
-          "forks": 372,
-          "open_issues": 62,
+          "forks": 374,
+          "open_issues": 66,
           "watchers": 5455,
           "default_branch": "main"
         }
