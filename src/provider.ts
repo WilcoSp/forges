@@ -1064,19 +1064,29 @@ export interface ForgeProvider<HasWeb extends boolean = boolean> {
  * Lazily constructed provider. `createForges` calls `create()`; nothing
  * touches the network before that.
  */
-export interface ForgeProviderFactory<T extends ForgeProvider = ForgeProvider> {
-  readonly forge: ForgeKind
+export interface ForgeProviderFactory<T extends ForgeProvider = ForgeProvider, Forge extends ForgeKind = ForgeKind, Experimental extends boolean = boolean> {
+  readonly forge: Forge
   /** The provider has not reached parity; see `ForgeCapabilities.experimental`. */
-  readonly experimental?: true
+  readonly experimental?: Experimental extends true ? true : undefined
   /** Creates the provider. Nothing touches the network before this. */
   create: () => T
 }
 
-/** A registry of providers that routes each ref to the provider it belongs to. */
-export interface Forges {
+type UnionToIntersection<U> = (U extends unknown ? (union: U) => void : never) extends (intersection: infer I) => void ? I : never
+
+type SingleForgeOf<F> = F extends { forge: infer Forge extends ForgeKind } ? [Forge] extends [UnionToIntersection<Forge>] ? Forge : never : never
+
+/** The forges of the fixed leading entries of `T` that each name a single forge. */
+type RegisteredKinds<T extends readonly unknown[]> = T extends readonly [infer Head, ...infer Rest] ? SingleForgeOf<Head> | RegisteredKinds<Rest> : never
+
+/** A registry of providers that routes each ref to the provider it belongs to. `Kind` is the forges it is certain to hold. */
+export interface Forges<Kind extends ForgeKind = never> {
   readonly providers: ForgeProvider[]
-  /** First provider for `forge`, optionally narrowed to a single instance host. */
-  get: (forge: ForgeKind, instance?: ForgeInstance) => ForgeProvider | undefined
+  /** First provider for `forge`, optionally narrowed to a single instance host. Typed as present for a forge in `Kind`. */
+  get: {
+    (forge: Kind): ForgeProvider
+    (forge: ForgeKind, instance?: ForgeInstance): ForgeProvider | undefined
+  }
   /** Every provider for a forge. */
   all: (forge: ForgeKind) => ForgeProvider[]
   /** The provider a ref belongs to, by `forge` and `instance`. */
@@ -1213,7 +1223,7 @@ function mergeByTime<Q extends Partial<SearchOrder>, T extends { createdAt?: Dat
  * const repo = await forges.repos.get({ forge: 'github', instance: 'github.com', owner: 'danielroe', name: 'forges' })
  * ```
  */
-export function createForges(factories: Array<ForgeProviderFactory | ForgeProvider>): Forges {
+export function createForges<const T extends readonly (ForgeProviderFactory | ForgeProvider)[]>(factories: T): Forges<RegisteredKinds<T>> {
   const providers = factories.map(factory => 'create' in factory ? factory.create() : factory)
   const seen = new Set<string>()
   for (const provider of providers) {
@@ -1282,9 +1292,9 @@ export function createForges(factories: Array<ForgeProviderFactory | ForgeProvid
       threads: (query = {}) => mergeByTime(providers, 'search.threads', query, (provider, page) => provider.search.threadsPage(page)),
       repos: (query = {}) => mergeByTime(providers, 'search.repos', query, (provider, page) => provider.search.reposPage(page)),
     },
-    get: (forge, instance) => providers.find(
+    get: ((forge: ForgeKind, instance?: ForgeInstance) => providers.find(
       provider => provider.forge === forge && (!instance || provider.instance === instance),
-    ),
+    )) as Forges<RegisteredKinds<T>>['get'],
     all: forge => providers.filter(provider => provider.forge === forge),
     notifications: {
       list(options) {

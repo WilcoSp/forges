@@ -1,4 +1,4 @@
-import type { Notification, NotificationReason, NotificationRef, RepoRef, ResolvedThreadRef, ThreadRef } from '../../src/model.ts'
+import type { ForgeKind, Notification, NotificationReason, NotificationRef, RepoRef, ResolvedThreadRef, ThreadRef } from '../../src/model.ts'
 import type { ForgeProvider, Forges } from '../../src/provider.ts'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { forgejo } from '../../src/forgejo/index.ts'
@@ -7,6 +7,7 @@ import * as root from '../../src/index.ts'
 import * as kit from '../../src/kit.ts'
 import { commentMarker, notificationKey, repoKey, repoRef, threadKey } from '../../src/model.ts'
 import { createForges } from '../../src/provider.ts'
+import { pushin } from '../../src/pushin/index.ts'
 import { summariseChecks } from '../../src/utils.ts'
 import { sameRepo } from '../../src/web.ts'
 import { hangingFetch } from '../utils/fixtures.ts'
@@ -103,10 +104,44 @@ describe('createForges', () => {
     ])
 
     expect(forges.providers).toHaveLength(3)
-    expect(forges.get('github')!.instance).toBe('github.com')
+    expect(forges.get('github').instance).toBe('github.com')
     expect(forges.get('github', 'ghe.example.com')!.baseUrl).toBe('https://ghe.example.com/api/v3')
     expect(forges.all('github')).toHaveLength(2)
+    expect(forges.get('github', 'unknown.example.com')).toBeUndefined()
     expect(forges.get('gitlab')).toBeUndefined()
+  })
+
+  it('narrows lookups and factory forges to the kinds registered', () => {
+    const auth = { type: 'token', token: 't' } as const
+    expectTypeOf(github({ auth }).forge).toEqualTypeOf<'github'>()
+    expectTypeOf(github({ auth }).experimental).toEqualTypeOf<undefined>()
+    expectTypeOf(pushin({ auth }).experimental).toEqualTypeOf<true | undefined>()
+    const custom = kit.defineForgeProvider({
+      forge: 'acme',
+      baseUrl: 'https://acme.example',
+      experimental: true,
+      setup: () => {
+        throw new Error('unused')
+      },
+    })
+    expectTypeOf(custom().experimental).toEqualTypeOf<true | undefined>()
+    const forges = createForges([github({ auth }), forgejo({ auth })])
+    expectTypeOf(forges).toEqualTypeOf<Forges<'github' | 'forgejo'>>()
+    expectTypeOf(forges.get('github')).toEqualTypeOf<ForgeProvider>()
+    expectTypeOf(forges.get('github', 'github.com')).toEqualTypeOf<ForgeProvider | undefined>()
+    expectTypeOf(forges.get('gitlab')).toEqualTypeOf<ForgeProvider | undefined>()
+    expectTypeOf(forges.get('github' as ForgeKind)).toEqualTypeOf<ForgeProvider | undefined>()
+    expectTypeOf(forges.all('gitlab')).toEqualTypeOf<ForgeProvider[]>()
+    expectTypeOf(forges).toExtend<Forges>()
+  })
+
+  it('narrows lookups only to the kinds certainly registered', () => {
+    const auth = { type: 'token', token: 't' } as const
+    const many = [github({ auth, baseUrl: 'https://ghe.example.com/api/v3' })]
+    expectTypeOf(createForges(many).get('github')).toEqualTypeOf<ForgeProvider | undefined>()
+    expectTypeOf(createForges([github({ auth }), ...many]).get('github')).toEqualTypeOf<ForgeProvider>()
+    expectTypeOf(createForges([forgejo({ auth }), ...many]).get('github')).toEqualTypeOf<ForgeProvider | undefined>()
+    expectTypeOf(createForges([github({ auth }).create()]).get('github')).toEqualTypeOf<ForgeProvider | undefined>()
   })
 
   it('yields nothing when no provider is registered', async () => {
