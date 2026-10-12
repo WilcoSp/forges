@@ -644,3 +644,67 @@ describe('tangled labels, reactions and people', () => {
     expect(await instance.users.get(GRACE)).toMatchObject({ login: 'grace.example.com', bio: undefined })
   })
 })
+
+describe('tangled thread updates', () => {
+  const labelled = {
+    [`GET ${PDS}/xrpc/com.atproto.repo.getRecord?repo=${OWNER}&collection=sh.tangled.repo&rkey=widgets`]: { status: 200, body: { uri: `at://${OWNER}/sh.tangled.repo/widgets`, cid: 'bafyreirepocid', value: {
+      $type: 'sh.tangled.repo',
+      knot: 'knot1.tangled.sh',
+      name: 'widgets',
+      repoDid: 'did:plc:widgetsrepo2222222222222',
+      labels: ['bug', 'priority', 'assignee'].map(rkey => `at://${OWNER}/sh.tangled.label.definition/${rkey}`),
+      createdAt: '2025-09-01T00:00:00Z',
+    } } },
+    [`GET ${C}?target=${PULL}&collection=sh.tangled.label.op&path=.subject&limit=100`]: { status: 200, body: { linking_records: [
+      { did: OWNER, collection: 'sh.tangled.label.op', rkey: '3mwqlabela222' },
+    ], cursor: null } },
+    ...labelOp(OWNER, '3mwqlabela222', '2025-09-16T09:00:00Z', [['priority', 'low'], ['assignee', GRACE]]),
+    ...definition('bug', { name: 'bug', color: '#EF4444', valueType: { type: 'null', format: 'any' } }),
+    ...definition('priority', { name: 'priority', color: '#F59E0B', valueType: { type: 'string', format: 'any', enum: ['high', 'low'] } }),
+    ...definition('assignee', { name: 'assignee', multiple: true, valueType: { type: 'string', format: 'did' } }),
+  }
+  const written = (calls: Array<{ url: string, body?: string }>) => calls.filter(call => call.url.endsWith('createRecord') || call.url.endsWith('putRecord')).map(call => JSON.parse(call.body!) as { collection: string, record: Record<string, unknown> })
+
+  it('writes labels and assignees as one label op', async () => {
+    const { instance, calls } = provider(labelled)
+    await instance.threads.update(pull, { labels: ['bug'], assignees: [ADA] })
+    const writes = written(calls)
+
+    expect(writes.map(write => write.collection)).toEqual(['sh.tangled.label.op'])
+    expect(writes[0]!.record).toMatchObject({
+      subject: PULL,
+      add: [{ key: `at://${OWNER}/sh.tangled.label.definition/bug`, value: 'null' }, { key: `at://${OWNER}/sh.tangled.label.definition/assignee`, value: ADA }],
+      delete: [{ key: `at://${OWNER}/sh.tangled.label.definition/priority`, value: 'low' }, { key: `at://${OWNER}/sh.tangled.label.definition/assignee`, value: GRACE }],
+    })
+  })
+
+  it('returns the state, labels and assignees it wrote', async () => {
+    const { instance } = provider(labelled)
+    const thread = await instance.threads.update(pull, { state: 'closed', labels: ['bug'], assignees: [ADA] })
+
+    expect(thread.state).toBe('closed')
+    expect(thread.labels).toEqual([{ name: 'bug', colour: 'EF4444' }])
+    expect(thread.assignees.map(actor => actor.id)).toEqual([ADA])
+  })
+
+  it('clears assignees as a no-op where the repository has no assignee label', async () => {
+    const { instance, calls } = provider({ ...labelled, ...definition('assignee', { name: 'owner', valueType: { type: 'string', format: 'any' } }) })
+    await instance.threads.update(pull, { labels: ['bug'], assignees: [] })
+
+    expect(written(calls).map(write => write.record)).toMatchObject([{ add: [{ key: `at://${OWNER}/sh.tangled.label.definition/bug`, value: 'null' }] }])
+  })
+
+  it('checks the label names before it writes the state', async () => {
+    const { instance, calls } = provider(labelled)
+
+    await expect(instance.threads.update(pull, { state: 'closed', labels: ['wontfix'] })).rejects.toThrow('No label named wontfix')
+    expect(written(calls)).toEqual([])
+  })
+
+  it('refuses to retitle another account\'s pull before it writes the labels', async () => {
+    const { instance, calls } = provider(labelled)
+
+    await expect(instance.threads.update(pull, { title: 'Retry uploads', labels: ['bug'] })).rejects.toThrow(InsufficientScopeError)
+    expect(written(calls)).toEqual([])
+  })
+})
