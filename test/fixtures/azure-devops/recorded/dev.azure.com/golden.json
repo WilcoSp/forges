@@ -9,6 +9,7 @@
     },
     "defaultBranch": "main",
     "visibility": "private",
+    "visibilityRaw": "private",
     "isFork": false,
     "isArchived": false,
     "topics": [],
@@ -28,6 +29,7 @@
     },
     "defaultBranch": "main",
     "visibility": "private",
+    "visibilityRaw": "private",
     "isFork": false,
     "isArchived": false,
     "topics": [],
@@ -638,6 +640,7 @@
         },
         "defaultBranch": "main",
         "visibility": "private",
+        "visibilityRaw": "private",
         "isFork": false,
         "isArchived": false,
         "topics": [],
@@ -646,6 +649,15 @@
           "https": "https://dev.azure.com/forges/forges-fixtures/_git/forges-fixtures",
           "ssh": "git@ssh.dev.azure.com:v3/forges/forges-fixtures/forges-fixtures"
         }
+      }
+    ]
+  },
+  "owner repos": {
+    "items": [],
+    "warnings": [
+      {
+        "code": "sort_unsupported",
+        "message": "Azure DevOps lists the repositories of a project in its own order"
       }
     ]
   },

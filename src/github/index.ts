@@ -29,6 +29,7 @@ import type {
   Notification,
   NotificationListOptions,
   NotificationRef,
+  OwnerRepoQuery,
   Page,
   PageOptions,
   Reaction,
@@ -881,6 +882,36 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
     )
   }
 
+  /** The authenticated login, read once and reused; reactions are deleted by id, so removing one needs it. */
+  const viewerLogin = memo(async () => (await fetcher.json<GitHubUserDetail>('/user')).data.login)
+
+  /** `/users/{owner}/repos` serves organisations too, but lists only public repositories. */
+  async function ownerReposPage(owner: RepoRef, query: OwnerRepoQuery = {}): Promise<Page<Repo>> {
+    const visibility = query.visibility === 'all' ? undefined : query.visibility
+    const read = (path: string, params: Record<string, string | undefined>) => list(path, query, (raw: GitHubRepositoryDetail) => toRepo(instance, raw), {
+      query: { ...params, sort: query.sort === 'name' ? 'full_name' : query.sort, direction: query.direction },
+    })
+    const userRepos = () => read(`/users/${encodeURIComponent(owner.owner)}/repos`, { type: 'owner' })
+    if (visibility === 'public') {
+      return userRepos()
+    }
+    try {
+      return await read(`/orgs/${encodeURIComponent(owner.owner)}/repos`, { type: visibility === 'internal' ? undefined : visibility })
+    }
+    catch (error) {
+      if (!(error instanceof NotFoundError) || query.cursor) {
+        throw error
+      }
+    }
+    if (auth.type === 'token' && (await viewerLogin()).toLowerCase() === owner.owner.toLowerCase()) {
+      return read('/user/repos', { affiliation: 'owner', visibility: visibility === 'internal' ? undefined : visibility })
+    }
+    if (visibility) {
+      return { items: [], warnings: [{ code: 'filter_unsupported', message: 'GitHub lists only the public repositories of another user' }] }
+    }
+    return userRepos()
+  }
+
   /** Repository hooks, or organisation hooks for a namespace ref. */
   function hooksPath(target: RepoRef): string {
     return isNamespaceRef(target) ? `/orgs/${encodeURIComponent(target.owner)}/hooks` : `${repoPath(target)}/hooks`
@@ -1228,9 +1259,6 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
     return `${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/reactions`
   }
 
-  /** The authenticated login, read once and reused; reactions are deleted by id, so removing one needs it. */
-  const viewerLogin = memo(async () => (await fetcher.json<GitHubUserDetail>('/user')).data.login)
-
   async function reactionsPage(target: ThreadRef | CommentRef, listOptions: ListOptions = {}): Promise<Page<Reaction>> {
     const thread = 'thread' in target ? target.thread : target
     if (thread.kind === 'discussion') {
@@ -1486,6 +1514,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         }
         return reposPage(fetcher, '/user/repos', false, listOptions)
       }),
+      byOwnerPage: verb(true, ownerReposPage),
       labelsPage: verb(true, (repo, listOptions = {}) => list(`${repoPath(repo)}/labels`, listOptions, toLabel)),
       createLabel: verb(true, async (repo, label, options) => toLabel((await fetcher.json<GitHubLabel>(`${repoPath(repo)}/labels`, {
         method: 'POST',

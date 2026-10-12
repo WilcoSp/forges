@@ -237,6 +237,20 @@ describe('fake forge', () => {
     expect(repos.map(repo => repo.ref.name)).toEqual(['widgets'])
   })
 
+  it('lists the repositories of an owner, with its subgroups when asked', async () => {
+    const forge = fake({ seed: { repos: [{ repo: 'acme/widgets' }, { repo: 'acme/tools/cli', visibility: 'private' }, { repo: 'other/gadgets' }] } }).create()
+    const acme = { forge: 'fake', instance: forge.instance, owner: 'acme', name: '', kind: 'namespace' } as const
+
+    const names = async (query = {}) => (await Array.fromAsync(forge.repos.byOwner(acme, query))).map(repo => `${repo.ref.owner}/${repo.ref.name}`)
+
+    expect(await names()).toEqual(['acme/widgets'])
+    expect(await names({ subgroups: true })).toEqual(['acme/widgets', 'acme/tools/cli'])
+    expect(await names({ subgroups: true, visibility: 'private' })).toEqual(['acme/tools/cli'])
+    expect(await names({ subgroups: true, sort: 'name' })).toEqual(['acme/tools/cli', 'acme/widgets'])
+    expect(await names({ subgroups: true, sort: 'name', direction: 'desc' })).toEqual(['acme/widgets', 'acme/tools/cli'])
+    expect((await forge.repos.byOwnerPage(acme, { sort: 'created' })).warnings).toContainEqual(expect.objectContaining({ code: 'sort_unsupported' }))
+  })
+
   it('searches the lines of seeded files', async () => {
     const forge = fake({ seed: { files: [{ repo: 'acme/widgets', path: 'src/useFetch.ts', content: 'import { ofetch } from \'ofetch\'\nexport const useFetch = ofetch\n' }] } }).create()
 
