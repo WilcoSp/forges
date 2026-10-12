@@ -59,7 +59,7 @@ jobs:
       - name: 💪 Test types
         run: pnpm test:types
 
-      - name: 📏 Test bundle size
+      - name: 📏 Check Lite tree-shaking and report bundle sizes
         run: pnpm test:size
 
       - name: 🧪 Test project

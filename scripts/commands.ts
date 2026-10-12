@@ -22,7 +22,7 @@ export const COMMANDS: Command[] = [
   { commands: ['pnpm test:capabilities'], scripts: ['test:capabilities'], description: 'Fails for a capability whose declared level does not match what the tests verify against the forge' },
   { commands: ['pnpm test:knip'], scripts: ['test:knip'], description: 'Finds unused files, exports and dependencies' },
   { commands: ['pnpm test:versions'], scripts: ['test:versions'], description: 'Checks that the dependencies support the `engines` range' },
-  { commands: ['pnpm test:size'], scripts: ['test:size'], description: 'Checks the browser bundle budgets. Run `pnpm build` first' },
+  { commands: ['pnpm test:size'], scripts: ['test:size'], description: 'Reports browser bundle sizes and checks Lite tree-shaking. Run `pnpm build` first' },
   { commands: ['pnpm lint', 'pnpm lint:fix'], scripts: ['lint', 'lint:fix'], description: 'Lints, and fixes what it can' },
   { commands: ['pnpm capability-matrix'], scripts: ['capability-matrix'], description: 'Updates the capability matrix and the other tables of the docs' },
   { commands: ['pnpm capability-diff [ref]'], scripts: ['capability-diff'], description: 'Shows how the capabilities differ from `ref`, `main` by default' },

@@ -1,0 +1,63 @@
+name: bundle size
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: bundle-size-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: head
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+      - uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
+        with:
+          working-directory: head
+          cache: true
+          install: false
+
+      - name: Measure PR bundles
+        working-directory: head
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          mkdir -p "$RUNNER_TEMP/bundle-sizes"
+          node scripts/bundle-size.ts --report --out "$RUNNER_TEMP/bundle-sizes/head.json"
+
+      - name: Build base bundles
+        working-directory: base
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - name: Measure base bundles
+        working-directory: head
+        run: node scripts/bundle-size.ts --dist ../base/dist --report --out "$RUNNER_TEMP/bundle-sizes/base.json"
+
+      - name: Summarise bundle sizes
+        working-directory: head
+        run: node scripts/bundle-size-diff.ts --base "$RUNNER_TEMP/bundle-sizes/base.json" --head "$RUNNER_TEMP/bundle-sizes/head.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bundle-sizes
+          path: ${{ runner.temp }}/bundle-sizes/
+          retention-days: 7
+          if-no-files-found: error

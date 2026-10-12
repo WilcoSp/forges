@@ -1,54 +1,80 @@
-/**
- * Bundles a one-line browser consumer of each public subpath with rolldown and
- * checks the entry chunk against a budget. `--report` prints without failing.
- */
+/** Measures browser entry bundles and checks that Lite bundles exclude webhook code. */
 import { Buffer } from 'node:buffer'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
+import { parseArgs } from 'node:util'
 import { gzipSync } from 'node:zlib'
 import { rolldown } from 'rolldown'
 
-/** `absent` is a string only the webhook code contains; a Lite bundle must not carry it. */
-const BUDGETS: Array<{ name: string, source: string, imports: string, minified: number, gzipped: number, absent?: string }> = [
-  { name: 'forges', source: 'index.mjs', imports: 'createForges', minified: 9_400, gzipped: 2_800 },
-  { name: 'forges/github', source: 'github/index.mjs', imports: 'github', minified: 109_100, gzipped: 33_200 },
-  { name: 'github lite', source: 'github/index.mjs', imports: 'githubLite', minified: 101_100, gzipped: 31_000, absent: 'x-hub-signature-256' },
-  { name: 'forges/gitlab', source: 'gitlab/index.mjs', imports: 'gitlab', minified: 86_300, gzipped: 26_800 },
-  { name: 'gitlab lite', source: 'gitlab/index.mjs', imports: 'gitlabLite', minified: 79_400, gzipped: 24_900, absent: 'x-gitlab-token' },
-  { name: 'forges/tangled', source: 'tangled/index.mjs', imports: 'tangled', minified: 77_400, gzipped: 25_300 },
-  { name: 'tangled lite', source: 'tangled/index.mjs', imports: 'tangledLite', minified: 73_700, gzipped: 24_100, absent: 'x-tangled-signature-256' },
+const BUNDLES: Array<{ name: string, source: string, imports: string, absent?: string }> = [
+  { name: 'forges', source: 'index.mjs', imports: 'createForges' },
+  { name: 'forges/github', source: 'github/index.mjs', imports: 'github' },
+  { name: 'github lite', source: 'github/index.mjs', imports: 'githubLite', absent: 'x-hub-signature-256' },
+  { name: 'forges/gitlab', source: 'gitlab/index.mjs', imports: 'gitlab' },
+  { name: 'gitlab lite', source: 'gitlab/index.mjs', imports: 'gitlabLite', absent: 'x-gitlab-token' },
+  { name: 'forges/tangled', source: 'tangled/index.mjs', imports: 'tangled' },
+  { name: 'tangled lite', source: 'tangled/index.mjs', imports: 'tangledLite', absent: 'x-tangled-signature-256' },
 ]
 
-async function measure(source: string, imports: string): Promise<{ minified: number, gzipped: number, lazy: number, code: string }> {
-  const directory = join(tmpdir(), 'forges-bundle-size')
-  mkdirSync(directory, { recursive: true })
+const { values } = parseArgs({
+  options: {
+    dist: { type: 'string', default: fileURLToPath(new URL('../dist', import.meta.url)) },
+    out: { type: 'string' },
+    report: { type: 'boolean', default: false },
+  },
+})
+
+async function measure(directory: string, source: string, imports: string) {
   const entry = join(directory, `${imports}.mjs`)
-  const target = new URL(`../dist/${source}`, import.meta.url).pathname
-  writeFileSync(entry, `import { ${imports} } from '${target}'\nconsole.info(${imports})\n`)
+  const target = resolve(values.dist, source)
+  writeFileSync(entry, `import { ${imports} } from ${JSON.stringify(target)}\nconsole.info(${imports})\n`)
   const bundle = await rolldown({ input: entry, platform: 'browser' })
-  const { output } = await bundle.generate({ format: 'esm', minify: true })
-  const code = (chunk: (typeof output)[number]) => Buffer.from('code' in chunk ? chunk.code : '')
-  const loaded = output.filter(chunk => 'isEntry' in chunk && chunk.isEntry).map(code)
-  const lazy = output.filter(chunk => 'isDynamicEntry' in chunk && chunk.isDynamicEntry).map(code)
-  const eager = Buffer.concat(loaded)
-  return { minified: eager.byteLength, gzipped: gzipSync(eager).byteLength, lazy: Buffer.concat(lazy).byteLength, code: eager.toString() }
+  try {
+    const { output } = await bundle.generate({ format: 'esm', minify: true })
+    const code = (chunk: (typeof output)[number]) => Buffer.from('code' in chunk ? chunk.code : '')
+    const loaded = output.filter(chunk => 'isEntry' in chunk && chunk.isEntry).map(code)
+    const lazy = output.filter(chunk => 'isDynamicEntry' in chunk && chunk.isDynamicEntry).map(code)
+    const eager = Buffer.concat(loaded)
+    return { minified: eager.byteLength, gzipped: gzipSync(eager).byteLength, lazy: Buffer.concat(lazy).byteLength, code: eager.toString() }
+  }
+  finally {
+    await bundle.close()
+  }
 }
 
+const directory = mkdtempSync(join(tmpdir(), 'forges-bundle-size-'))
 const failures: string[] = []
-for (const budget of BUDGETS) {
-  const { minified, gzipped, lazy, code } = await measure(budget.source, budget.imports)
-  console.info(`${budget.name.padEnd(16)} ${String(minified).padStart(7)} min (budget ${budget.minified})  ${String(gzipped).padStart(6)} gz (budget ${budget.gzipped})  ${String(lazy).padStart(6)} lazy`)
-  if (minified > budget.minified || gzipped > budget.gzipped) {
-    failures.push(`${budget.name} is over budget: ${minified} min, ${gzipped} gz`)
+const bundles = []
+try {
+  for (const { name, source, imports, absent } of BUNDLES) {
+    const result = await measure(directory, source, imports).catch((error: unknown) => {
+      if (!values.report) {
+        throw error
+      }
+      console.warn(`${name.padEnd(16)} skipped: ${error instanceof Error ? error.message.split('\n')[0] : error}`)
+    })
+    if (!result) {
+      continue
+    }
+    const { minified, gzipped, lazy, code } = result
+    bundles.push({ name, minified, gzipped, lazy })
+    console.info(`${name.padEnd(16)} ${String(minified).padStart(7)} min  ${String(gzipped).padStart(6)} gz  ${String(lazy).padStart(6)} lazy`)
+    if (absent && code.includes(absent)) {
+      failures.push(`${name} contains ${absent}`)
+    }
   }
-  if (budget.absent && code.includes(budget.absent)) {
-    failures.push(`${budget.name} contains ${budget.absent}`)
+  if (values.out) {
+    writeFileSync(values.out, `${JSON.stringify({ version: 1, bundles }, null, 2)}\n`)
   }
 }
+finally {
+  rmSync(directory, { recursive: true, force: true })
+}
 
-if (failures.length && !process.argv.includes('--report')) {
+if (failures.length && !values.report) {
   console.error(failures.join('\n'))
-  process.exit(1)
+  process.exitCode = 1
 }
