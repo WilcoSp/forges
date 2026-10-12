@@ -1,8 +1,9 @@
 import type { RepoRef, ThreadKind, ThreadRef } from '../model.ts'
-import type { WebLinks } from '../web.ts'
+import type { RepoSection, WebLinks } from '../web.ts'
 
 const SECTIONS: Partial<Record<ThreadKind, string>> = { issue: 'issues', pull_request: 'pull-requests', commit: 'commits' }
 const KINDS = new Map(Object.entries(SECTIONS).map(([kind, section]) => [section, kind as ThreadKind]))
+const PAGES: Partial<Record<RepoSection, string>> = { issues: 'issues', pullRequests: 'pull-requests', compare: 'branches/compare' }
 
 const repoPath = (repo: RepoRef) => `/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.name)}`
 
@@ -10,6 +11,7 @@ export function bitbucketWeb(origin: string): WebLinks {
   return {
     origin,
     repo: repoPath,
+    section: (repo, section) => repo.kind === 'namespace' || !PAGES[section] ? undefined : `${repoPath(repo)}/${PAGES[section]}`,
     thread: ref => SECTIONS[ref.kind] && `${repoPath(ref.repo)}/${SECTIONS[ref.kind]}/${encodeURIComponent(ref.number)}`,
     comment: ref => ref.thread.kind === 'commit' || !SECTIONS[ref.thread.kind] ? undefined : `${repoPath(ref.thread.repo)}/${SECTIONS[ref.thread.kind]}/${encodeURIComponent(ref.thread.number)}#comment-${ref.id}`,
     file: (repo, path, at, line) => `${repoPath(repo)}/src/${encodeURIComponent(at)}/${path.split('/').map(encodeURIComponent).join('/')}${line ? `#lines-${line}` : ''}`,

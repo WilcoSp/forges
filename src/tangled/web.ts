@@ -1,7 +1,8 @@
 import type { RepoRef, ThreadKind } from '../model.ts'
-import type { WebLinks } from '../web.ts'
+import type { RepoSection, WebLinks } from '../web.ts'
 
 const SECTIONS: Partial<Record<ThreadKind, string>> = { issue: 'issues', pull_request: 'pulls' }
+const PAGES: Partial<Record<RepoSection, string>> = { issues: 'issues', pullRequests: 'pulls', compare: 'compare' }
 
 const encode = (path: string) => path.split('/').map(encodeURIComponent).join('/')
 const repoPath = (repo: RepoRef) => `/${encodeURIComponent(repo.owner).replaceAll('%3A', ':')}/${encodeURIComponent(repo.name)}`
@@ -11,6 +12,7 @@ export function tangledWeb(origin: string): WebLinks {
   return {
     origin,
     repo: repoPath,
+    section: (repo, section) => repo.kind === 'namespace' || !PAGES[section] ? undefined : `${repoPath(repo)}/${PAGES[section]}`,
     thread: (ref) => {
       if (ref.kind === 'commit') {
         return `${repoPath(ref.repo)}/commit/${encodeURIComponent(ref.number)}`

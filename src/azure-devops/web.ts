@@ -1,8 +1,9 @@
 import type { RepoRef, ThreadRef } from '../model.ts'
-import type { WebLinks } from '../web.ts'
+import type { RepoSection, WebLinks } from '../web.ts'
 
 const encode = (path: string) => path.split('/').map(encodeURIComponent).join('/')
 const gitPath = (repo: RepoRef) => `/${encode(repo.owner)}/_git/${encodeURIComponent(repo.name)}`
+const REPO_PAGES: Partial<Record<RepoSection, string>> = { pullRequests: 'pullrequests', compare: 'branchCompare' }
 const isSha = (at: string) => /^[0-9a-f]{40}$/i.test(at)
 const version = (at: string) => `${isSha(at) ? 'GC' : 'GB'}${encodeURIComponent(at)}`
 
@@ -10,6 +11,12 @@ export function azureWeb(origin: string): WebLinks {
   return {
     origin,
     repo: repo => repo.kind === 'namespace' ? `/${encode(repo.owner)}` : gitPath(repo),
+    section: (repo, section) => {
+      if (section === 'issues') {
+        return `/${encode(repo.owner)}/_workitems`
+      }
+      return repo.kind === 'namespace' || !REPO_PAGES[section] ? undefined : `${gitPath(repo)}/${REPO_PAGES[section]}`
+    },
     thread: (ref) => {
       if (ref.kind === 'issue') {
         return `/${encode(ref.repo.owner)}/_workitems/edit/${encodeURIComponent(ref.number)}`

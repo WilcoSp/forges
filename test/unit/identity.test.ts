@@ -1,4 +1,4 @@
-import type { Page, RepoRef, SearchQuery, Thread, ThreadRef } from '../../src/index.ts'
+import type { Page, RepoRef, RepoSection, SearchQuery, Thread, ThreadRef } from '../../src/index.ts'
 import { describe, expect, it } from 'vitest'
 import { azureDevOps } from '../../src/azure-devops/index.ts'
 import { bitbucket } from '../../src/bitbucket/index.ts'
@@ -115,6 +115,25 @@ describe('web links', () => {
     expect(provider.urlFor({ raw: { repo: group, path: 'README.md', at: 'main' } })).toBeUndefined()
     expect(provider.urlFor({ commit: { repo: group, sha } })).toBeUndefined()
     expect(provider.urlFor({ compare: { repo: group, base: 'main', head: 'next' } })).toBeUndefined()
+  })
+
+  it.each([
+    ['github', gh, repo, ['https://github.com/acme/widgets/issues', 'https://github.com/acme/widgets/pulls', 'https://github.com/acme/widgets/compare', 'https://github.com/acme/widgets/releases']],
+    ['gitlab', gl, { ...repo, forge: 'gitlab', instance: 'gitlab.com', owner: 'acme/platform' }, ['https://gitlab.com/acme/platform/widgets/-/issues', 'https://gitlab.com/acme/platform/widgets/-/merge_requests', 'https://gitlab.com/acme/platform/widgets/-/compare', 'https://gitlab.com/acme/platform/widgets/-/releases']],
+    ['gitlab group', gl, { forge: 'gitlab', instance: 'gitlab.com', owner: 'acme/platform', name: '', kind: 'namespace' }, ['https://gitlab.com/groups/acme/platform/-/issues', 'https://gitlab.com/groups/acme/platform/-/merge_requests', undefined, undefined]],
+    ['forgejo', cb, { ...repo, forge: 'forgejo', instance: 'codeberg.org' }, ['https://codeberg.org/acme/widgets/issues', 'https://codeberg.org/acme/widgets/pulls', 'https://codeberg.org/acme/widgets/compare', 'https://codeberg.org/acme/widgets/releases']],
+    ['bitbucket', bb, { ...repo, forge: 'bitbucket', instance: 'bitbucket.org' }, ['https://bitbucket.org/acme/widgets/issues', 'https://bitbucket.org/acme/widgets/pull-requests', 'https://bitbucket.org/acme/widgets/branches/compare', undefined]],
+    ['azure-devops', az, { ...repo, forge: 'azure-devops', instance: 'dev.azure.com', owner: 'contoso/Widgets' }, ['https://dev.azure.com/contoso/Widgets/_workitems', 'https://dev.azure.com/contoso/Widgets/_git/widgets/pullrequests', 'https://dev.azure.com/contoso/Widgets/_git/widgets/branchCompare', undefined]],
+    ['azure-devops project', az, { forge: 'azure-devops', instance: 'dev.azure.com', owner: 'contoso/Widgets', name: '', kind: 'namespace' }, ['https://dev.azure.com/contoso/Widgets/_workitems', undefined, undefined, undefined]],
+    ['tangled', tg, { ...repo, forge: 'tangled', instance: 'tangled.org', owner: 'acme.dev' }, ['https://tangled.org/acme.dev/widgets/issues', 'https://tangled.org/acme.dev/widgets/pulls', 'https://tangled.org/acme.dev/widgets/compare', undefined]],
+    ['github namespace', gh, { ...repo, name: '', kind: 'namespace' }, [undefined, undefined, undefined, undefined]],
+  ] as const)('builds repository section URLs on %s', (_, provider, target, urls) => {
+    expect((['issues', 'pullRequests', 'compare', 'releases'] as const).map(section => provider.urlFor({ repo: target, section }))).toEqual(urls)
+  })
+
+  it('builds the repository URL when the section is undefined', () => {
+    const section: RepoSection | undefined = undefined
+    expect(gh.urlFor({ repo, section })).toBe('https://github.com/acme/widgets')
   })
 
   it('parses web URLs on its own instance only', () => {

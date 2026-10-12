@@ -1,12 +1,16 @@
 import type { CommentRef, ForgeOrigin, ReleaseRef, RepoRef, ResolvedThreadRef, ThreadKind, ThreadRef } from './model.ts'
 import { isResolvedThread, normaliseRepoName } from './model.ts'
 
+/** A repository's section, for linking to the section itself rather than one entry in it. */
+export type RepoSection = 'issues' | 'pullRequests' | 'compare' | 'releases'
+
 /**
  * Something with a web page. A revision (`at`, `base` or `head`) is a branch,
  * tag or commit sha; Azure DevOps reads anything but a full commit sha as a branch.
  */
 export type UrlTarget
   = | { repo: RepoRef }
+    | { repo: RepoRef, section: RepoSection }
     | { thread: ThreadRef }
     | { comment: CommentRef }
     | { release: ReleaseRef }
@@ -40,6 +44,8 @@ export interface WebLinks {
   origin: string
   /** The page of a repository. */
   repo: (repo: RepoRef) => string
+  /** The page of one of a repository's sections, such as its issues or pull requests. */
+  section?: (repo: RepoRef, section: RepoSection) => string | undefined
   /** The page of an issue or pull request. */
   thread: (ref: ResolvedThreadRef) => string | undefined
   /** The page of a comment, anchored on its thread. */
@@ -77,7 +83,7 @@ export function webUrlFor(web: WebLinks, target: UrlTarget): string | undefined 
   }
   let path: string | undefined
   if ('repo' in target) {
-    path = web.repo(target.repo)
+    path = 'section' in target && target.section ? web.section?.(target.repo, target.section) : web.repo(target.repo)
   }
   else if ('thread' in target) {
     path = isResolvedThread(target.thread) ? web.thread(target.thread) : undefined
@@ -183,6 +189,7 @@ export function githubShapedWeb(origin: string, shape: GitHubShape): WebLinks {
   return {
     origin,
     repo: repoPath,
+    section: (repo, section) => repo.kind === 'namespace' ? undefined : `${repoPath(repo)}/${section === 'pullRequests' ? 'pulls' : section}`,
     thread: ref => kindPath[ref.kind] && `${repoPath(ref.repo)}/${kindPath[ref.kind]}/${encodeURIComponent(ref.number)}`,
     comment: ref => ref.thread.kind === 'commit' || !kindPath[ref.thread.kind]
       ? undefined
