@@ -10,7 +10,7 @@ function fixture(url: string, body: unknown, headers: Record<string, string> = {
   return { request: { method: 'GET', url }, response: { status: 200, headers, body } }
 }
 
-const repo = (stars: number, remaining: string) => fixture('https://api.github.com/repos/h3js/h3', { full_name: 'h3js/h3', stargazers_count: stars }, { 'x-ratelimit-remaining': remaining })
+const repo = (stars: number, remaining: string) => fixture('https://api.github.com/repos/h3js/h3', { full_name: 'h3js/h3', stargazers_count: stars, owner: { login: 'h3js', followers: stars * 2, local_time: `${stars}:00 PM` } }, { 'x-ratelimit-remaining': remaining })
 const comment = (id: number) => fixture(`https://api.github.com/repos/h3js/h3/issues/comments/${id}`, { id, body: 'Hello' })
 
 function step(name: string, fixtures: Fixture[], { needs = [] as string[], recordedAt = '2026-01-01T00:00:00.000Z' } = {}): StepRecording {
@@ -41,6 +41,16 @@ describe('recording store', () => {
 
     expect(readdirSync(`${directory}steps/pull-getcomment`).sort()).toEqual(['01-get-comments-N.json', 'step.json'])
     expect(JSON.parse(stepFile(directory, 'pull-getcomment', 'step.json'))).toEqual({ name: 'pull getComment', recordedAt: '2026-01-01T00:00:00.000Z', needs: ['pull comments'] })
+  })
+
+  it('leaves ids out of the names of fixtures whose path holds them within a segment', () => {
+    const directory = recording()
+    const label = fixture('https://api.github.com/repos/h3js/h3/issues/85/labels/forges-fixture-20261012113502', [])
+    const hook = fixture('https://api.bitbucket.org/2.0/repositories/bot/forges-fixtures/hooks/%7B9e802850-0c69-4230-90d6-6b40c0a310a1%7D', {})
+    const compare = fixture('https://api.github.com/repos/h3js/h3/compare/main...4348bba01b5300d6d0c0218dc48e3de88068018b', {})
+    writeRecording(directory, { steps: [step('labels', [label, hook, compare])], failed: [], setup: [] })
+
+    expect(readdirSync(`${directory}steps/labels`).sort()).toEqual(['01-get-hooks-ID.json', '02-get-compare-main...SHA.json', '03-get-labels-forges-fixture-N.json', 'step.json'])
   })
 
   it('keeps a step whose responses differ only in rate limits and counters', () => {
