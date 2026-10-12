@@ -1,12 +1,12 @@
 /**
  * Prints every provider's declared support for every capability as JSON.
  * Pass `--ref <git-ref>` to snapshot another commit with that commit's own
- * code, and `--out <file>` to write to a file. A ref without this script
- * prints a notice and writes nothing.
+ * code, and `--out <file>` to write to a file. A ref without this script or
+ * a baseline in `capability-baselines/` prints a notice and writes nothing.
  */
 import type { SupportCell, SupportLevel } from './capabilities.ts'
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import process from 'node:process'
@@ -61,15 +61,23 @@ export function capabilitySnapshot(): CapabilitySnapshot {
   }
 }
 
-/** Runs this script as committed at `ref`, or returns `undefined` when `ref` has no such script. */
+/**
+ * Runs this script as committed at `ref`. For a release tag without the
+ * script, reads `capability-baselines/<tag>.json` instead. Returns
+ * `undefined` when neither exists.
+ */
 export function snapshotAt(ref: string): string | undefined {
   const root = fileURLToPath(new URL('..', import.meta.url))
+  const baseline = /^v\d+\.\d+\.\d+$/.test(ref) ? fileURLToPath(new URL(`./capability-baselines/${ref}.json`, import.meta.url)) : undefined
   const directory = mkdtempSync(join(tmpdir(), 'forges-capabilities-'))
   try {
     const archive = execFileSync('git', ['archive', '--format=tar', ref, 'package.json', 'src', 'scripts'], { cwd: root, maxBuffer: 256 * 1024 * 1024 })
     execFileSync('tar', ['-x', '-C', directory], { input: archive })
     const script = join(directory, 'scripts/capability-snapshot.ts')
-    return existsSync(script) ? execFileSync(process.execPath, [script], { cwd: directory, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }) : undefined
+    if (existsSync(script)) {
+      return execFileSync(process.execPath, [script], { cwd: directory, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+    }
+    return baseline && existsSync(baseline) ? readFileSync(baseline, 'utf8') : undefined
   }
   finally {
     rmSync(directory, { recursive: true, force: true })

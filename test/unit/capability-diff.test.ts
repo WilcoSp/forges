@@ -1,5 +1,6 @@
 import type { RenderOptions } from '../../scripts/capability-diff.ts'
 import type { CapabilitySnapshot, SnapshotProvider, SupportMap } from '../../scripts/capability-snapshot.ts'
+import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { diffSnapshots, parseSnapshot, renderDiff, withCapabilitySection } from '../../scripts/capability-diff.ts'
 import { capabilitySnapshot } from '../../scripts/capability-snapshot.ts'
@@ -21,6 +22,16 @@ function legend(...entries: string[]): string {
 }
 
 describe('capability snapshots', () => {
+  it('accepts the committed baselines of releases without a snapshot script', () => {
+    const directory = new URL('../../scripts/capability-baselines/', import.meta.url)
+    const files = readdirSync(directory)
+
+    expect(files).not.toEqual([])
+    for (const file of files) {
+      expect(parseSnapshot(readFileSync(new URL(file, directory), 'utf8')).providers.length).toBeGreaterThan(0)
+    }
+  })
+
   it('accepts the snapshot of the working tree', () => {
     const current = capabilitySnapshot()
 
@@ -291,6 +302,18 @@ describe('capability section of a pull request body', () => {
 
     expect(withCapabilitySection(body, '')).toBe(body)
     expect(withCapabilitySection(body, section)).toBe(`${body}\n\n<!-- forges:capabilities:start -->\n### Capability changes\n<!-- forges:capabilities:end -->`)
+  })
+
+  it('adds a new section above the anchor line, and replaces it in place after', () => {
+    const release = '> v0.2.0 is the next minor release.\n\n## 👉 Changelog\n\n- feat: something'
+    const added = withCapabilitySection(release, section, '## 👉 ')
+
+    expect(added).toBe('> v0.2.0 is the next minor release.\n\n<!-- forges:capabilities:start -->\n### Capability changes\n<!-- forges:capabilities:end -->\n\n## 👉 Changelog\n\n- feat: something')
+    expect(withCapabilitySection(`${added}\n\n## 👉 Other`, '### Newer', '## 👉 ')).toBe(`${added.replace(section, '### Newer')}\n\n## 👉 Other`)
+  })
+
+  it('appends a new section when no line starts with the anchor', () => {
+    expect(withCapabilitySection('Mentions ## 👉 inline.', section, '## 👉 ')).toBe('Mentions ## 👉 inline.\n\n<!-- forges:capabilities:start -->\n### Capability changes\n<!-- forges:capabilities:end -->')
   })
 
   it('removes the section once nothing changes', () => {

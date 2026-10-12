@@ -9,7 +9,8 @@
  *
  * With `--body <file>`, it prints that pull request body with its capability
  * section replaced, added, or removed when nothing changed, and with `--out`
- * writes nothing when the body stays the same. `--coverage` adds a chart of
+ * writes nothing when the body stays the same. `--before <prefix>` adds a new
+ * section above the first line starting with `prefix` rather than at the end. `--coverage` adds a chart of
  * the verified capabilities each provider gained and lost. `--icons <url>`
  * shows the logos in `assets/providers/` served from `url` in place of
  * provider names. `--out <file>` writes to a file. Snapshots are validated before use, as a
@@ -517,11 +518,25 @@ const SECTION_START = '<!-- forges:capabilities:start -->'
 const SECTION_END = '<!-- forges:capabilities:end -->'
 const SECTION = new RegExp(`^${SECTION_START}\\r?$[\\s\\S]+?^${SECTION_END}\\r?$`, 'm')
 
-/** `body` with its capability section, between markers on lines of their own, replaced, appended, or removed when `section` is empty. */
-export function withCapabilitySection(body: string, section: string): string {
+function lineStarting(body: string, prefix: string): number {
+  if (body.startsWith(prefix)) {
+    return 0
+  }
+  const index = body.indexOf(`\n${prefix}`)
+  return index < 0 ? -1 : index + 1
+}
+
+/**
+ * `body` with its capability section, between markers on lines of their own,
+ * replaced, or removed when `section` is empty. A new section goes above the
+ * first line that starts with `anchor`, or at the end.
+ */
+export function withCapabilitySection(body: string, section: string, anchor?: string): string {
   const block = section && `${SECTION_START}\n${section}\n${SECTION_END}`
   const match = SECTION.exec(body)
-  const [before, after] = match ? [body.slice(0, match.index), body.slice(match.index + match[0].length)] : [body, '']
+  const at = match ? match.index : anchor ? lineStarting(body, anchor) : -1
+  const end = match ? match.index + match[0].length : at
+  const [before, after] = at < 0 ? [body, ''] : [body.slice(0, at), body.slice(end)]
   return [before.trimEnd(), block, after.trim()].filter(Boolean).join('\n\n')
 }
 
@@ -533,7 +548,7 @@ function readSnapshot(path: string): CapabilitySnapshot {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { values, positionals } = parseArgs({ allowPositionals: true, options: { base: { type: 'string' }, head: { type: 'string' }, body: { type: 'string' }, out: { type: 'string' }, coverage: { type: 'boolean', default: false }, icons: { type: 'string' } } })
+  const { values, positionals } = parseArgs({ allowPositionals: true, options: { base: { type: 'string' }, head: { type: 'string' }, body: { type: 'string' }, out: { type: 'string' }, coverage: { type: 'boolean', default: false }, icons: { type: 'string' }, before: { type: 'string' } } })
   if (values.icons !== undefined && !/^https:\/\/\S+\/$/.test(values.icons)) {
     throw new Error('--icons takes an https URL ending in /')
   }
@@ -555,7 +570,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   }
   const markdown = base ? renderDiff(diffSnapshots(base, head), { coverage: values.coverage, icon }) : ''
   const body = values.body === undefined ? undefined : readFileSync(values.body, 'utf8')
-  const output = body === undefined ? markdown : withCapabilitySection(body, markdown)
+  const output = body === undefined ? markdown : withCapabilitySection(body, markdown, values.before)
   if (body !== undefined && output.trim() === body.trim()) {
     console.info('The capability section is up to date.')
   }
