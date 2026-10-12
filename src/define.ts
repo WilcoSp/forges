@@ -25,7 +25,7 @@ import type {
   WebhooksApi,
 } from './provider.ts'
 import type { ForgeVerb } from './supports.ts'
-import type { WebLinks } from './web.ts'
+import type { UrlTarget, WebLinks } from './web.ts'
 import { ALERT_KINDS, approveAndMergeSupport, capabilitiesOf, ciJobSupport, getCommentKinds, getReviewSupport, KINDS, resolve, restrict, threadEventKinds, upsertKinds, WRITE_VERBS } from './capabilities.ts'
 import { CAPABILITY_TABLE } from './capability-table.ts'
 import { decodeText, isSha } from './contents.ts'
@@ -677,7 +677,7 @@ function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extend
     scopesFor: verb => spec.scopes?.(verb) ?? {},
     can: (verb, kind) => supports(capabilities, verb, kind),
     support: (verb, kind) => supportOf(capabilities, verb, kind),
-    urlFor: target => spec.web ? webUrlFor(spec.web, target) : undefined,
+    urlFor: ((target: UrlTarget) => spec.web ? webUrlFor(spec.web, target) : undefined) as ForgeProvider<HasWeb>['urlFor'],
     webOrigin: (spec.web ? new URL(spec.web.origin).origin : undefined) as HasWeb extends true ? string : string | undefined,
     parseUrl: url => spec.web ? parseWebUrl(spec.web, url, origin) : undefined,
     referenceTo: (ref, referenceOptions) => referenceFor(spec.web, ref, referenceOptions),

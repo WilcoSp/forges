@@ -1028,7 +1028,10 @@ export interface ForgeProvider<HasWeb extends boolean = boolean> {
    * The web page for `target`, built without a request; `undefined` when the forge has no such page.
    * @param target What to link to: a repository or one of its sections, thread, comment, release, file, raw file, commit or comparison.
    */
-  urlFor: (target: UrlTarget) => string | undefined
+  urlFor: {
+    (target: { repo: RepoRef, section?: undefined }): HasWeb extends true ? string : string | undefined
+    (target: UrlTarget): string | undefined
+  }
   /**
    * The canonical origin of the forge's website for this instance, such as `https://github.com`
    * (without any deployment path), or `undefined` when the forge has no website. Useful for
