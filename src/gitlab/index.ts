@@ -789,8 +789,12 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
         get: verb(true, async (ref, options) => toRelease(ref.repo, (await fetcher.json<GitLabRelease>(`${projectPath(ref.repo)}/releases/${encodeURIComponent(ref.tag ?? ref.id)}`, { signal: options?.signal })).data)),
         getByTag: verb(true, async (repo, tag, options) => toRelease(repo, (await fetcher.json<GitLabRelease>(`${projectPath(repo)}/releases/${encodeURIComponent(tag)}`, { signal: options?.signal })).data)),
         latest: verb(true, async (repo, options) => {
-          const { items } = await releasesPage(repo, { perPage: 20, signal: options?.signal })
-          return items.find(release => release.publishedAt)
+          // Releases are listed newest `released_at` first, so an upcoming release can lead the list.
+          const [newest] = (await releasesPage(repo, { perPage: 1, signal: options?.signal })).items
+          if (!newest || newest.publishedAt) {
+            return newest
+          }
+          return (await releasesPage(repo, { perPage: 20, signal: options?.signal })).items.find(release => release.publishedAt)
         }),
         create: verb(true, async (repo, input, options) => {
           requirePublishedRelease(input)
