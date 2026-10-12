@@ -199,11 +199,13 @@ jobs:
         if: needs.plan.outputs.kind == 'writes'
         run: |
           set -euo pipefail
+          node scripts/stabilise-recordings.ts > "$RUNNER_TEMP/renamed.txt"
+          cat "$RUNNER_TEMP/renamed.txt"
           {
             echo '#### renamed ids'
             echo
             echo '```text'
-            node scripts/stabilise-recordings.ts | tr -d '`'
+            tr -d '`' < "$RUNNER_TEMP/renamed.txt"
             echo '```'
           } >> "$RUNNER_TEMP/summary.md"
 
