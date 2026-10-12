@@ -1,0 +1,143 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "repo": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "owner": "forgejo",
+          "name": "forgejo"
+        },
+        "kind": "pull_request",
+        "number": "14822",
+        "externalId": "7676496"
+      },
+      "kind": "pull_request",
+      "title": "fix: allow for PARAM+ when matching GitHub media types",
+      "body": "The current code for detecting a GitHub `Accept` header matches strictly\r\non `application/vnd.github+json`. But, according to the [docs][],\r\n\r\n> All custom media types for GitHub look like this:\r\n> application/vnd.github.PARAM+json, where PARAM is the name of the\r\n> media type\r\n\r\nTherefore, the check is failing cases that make use of `PARAM`. Matching\r\nother media types like `raw` was probably fine to not support, since\r\nthis was primarily useful in release endpoints, but GitHub seems to uses\r\n`PARAM` for versioning too.\r\n\r\nSpecifically, I am seeing `application/vnd.github.v3+json`, which is\r\ncausing my release workflows to fail:\r\n\r\n```\r\nrequest: {\r\n    ....\r\n    headers: {\r\n      accept: 'application/vnd.github.v3+json',\r\n      ...\r\n    }\r\n}\r\n::error::HttpError: Missing 'name' parameter\r\n```\r\n\r\nI pointed this out in the original [PR][], and the reply was:\r\n\r\n> If the need comes, this function can be adjusted\r\n\r\nI believe the need has come, so I'm proposing that adjustment.\r\n\r\n[docs]: https://docs.github.com/en/rest/using-the-rest-api/getting-started-with-the-rest-api?apiVersion=2022-11-28#media-types\r\n[pr]: https://codeberg.org/forgejo/forgejo/pulls/9285/files#issuecomment-7197535\r\n\r\n\r\n## Checklist\r\n\r\nThe [contributor guide](https://forgejo.org/docs/next/contributor/) contains information that will be helpful to first time contributors. All work and communication must conform to Forgejo's [AI Agreement](https://codeberg.org/forgejo/governance/src/branch/main/AIAgreement.md). There also are a few [conditions for merging Pull Requests in Forgejo repositories](https://codeberg.org/forgejo/governance/src/branch/main/PullRequestsAgreement.md). You are also welcome to join the [Forgejo development chatroom](https://matrix.to/#/#forgejo-development:matrix.org).\r\n\r\n### Compliance\r\n\r\n- [x] I confirm that I make this contribution in accordance with [Forgejo's AI Agreement](https://codeberg.org/forgejo/governance/src/commit/9084720dc6a7fbf1d3f358919d46bd6adfb55287/AIAgreement.md).\r\n\r\n### Tests for Go changes\r\n\r\n(can be removed for JavaScript changes)\r\n\r\n- I added test coverage for Go changes...\r\n  - [x] in their respective `*_test.go` for unit tests.\r\n  - [ ] in the `tests/integration` directory if it involves interactions with a live Forgejo server.\r\n- I ran...\r\n  - [x] `make pr-go` before pushing\r\n\r\n### Documentation\r\n\r\n- [ ] I created a pull request [to the documentation](https://codeberg.org/forgejo/docs) to explain to Forgejo users how to use this change.\r\n- [x] I did not document these changes and I do not expect someone else to do it.\r\n\r\n### Release notes\r\n\r\n- [x] This change will be noticed by a Forgejo user or admin (feature, bug fix, performance, etc.). I suggest to include a release note for this change.\r\n- [ ] This change is not visible to a Forgejo user or admin (refactor, dependency upgrade, etc.). I think there is no need to add a release note for this change.\r\n\r\n*The decision if the pull request will be shown in the release notes is up to the mergers / release team.*\r\n\r\nThe content of the `release-notes/<pull request number>.md` file will serve as the basis for the release notes. If the file does not exist, the title of the pull request will be used instead.\r\n",
+      "state": "open",
+      "stateRaw": "open",
+      "isDraft": false,
+      "author": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "login": "pbrisbin",
+        "id": "510677",
+        "name": "Pat Brisbin",
+        "avatarUrl": "https://codeberg.org/avatars/1c65c34b9f31fad19988351f7804681035c267e8bcb8ba8e33a99ee33a9c2990",
+        "url": "https://codeberg.org/pbrisbin",
+        "isBotHint": false
+      },
+      "assignees": [],
+      "reviewers": [],
+      "labels": [
+        {
+          "name": "code/api",
+          "colour": "eb6420",
+          "description": "API"
+        },
+        {
+          "name": "test/present",
+          "colour": "5319e7",
+          "description": "test has been added"
+        }
+      ],
+      "url": "https://codeberg.org/forgejo/forgejo/pulls/14822",
+      "createdAt": "<now>",
+      "updatedAt": "<now>",
+      "lastActivityAt": "<now>",
+      "locked": false,
+      "commentCount": 0
+    },
+    {
+      "ref": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "repo": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "owner": "forgejo",
+          "name": "forgejo"
+        },
+        "kind": "pull_request",
+        "number": "14821",
+        "externalId": "7674768"
+      },
+      "kind": "pull_request",
+      "title": "Partial: make some tests work outside TZ=UTC",
+      "body": "I was surprised and irritated that some tests require `TZ=UTC` as set here:\n\nhttps://codeberg.org/forgejo/forgejo/src/commit/5e50d27f1e39e2bf0ff5bda2046ea1a5c0db7a3d/Makefile#L573-L576\n\nSo I looked at what it takes to change this for some test cases, but would like to ask if this is at all desired, or if maintainers would rather like to avoid adjustments.\n\nThe PR can be merged, IMHO, the changed tests work no matter the TZ setting.\n\n### Compliance\n\n- [X] I confirm that I make this contribution in accordance with [Forgejo's AI Agreement](https://codeberg.org/forgejo/governance/src/commit/9084720dc6a7fbf1d3f358919d46bd6adfb55287/AIAgreement.md).\n\n### Tests for Go changes\n\n(can be removed for JavaScript changes)\n\n- I added test coverage for Go changes...\n  - [X] in their respective `*_test.go` for unit tests.\n  - [ ] in the `tests/integration` directory if it involves interactions with a live Forgejo server.\n- I ran...\n  - [X] `make pr-go` before pushing\n\n### Documentation\n\n- [ ] I created a pull request [to the documentation](https://codeberg.org/forgejo/docs) to explain to Forgejo users how to use this change.\n- [X] I did not document these changes and I do not expect someone else to do it.\n\n### Release notes\n\n- [ ] This change will be noticed by a Forgejo user or admin (feature, bug fix, performance, etc.). I suggest to include a release note for this change.\n- [X] This change is not visible to a Forgejo user or admin (refactor, dependency upgrade, etc.). I think there is no need to add a release note for this change.\n",
+      "state": "open",
+      "stateRaw": "open",
+      "isDraft": false,
+      "author": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "login": "slink",
+        "id": "381495",
+        "name": "Nils Goroll",
+        "avatarUrl": "https://codeberg.org/avatars/b5d63dc33281a8f89f64eed46eee13a2777e9d8944872537ba94ed13495e4c6b",
+        "url": "https://codeberg.org/slink",
+        "isBotHint": false
+      },
+      "assignees": [],
+      "reviewers": [],
+      "labels": [
+        {
+          "name": "test/present",
+          "colour": "5319e7",
+          "description": "test has been added"
+        }
+      ],
+      "url": "https://codeberg.org/forgejo/forgejo/pulls/14821",
+      "createdAt": "2026-10-12T09:04:16.000Z",
+      "updatedAt": "2026-10-12T09:05:43.000Z",
+      "lastActivityAt": "2026-10-12T09:05:43.000Z",
+      "locked": false,
+      "commentCount": 0
+    },
+    {
+      "ref": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "repo": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "owner": "forgejo",
+          "name": "forgejo"
+        },
+        "kind": "pull_request",
+        "number": "14820",
+        "externalId": "7673958"
+      },
+      "kind": "pull_request",
+      "title": "chore(release-notes): Forgejo v15.0.10 [skip ci]",
+      "body": "https://codeberg.org/forgejo/forgejo/milestone/142894",
+      "state": "open",
+      "stateRaw": "open",
+      "isDraft": false,
+      "author": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "login": "forgejo-release-manager",
+        "id": "242382",
+        "avatarUrl": "https://codeberg.org/avatars/3539e323882524c1a0a185d36428fe089886580386ce4b3261cdd6d8f983af4d",
+        "url": "https://codeberg.org/forgejo-release-manager",
+        "isBotHint": false
+      },
+      "assignees": [],
+      "reviewers": [],
+      "labels": [],
+      "url": "https://codeberg.org/forgejo/forgejo/pulls/14820",
+      "createdAt": "2026-10-12T07:55:40.000Z",
+      "updatedAt": "2026-10-12T07:55:42.000Z",
+      "lastActivityAt": "2026-10-12T07:55:42.000Z",
+      "locked": false,
+      "commentCount": 0
+    }
+  ],
+  "cursor": {
+    "nextUrl": "https://codeberg.org/api/v1/repos/forgejo/forgejo/issues?limit=3&page=2&state=open&type=pulls"
+  }
+}

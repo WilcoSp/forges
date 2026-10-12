@@ -1,0 +1,54 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/repository/commits/main"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "etag": "W/\"f122ccd0eecff038f358103f2541f85e\"",
+      "ratelimit-limit": "500",
+      "ratelimit-remaining": "462",
+      "ratelimit-reset": "1791804660"
+    },
+    "body": {
+      "id": "b67f19b0f87455fc09d18e3b0314a14d022f3af6",
+      "short_id": "b67f19b0",
+      "created_at": "2026-10-12T12:58:35.000+02:00",
+      "parent_ids": [
+        "6ff113fb6793eb4963464a2923de28890f1127f9",
+        "c3151df7594b6208664ed7c51dd97ffd671067d6"
+      ],
+      "title": "Merge branch '8577-ssh-key-add-replace' into 'main'",
+      "message": "Merge branch '8577-ssh-key-add-replace' into 'main'\n\nfeat(ssh-key): add --replace flag to ssh-key add\n\nSee merge request https://gitlab.com/gitlab-org/cli/-/merge_requests/4034\n\nMerged-by: Ahmed Hemdan <redacted@example.invalid>\nApproved-by: Ahmed Hemdan <redacted@example.invalid>\nApproved-by: GitLab Duo <redacted@example.invalid>\nReviewed-by: Ahmed Hemdan <redacted@example.invalid>\nReviewed-by: GitLab Duo <redacted@example.invalid>\nCo-authored-by: Radek Antoniuk <redacted@example.invalid>",
+      "author_name": "Ahmed Hemdan",
+      "author_email": "redacted@example.invalid",
+      "authored_date": "2026-10-12T12:58:35.000+02:00",
+      "committer_name": "GitLab",
+      "committer_email": "redacted@example.invalid",
+      "committed_date": "2026-10-12T12:58:35.000+02:00",
+      "trailers": {},
+      "extended_trailers": {},
+      "web_url": "https://gitlab.com/gitlab-org/cli/-/commit/b67f19b0f87455fc09d18e3b0314a14d022f3af6",
+      "stats": {
+        "additions": 277,
+        "deletions": 24,
+        "total": 301
+      },
+      "status": "success",
+      "project_id": 34675721,
+      "last_pipeline": {
+        "id": 2938354390,
+        "iid": 15128,
+        "project_id": 34675721,
+        "sha": "b67f19b0f87455fc09d18e3b0314a14d022f3af6",
+        "ref": "main",
+        "status": "success",
+        "source": "push",
+        "created_at": "2026-10-12T10:58:37.988Z",
+        "updated_at": "2026-10-12T11:11:55.378Z",
+        "web_url": "https://gitlab.com/gitlab-org/cli/-/pipelines/2938354390"
+      }
+    }
+  }
+}

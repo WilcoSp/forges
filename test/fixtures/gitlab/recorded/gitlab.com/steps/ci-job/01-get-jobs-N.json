@@ -1,0 +1,143 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/jobs/17110223356"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "etag": "W/\"4b4950b91f84990e86162b28830bde76\"",
+      "ratelimit-limit": "2000",
+      "ratelimit-remaining": "1951",
+      "ratelimit-reset": "1791805800"
+    },
+    "body": {
+      "id": 17110223356,
+      "status": "success",
+      "stage": "release",
+      "name": "snapcraft_release_edge",
+      "ref": "main",
+      "tag": false,
+      "coverage": null,
+      "allow_failure": false,
+      "created_at": "2026-10-12T10:58:38.056Z",
+      "started_at": "2026-10-12T11:10:03.864Z",
+      "finished_at": "2026-10-12T11:11:13.143Z",
+      "erased_at": null,
+      "duration": 69.279111,
+      "queued_duration": 0.166076,
+      "user": {
+        "id": 11334402,
+        "username": "ahmed.hemdan",
+        "public_email": "",
+        "name": "Ahmed Hemdan",
+        "state": "active",
+        "locked": false,
+        "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/11334402/avatar.png?v=1791801783",
+        "web_url": "https://gitlab.com/ahmed.hemdan",
+        "created_at": "2022-04-11T11:39:02.258Z",
+        "bio": "",
+        "location": "Berlin, Germany",
+        "linkedin": "https://linkedin.com/in/ahazem",
+        "twitter": "",
+        "discord": "",
+        "website_url": "",
+        "github": "",
+        "job_title": "Staff Backend Engineer – Tech Lead, Security Factory:Secret Detection",
+        "pronouns": "he/him",
+        "organization": "GitLab",
+        "bot": false,
+        "work_information": "Staff Backend Engineer – Tech Lead, Security Factory:Secret Detection at GitLab",
+        "followers": 9,
+        "following": 0,
+        "local_time": "1:49 PM"
+      },
+      "commit": {
+        "id": "b67f19b0f87455fc09d18e3b0314a14d022f3af6",
+        "short_id": "b67f19b0",
+        "created_at": "2026-10-12T12:58:35.000+02:00",
+        "parent_ids": [
+          "6ff113fb6793eb4963464a2923de28890f1127f9",
+          "c3151df7594b6208664ed7c51dd97ffd671067d6"
+        ],
+        "title": "Merge branch '8577-ssh-key-add-replace' into 'main'",
+        "message": "Merge branch '8577-ssh-key-add-replace' into 'main'\n\nfeat(ssh-key): add --replace flag to ssh-key add\n\nSee merge request https://gitlab.com/gitlab-org/cli/-/merge_requests/4034\n\nMerged-by: Ahmed Hemdan <redacted@example.invalid>\nApproved-by: Ahmed Hemdan <redacted@example.invalid>\nApproved-by: GitLab Duo <redacted@example.invalid>\nReviewed-by: Ahmed Hemdan <redacted@example.invalid>\nReviewed-by: GitLab Duo <redacted@example.invalid>\nCo-authored-by: Radek Antoniuk <redacted@example.invalid>",
+        "author_name": "Ahmed Hemdan",
+        "author_email": "redacted@example.invalid",
+        "authored_date": "2026-10-12T12:58:35.000+02:00",
+        "committer_name": "GitLab",
+        "committer_email": "redacted@example.invalid",
+        "committed_date": "2026-10-12T12:58:35.000+02:00",
+        "trailers": {},
+        "extended_trailers": {},
+        "web_url": "https://gitlab.com/gitlab-org/cli/-/commit/b67f19b0f87455fc09d18e3b0314a14d022f3af6"
+      },
+      "pipeline": {
+        "id": 2938354390,
+        "iid": 15128,
+        "project_id": 34675721,
+        "sha": "b67f19b0f87455fc09d18e3b0314a14d022f3af6",
+        "ref": "main",
+        "status": "success",
+        "source": "push",
+        "created_at": "2026-10-12T10:58:37.988Z",
+        "updated_at": "2026-10-12T11:11:55.378Z",
+        "web_url": "https://gitlab.com/gitlab-org/cli/-/pipelines/2938354390"
+      },
+      "web_url": "https://gitlab.com/gitlab-org/cli/-/jobs/17110223356",
+      "project": {
+        "ci_job_token_scope_enabled": false
+      },
+      "artifacts": [
+        {
+          "file_type": "trace",
+          "size": 10386,
+          "filename": "job.log",
+          "file_format": null
+        }
+      ],
+      "runner": {
+        "id": 55314121,
+        "description": "k8s.saas-linux-medium-amd64.runners-manager.gitlab.com/default",
+        "ip_address": null,
+        "active": true,
+        "paused": false,
+        "is_shared": true,
+        "runner_type": "instance_type",
+        "name": null,
+        "online": true,
+        "created_by": {
+          "id": 5372863,
+          "username": "igorwwwwwwwwwwwwwwwwwwww-admin",
+          "public_email": "",
+          "name": "Igor Wiedler",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://secure.gravatar.com/avatar/509321df9ad78093586110676a0f3e0517e2744bce4c1963fac9ad5acd19f4f0?s=80&d=identicon",
+          "web_url": "https://gitlab.com/igorwwwwwwwwwwwwwwwwwwww-admin"
+        },
+        "created_at": "2026-08-19T15:31:33.905Z",
+        "status": "online",
+        "job_execution_status": "active"
+      },
+      "runner_manager": {
+        "id": 162178864,
+        "system_id": "r_xANM7HpYAXB2",
+        "version": "19.5.0~pre.2302.g6414598a",
+        "revision": "6414598a",
+        "platform": "linux",
+        "architecture": "amd64",
+        "created_at": "2026-10-12T10:54:38.196Z",
+        "contacted_at": "2026-10-12T11:49:31.318Z",
+        "ip_address": "10.218.11.3",
+        "status": "online",
+        "job_execution_status": "active"
+      },
+      "artifacts_expire_at": null,
+      "archived": false,
+      "tag_list": [
+        "saas-linux-medium-amd64"
+      ]
+    }
+  }
+}

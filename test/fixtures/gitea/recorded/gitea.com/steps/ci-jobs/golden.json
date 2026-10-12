@@ -1,0 +1,64 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "gitea",
+        "instance": "gitea.com",
+        "repo": {
+          "forge": "gitea",
+          "instance": "gitea.com",
+          "owner": "gitea",
+          "name": "tea"
+        },
+        "id": "1434630",
+        "run": {
+          "forge": "gitea",
+          "instance": "gitea.com",
+          "repo": {
+            "forge": "gitea",
+            "instance": "gitea.com",
+            "owner": "gitea",
+            "name": "tea"
+          },
+          "id": "1057546"
+        }
+      },
+      "name": "goreleaser",
+      "state": "success",
+      "stateRaw": "completed",
+      "url": "https://gitea.com/gitea/tea/actions/runs/1057546/jobs/1434630",
+      "startedAt": "2026-10-12T00:56:42.000Z",
+      "completedAt": "2026-10-12T00:58:15.000Z"
+    },
+    {
+      "ref": {
+        "forge": "gitea",
+        "instance": "gitea.com",
+        "repo": {
+          "forge": "gitea",
+          "instance": "gitea.com",
+          "owner": "gitea",
+          "name": "tea"
+        },
+        "id": "1434631",
+        "run": {
+          "forge": "gitea",
+          "instance": "gitea.com",
+          "repo": {
+            "forge": "gitea",
+            "instance": "gitea.com",
+            "owner": "gitea",
+            "name": "tea"
+          },
+          "id": "1057546"
+        }
+      },
+      "name": "release-image",
+      "state": "success",
+      "stateRaw": "completed",
+      "url": "https://gitea.com/gitea/tea/actions/runs/1057546/jobs/1434631",
+      "startedAt": "2026-10-12T00:56:49.000Z",
+      "completedAt": "2026-10-12T01:00:43.000Z"
+    }
+  ]
+}

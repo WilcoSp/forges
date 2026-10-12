@@ -1,0 +1,159 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "repo": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "owner": "forgejo",
+          "name": "forgejo"
+        },
+        "kind": "issue",
+        "number": "14823",
+        "externalId": "7678344"
+      },
+      "kind": "issue",
+      "title": "problem: Git LFS: split OID and Pointer types",
+      "body": "### Does your problem still exist on the latest Forgejo version?\n\nYes, the problem still exists (tested locally with the latest development version)\n\n### About your usage of Forgejo\n\nDevelopment and maintenance of the Git LFS integration.\n\n### Problem description\n\n*copied from https://codeberg.org/forgejo/discussions/issues/500*\r\n\r\n- We have a method for checking [whether an \"LFS pointer is valid\"](https://codeberg.org/forgejo/forgejo/src/commit/202d46b941cb3850ea87dd561da9a91c98a4d69f/modules/lfs/pointer.go#L88), but we don't always use it consistently. Matter of fact, we apply [different](https://codeberg.org/forgejo/forgejo/src/commit/202d46b941cb3850ea87dd561da9a91c98a4d69f/routers/web/repo/setting/lfs.go#L392) [criteria](https://codeberg.org/forgejo/forgejo/src/commit/202d46b941cb3850ea87dd561da9a91c98a4d69f/services/gitdiff/gitdiff.go#L952) [each](https://codeberg.org/forgejo/forgejo/src/commit/202d46b941cb3850ea87dd561da9a91c98a4d69f/models/git/lfs.go#L165) [time](https://codeberg.org/forgejo/forgejo/src/commit/202d46b941cb3850ea87dd561da9a91c98a4d69f/models/git/lfs.go#L188) when establishing the validity of a pointer, when we have a \"central function\" that lets us check that...\r\n  - yet we do not always *need* to check whether the entirety of a pointer object, [as defined by the git-lfs spec](https://codeberg.org/forgejo/forgejo/src/commit/202d46b941cb3850ea87dd561da9a91c98a4d69f/models/git/lfs.go#L188), is valid (including by containing a `size` whose value is above `0`); in some cases, we may use a pointer object for a database lookup, and we don't need to know the size. So we need a second validator just for the OID format.\r\n\r\nSee: https://codeberg.org/forgejo/discussions/issues/500#issuecomment-24886284\n\n### Potential workarounds\n\nSo far, we've separated validating functions into `p.IsOIDValid` and `p.Validate` (with `p` being a `Pointer` type), but that's not good. This should probably be fixed after https://codeberg.org/forgejo/forgejo/pulls/14364 and other open LFS PRs are merged.\n\n### Forgejo Version\n\n18.0.0-dev\n\n### Other details about your environment (software names and versions)\n\nN/A\n\n### Solutions\n\n*Accepted solutions to address this problem will go here*\n\n\n",
+      "state": "open",
+      "stateRaw": "open",
+      "isDraft": false,
+      "author": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "login": "n0toose",
+        "id": "33716",
+        "name": "Panagiotis \"Ivory\" Vasilopoulos",
+        "avatarUrl": "https://codeberg.org/avatars/d3e911eec058bc2605b5bf5a1af2c968f64815a2f6aedefd3e5f93cb6ba514a4",
+        "url": "https://codeberg.org/n0toose",
+        "isBotHint": false
+      },
+      "assignees": [],
+      "reviewers": [],
+      "labels": [
+        {
+          "name": "impact/unknown",
+          "colour": "545454",
+          "description": "Report was not yet triaged to assess impact."
+        },
+        {
+          "name": "problem",
+          "colour": "fbca04",
+          "description": "A user report about a problem. Needs to be triaged to find potential solutions."
+        }
+      ],
+      "url": "https://codeberg.org/forgejo/forgejo/issues/14823",
+      "createdAt": "<now>",
+      "updatedAt": "<now>",
+      "lastActivityAt": "<now>",
+      "locked": false,
+      "commentCount": 0
+    },
+    {
+      "ref": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "repo": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "owner": "forgejo",
+          "name": "forgejo"
+        },
+        "kind": "issue",
+        "number": "14810",
+        "externalId": "7667313"
+      },
+      "kind": "issue",
+      "title": "problem: Mirroring many repos clutters user accounts",
+      "body": "### Does your problem still exist on the latest Forgejo version?\n\nYes, the problem still exists (tested locally with the latest development version)\n\n### About your usage of Forgejo\n\nI have a self-hosted instance to store my own code locally and also create sync'd mirrors of remote repos as a local archive.\n\n### Problem description\n\nThis is more of a feature request.\r\n\r\nMigrating repos assigns them to your user account by default, which can clutter up your repos and leave them unorganized. Although you can create custom organizations, that requires manual intervention, to first create a copy of an existing remote organization/user, then in Forgejo when you migrate you have to manually assign the migrated repo to the new organization.\r\n\r\nIt would be nice if all of that could be automated, such that a new migration could automatically create a new organization with the details sync'd from the remote source. This way if you mirror, e.g. 4 repos from SomeGithubOrgOrUser then in your local Forgejo instance, you would have an organization for that SomeGithubOrgOrUser with all 4 repos associated to it.\r\n\r\nIt may even be beneficial to allow organizations to be marked as mirrors, like repos are, to keep them read-only and sync automatically as they change (image, description, etc.).\n\n### Potential workarounds\n\n_No response_\n\n### Forgejo Version\n\n7699483827b24e958772d10b363e087e1f4173c4\n\n### Other details about your environment (software names and versions)\n\n7699483827b24e958772d10b363e087e1f4173c4\n\n### Solutions\n\n*Accepted solutions to address this problem will go here*\n\n\n",
+      "state": "open",
+      "stateRaw": "open",
+      "isDraft": false,
+      "author": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "login": "deadmeu",
+        "id": "110305",
+        "avatarUrl": "https://codeberg.org/avatars/edb2a686e3b3e566c5df860737761ba9",
+        "url": "https://codeberg.org/deadmeu",
+        "isBotHint": false
+      },
+      "assignees": [],
+      "reviewers": [],
+      "labels": [
+        {
+          "name": "impact/unknown",
+          "colour": "545454",
+          "description": "Report was not yet triaged to assess impact."
+        },
+        {
+          "name": "problem",
+          "colour": "fbca04",
+          "description": "A user report about a problem. Needs to be triaged to find potential solutions."
+        }
+      ],
+      "url": "https://codeberg.org/forgejo/forgejo/issues/14810",
+      "createdAt": "2026-10-11T14:52:57.000Z",
+      "updatedAt": "2026-10-11T14:52:57.000Z",
+      "lastActivityAt": "2026-10-11T14:52:57.000Z",
+      "locked": false,
+      "commentCount": 0
+    },
+    {
+      "ref": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "repo": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "owner": "forgejo",
+          "name": "forgejo"
+        },
+        "kind": "issue",
+        "number": "14807",
+        "externalId": "7666635"
+      },
+      "kind": "issue",
+      "title": "problem: [subsystem] STORAGE_TYPE = xxx vs. [storage.subsystem]",
+      "body": "### Does your problem still exist on the latest Forgejo version?\n\nYes, the problem still exists (tested on a next instance)\n\n### About your usage of Forgejo\n\nself built, self hosted\n\n### Problem description\n\nI am working on an [exhaustive test for packages storage](https://codeberg.org/slink/forgejo/commit/2e3110508b73a8444db817e6341741cc997e4357) similar to #14496 and found cases for which the expected behavior is not clear to me. Starting with the first failing with the test as given:\n\n```\n=== RUN   Test_getStorageInheritNameSectionTypeForPackages/defaultStorageType=\"\".packagesStorageType=\"minio\".packagesBasePath=\"\".storageBasePath=\"\".packagesServeDirect=false.storageServeDirect=false\n    packages_test.go:105: \n        [packages]\n        STORAGE_TYPE = minio\n        [storage.minio]\n        [storage.packages]\n        STORAGE_TYPE = minio\n        \n    packages_test.go:39: \n                Error Trace:    /home/slink/Devel/forgejo/forgejo/modules/setting/packages_test.go:39\n                                                        /home/slink/Devel/forgejo/forgejo/modules/setting/packages_test.go:110\n                Error:          Not equal: \n                                expected: \"gitea\"\n                                actual  : \"\"\n                                \n                                Diff:\n                                --- Expected\n                                +++ Actual\n                                @@ -1 +1 @@\n                                -gitea\n                                +\n                Test:           Test_getStorageInheritNameSectionTypeForPackages/defaultStorageType=\"\".packagesStorageType=\"minio\".packagesBasePath=\"\".storageBasePath=\"\".packagesServeDirect=false.storageServeDirect=false\n```\n\nSo with this configuration, the built configuration looks incomplete, `Packages.Storage.MinioConfig.Bucket` is empty rather than having the default `gitea`.\n\nThe [documentaion](https://forgejo.org/docs/next/admin/setup/storage/) does not mention `[storage.packages]` and says _It is strongly recommended to avoid using undocumented features - such as [storage.attachments] as an alternative to [attachment]_, but then we also have\n\nhttps://codeberg.org/forgejo/forgejo/src/commit/0380b6d688eaf1390e4f24c618386737bf9fc6b1/custom/conf/app.example.ini#L2802-L2806\n\nSo I do not understand the intention here:\n\n1) Should `[storage.packages]` actually work?\n2) Was the plan for `[storage.packages]` to replace `[packages] STORAGE_TYPE`?\n3) What is the precedence supposed to be? \n\nThe best I could find here is the commit message of d6dd6d641b593c54fe1a1041c153111ce81dbc20 which seems to suggest that the answers would be\n\n1) yes\n2) probably\n3) `[packages]` > `[storage.packages]`\n\nBut I wonder if this really makes sense: Having more than one way to configure things needs a good reason.\n\nMy proposal for simplification would be to only use `[storage.xxx]` for component `xxx`. This could then still use `STORAGE_TYPE = custom` and hence inherit from `[storage.custom]`. But having the same overrides in `[storage.xxx]` and `[xxx]` does not seem to make sense long term.\n\n### Potential workarounds\n\n_No response_\n\n### Forgejo Version\n\n_No response_\n\n### Other details about your environment (software names and versions)\n\n.\n\n### Solutions\n\n*Accepted solutions to address this problem will go here*\n\n\n",
+      "state": "open",
+      "stateRaw": "open",
+      "isDraft": false,
+      "author": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "login": "slink",
+        "id": "381495",
+        "name": "Nils Goroll",
+        "avatarUrl": "https://codeberg.org/avatars/b5d63dc33281a8f89f64eed46eee13a2777e9d8944872537ba94ed13495e4c6b",
+        "url": "https://codeberg.org/slink",
+        "isBotHint": false
+      },
+      "assignees": [],
+      "reviewers": [],
+      "labels": [
+        {
+          "name": "impact/unknown",
+          "colour": "545454",
+          "description": "Report was not yet triaged to assess impact."
+        },
+        {
+          "name": "problem",
+          "colour": "fbca04",
+          "description": "A user report about a problem. Needs to be triaged to find potential solutions."
+        }
+      ],
+      "url": "https://codeberg.org/forgejo/forgejo/issues/14807",
+      "createdAt": "2026-10-11T12:56:32.000Z",
+      "updatedAt": "2026-10-11T12:58:13.000Z",
+      "lastActivityAt": "2026-10-11T12:58:13.000Z",
+      "locked": false,
+      "commentCount": 0
+    }
+  ],
+  "cursor": {
+    "nextUrl": "https://codeberg.org/api/v1/repos/forgejo/forgejo/issues?limit=3&page=2&state=open&type=issues"
+  }
+}

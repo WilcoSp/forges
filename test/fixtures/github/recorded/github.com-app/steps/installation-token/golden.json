@@ -1,0 +1,17 @@
+{
+  "expiresAt": "2026-10-12T12:48:36.000Z",
+  "permissions": {
+    "actions": "read",
+    "checks": "read",
+    "contents": "read",
+    "issues": "read",
+    "metadata": "read",
+    "pull_requests": "read",
+    "repository_hooks": "read",
+    "secret_scanning_alerts": "REDACTED",
+    "security_events": "read",
+    "statuses": "read",
+    "vulnerability_alerts": "read"
+  },
+  "repositorySelection": "selected"
+}

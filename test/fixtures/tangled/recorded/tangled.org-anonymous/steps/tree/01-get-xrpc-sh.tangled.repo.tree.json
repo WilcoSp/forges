@@ -1,0 +1,49 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://knot1.tangled.sh/xrpc/sh.tangled.repo.tree?repo=did%3Aplc%3At73o44q7fppgagkrevtztyok"
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": {
+      "ref": "",
+      "files": [
+        {
+          "name": "README.md",
+          "mode": "0100644",
+          "size": 130,
+          "last_commit": {
+            "hash": "1cd76a776cc09a1acc55e0bfe498b39a5bb76bd0",
+            "message": "chore: add readme",
+            "when": "2026-10-09T17:04:18Z"
+          }
+        },
+        {
+          "name": "forges-fixtures",
+          "mode": "0040000",
+          "size": 0,
+          "last_commit": {
+            "hash": "c0bb543486e6c8a1853dade35c3ac475ad062af3",
+            "message": "Add forges-fixtures/20261012114229-1.md",
+            "when": "2026-10-12T11:42:34Z"
+          }
+        }
+      ],
+      "lastCommit": {
+        "hash": "c0bb543486e6c8a1853dade35c3ac475ad062af3",
+        "message": "Add forges-fixtures/20261012114229-1.md",
+        "when": "2026-10-12T11:42:34Z",
+        "author": {
+          "name": "forges fixtures",
+          "email": "redacted@example.invalid",
+          "when": ""
+        }
+      },
+      "readme": {
+        "filename": "README.md",
+        "contents": "An automated fixture target for [`forges`](https://github.com/danielroe/forges). Issues and pull requests here aren't monitored.\n\n"
+      }
+    }
+  }
+}

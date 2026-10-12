@@ -1,0 +1,34 @@
+{
+  "ref": {
+    "forge": "github",
+    "instance": "github.com",
+    "repo": {
+      "forge": "github",
+      "instance": "github.com",
+      "owner": "h3js",
+      "name": "h3"
+    },
+    "id": "38232588486"
+  },
+  "name": "ci",
+  "state": "success",
+  "stateRaw": "completed",
+  "number": "4762",
+  "eventRaw": "pull_request",
+  "branch": "docs/static-assets-example-path",
+  "sha": "dd84e37fca0559506ad97022b5ac9438b427e6e2",
+  "url": "https://github.com/h3js/h3/actions/runs/38232588486",
+  "actor": {
+    "forge": "github",
+    "instance": "github.com",
+    "login": "lx3133584",
+    "id": "24490353",
+    "avatarUrl": "https://avatars.githubusercontent.com/u/24490353?v=4",
+    "url": "https://github.com/lx3133584",
+    "typeRaw": "User",
+    "isBotHint": false
+  },
+  "createdAt": "2026-10-12T09:51:31.000Z",
+  "startedAt": "2026-10-12T09:51:31.000Z",
+  "completedAt": "2026-10-12T09:52:43.000Z"
+}

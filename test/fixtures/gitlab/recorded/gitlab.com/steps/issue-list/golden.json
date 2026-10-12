@@ -1,0 +1,237 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "repo": {
+          "forge": "gitlab",
+          "instance": "gitlab.com",
+          "owner": "gitlab-org",
+          "name": "cli"
+        },
+        "kind": "issue",
+        "number": "8601",
+        "externalId": "206228396"
+      },
+      "kind": "issue",
+      "title": "feat: add --message-file to issue note and mr note (consistency with --description-file)",
+      "body": "### Problem to solve\n\n`glab issue note` and `glab mr note create` only accept the comment body via the inline `--message` flag. This makes multiline comments, code blocks with backticks, and shell-quoted content error-prone or impossible to pass safely from the command line:\n\n```sh\n# backticks and $(...) inside the message are subject to shell command substitution\nglab issue note 3 --message \"run `git status` and paste the output of $(date)\"\n```\n\nThis is a real footgun: the text can be silently mangled by the shell before glab ever sees it.\n\n### Proposal\n\nAdd file/stdin input for note bodies, consistent with the existing `--description-file` flag on `glab issue create` and `glab mr create`:\n\n- `glab issue note <id> --message-file <file>` (and `-` for stdin)\n- `glab mr note create --message-file <file>` (and `-` for stdin)\n\nThis restores symmetry with the create commands and makes it practical to script comments containing backticks, `$()`, or long Markdown.\n\n### Related\n\n- #7500 \"Allow mr note to use a file as message\" was closed (2026-09-23) but as of glab 1.122.0 neither `mr note create` nor `issue note` ships a `--message-file` flag, so the request appears unresolved.\n- Current workaround: `glab api --method POST projects/<id>/issues/<iid>/notes -F body=@file`, which works but bypasses the CLI UX and requires knowing the numeric project ID / URL-encoding the path.\n\n### Environment\n\n- glab 1.122.0 (89d0008af), macOS (Homebrew)\n- Affected commands: `glab issue note`, `glab mr note create`",
+      "state": "open",
+      "stateRaw": "opened",
+      "isDraft": false,
+      "assignees": [],
+      "reviewers": [],
+      "lastActivityAt": "2026-10-12T06:53:15.809Z",
+      "author": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "login": "wlnpu",
+        "id": "43270189",
+        "name": "wlnpu",
+        "avatarUrl": "https://secure.gravatar.com/avatar/3195812a46f84e62aa63220238e48bccb42bcffaf8faf4afae0e0a99b7a4e116?s=80&d=identicon",
+        "url": "https://gitlab.com/wlnpu",
+        "isBotHint": false
+      },
+      "url": "https://gitlab.com/gitlab-org/cli/-/work_items/8601",
+      "createdAt": "2026-10-12T03:29:56.054Z",
+      "updatedAt": "2026-10-12T06:53:15.809Z",
+      "labels": [
+        {
+          "name": "automation:ml"
+        },
+        {
+          "name": "backend"
+        },
+        {
+          "name": "category:gitlab cli"
+        },
+        {
+          "name": "devops::ai coding"
+        },
+        {
+          "name": "feature::addition"
+        },
+        {
+          "name": "group::code review"
+        },
+        {
+          "name": "section::ai"
+        },
+        {
+          "name": "type::feature"
+        }
+      ],
+      "commentCount": 3,
+      "reactions": {
+        "total": 0,
+        "counts": {}
+      }
+    },
+    {
+      "ref": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "repo": {
+          "forge": "gitlab",
+          "instance": "gitlab.com",
+          "owner": "gitlab-org",
+          "name": "cli"
+        },
+        "kind": "issue",
+        "number": "8600",
+        "externalId": "206226142"
+      },
+      "kind": "issue",
+      "title": "Release create webhook omits asset links added by glab release create",
+      "body": "## Summary\n\nWhen `glab release create` creates a new release, the `create` release webhook payload has no `assets.links`. A later `update` webhook (for example, after editing the release notes) has them. The CI/CD `release:` keyword runs `glab release create`, so releases created from pipelines are affected.\n\nThe cause is that glab creates the release first and then adds each asset link with a separate `CreateReleaseLink` request. The `create` webhook fires before any links exist.\n\nOriginally reported against the GitLab project in gitlab-org/gitlab#574029, which was closed without a fix because the behavior is client-side.\n\n## Steps to reproduce\n\n1. Add a project webhook for release events.\n1. Run `glab release create v1.0.0 --assets-links='[{\"name\":\"asset\",\"url\":\"https://example.com/asset\"}]'`, or use a `release:` job with `assets: links:`.\n1. Inspect the `create` webhook payload: `assets.links` is empty.\n\n## Expected behavior\n\nThe `create` webhook payload includes every asset link passed to `glab release create`.\n\n## Proposed fix\n\nOn the create path, send the links in the `assets.links` field of the [create release](https://docs.gitlab.com/api/releases/#create-a-release) request instead of adding them afterwards. Existing releases keep using the per-link route, because the update API has no assets field.\n\nThis applies to both:\n\n- JSON links from `--assets-links`.\n- Files passed as positional arguments. Neither generic package uploads nor project markdown uploads need the release to exist, so files can be uploaded before the release is created and their links included in the create request.\n\n## Related\n\n- gitlab-org/cli!4040 (fixes `--assets-links`; uploaded files are still linked after creation)\n- gitlab-org/cli#7859",
+      "state": "open",
+      "stateRaw": "opened",
+      "isDraft": false,
+      "assignees": [
+        {
+          "forge": "gitlab",
+          "instance": "gitlab.com",
+          "login": "RabadanDotDev",
+          "id": "27526901",
+          "name": "Raul Rabadan Arroyo",
+          "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/27526901/avatar.png?v=1791753570",
+          "url": "https://gitlab.com/RabadanDotDev",
+          "isBotHint": false
+        }
+      ],
+      "reviewers": [],
+      "lastActivityAt": "2026-10-12T06:58:21.611Z",
+      "author": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "login": "jay_mccure",
+        "id": "11809982",
+        "name": "Jay McCure",
+        "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/11809982/avatar.png?v=1791788916",
+        "url": "https://gitlab.com/jay_mccure",
+        "isBotHint": false
+      },
+      "url": "https://gitlab.com/gitlab-org/cli/-/work_items/8600",
+      "createdAt": "2026-10-12T02:24:10.630Z",
+      "updatedAt": "2026-10-12T06:58:21.611Z",
+      "labels": [
+        {
+          "name": "automation:quick-win-judged"
+        },
+        {
+          "name": "bug::functional"
+        },
+        {
+          "name": "category:gitlab cli"
+        },
+        {
+          "name": "devops::ai coding"
+        },
+        {
+          "name": "group::code review"
+        },
+        {
+          "name": "section::ai"
+        },
+        {
+          "name": "type::bug"
+        }
+      ],
+      "commentCount": 1,
+      "reactions": {
+        "total": 0,
+        "counts": {}
+      }
+    },
+    {
+      "ref": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "repo": {
+          "forge": "gitlab",
+          "instance": "gitlab.com",
+          "owner": "gitlab-org",
+          "name": "cli"
+        },
+        "kind": "issue",
+        "number": "8599",
+        "externalId": "206201316"
+      },
+      "kind": "issue",
+      "title": "Release note file lookup leaves the repository directory handle open",
+      "body": "When `glab release create --experimental-notes-text-or-file` checks a file, `resolveNotesFileOrText` opens the repository directory with `os.OpenRoot`.\n\nThe function closes the note file but does not close the directory handle. The handle also stays open when the file is missing.\n\nOn Windows, the existing `TestReleaseCreate_ExperimentalNotes` tests fail when they remove their temporary directories.\n\n### Reproduction\n\nBaseline: `9a7963a1f` on `main`, Go 1.27.2, Windows.\n\nRun `go test ./internal/commands/release/create -run TestReleaseCreate_ExperimentalNotes -count=1`.\n\nThe existing-file and leading-space cases fail with `The process cannot access the file because it is being used by another process`.\n\n### Expected result\n\nClose the directory handle on each return path. Preserve read errors and close errors.\n\nA local patch closes both handles and passes the full release-create suite. Additional tests cover a file, a missing file, and a directory read error.\n\n### AI assistance\n\nInvestigated and tested with OpenAI Codex.",
+      "state": "open",
+      "stateRaw": "opened",
+      "isDraft": false,
+      "assignees": [
+        {
+          "forge": "gitlab",
+          "instance": "gitlab.com",
+          "login": "vivekyarra567",
+          "id": "39012371",
+          "name": "Yarra Vivek",
+          "avatarUrl": "https://secure.gravatar.com/avatar/2e76193c97431532a49acc6f40e4aa54d6f460f91da23202bad1a76ab610ff43?s=80&d=identicon",
+          "url": "https://gitlab.com/vivekyarra567",
+          "isBotHint": false
+        }
+      ],
+      "reviewers": [],
+      "lastActivityAt": "2026-10-12T06:45:34.767Z",
+      "author": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "login": "vivekyarra567",
+        "id": "39012371",
+        "name": "Yarra Vivek",
+        "avatarUrl": "https://secure.gravatar.com/avatar/2e76193c97431532a49acc6f40e4aa54d6f460f91da23202bad1a76ab610ff43?s=80&d=identicon",
+        "url": "https://gitlab.com/vivekyarra567",
+        "isBotHint": false
+      },
+      "url": "https://gitlab.com/gitlab-org/cli/-/work_items/8599",
+      "createdAt": "2026-10-11T17:32:53.675Z",
+      "updatedAt": "2026-10-12T06:45:34.767Z",
+      "labels": [
+        {
+          "name": "automation:ml"
+        },
+        {
+          "name": "backend"
+        },
+        {
+          "name": "bug::functional"
+        },
+        {
+          "name": "category:gitlab cli"
+        },
+        {
+          "name": "devops::ai coding"
+        },
+        {
+          "name": "group::code review"
+        },
+        {
+          "name": "section::ai"
+        },
+        {
+          "name": "type::bug"
+        }
+      ],
+      "commentCount": 4,
+      "reactions": {
+        "total": 0,
+        "counts": {}
+      }
+    }
+  ],
+  "cursor": {
+    "nextUrl": "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/issues?id=gitlab-org%2Fcli&order_by=created_at&page=2&per_page=3&sort=desc&state=opened&with_labels_details=false",
+    "etag": "W/\"ca8e5ce0dbfce0a65832dcf1c75069b1\"",
+    "token": "0:"
+  },
+  "rateLimit": {
+    "limit": 2000,
+    "remaining": 1977,
+    "resetAt": "<now>"
+  }
+}

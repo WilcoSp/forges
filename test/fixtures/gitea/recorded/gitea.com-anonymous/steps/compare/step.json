@@ -1,0 +1,7 @@
+{
+  "name": "compare",
+  "recordedAt": "2026-10-12T11:51:34.540Z",
+  "needs": [
+    "pull"
+  ]
+}

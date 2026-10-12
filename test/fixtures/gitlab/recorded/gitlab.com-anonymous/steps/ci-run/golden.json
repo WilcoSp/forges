@@ -1,0 +1,34 @@
+{
+  "ref": {
+    "forge": "gitlab",
+    "instance": "gitlab.com",
+    "repo": {
+      "forge": "gitlab",
+      "instance": "gitlab.com",
+      "owner": "gitlab-org",
+      "name": "cli"
+    },
+    "id": "2938354390"
+  },
+  "name": "push",
+  "state": "success",
+  "stateRaw": "success",
+  "number": "15128",
+  "eventRaw": "push",
+  "branch": "main",
+  "sha": "b67f19b0f87455fc09d18e3b0314a14d022f3af6",
+  "url": "https://gitlab.com/gitlab-org/cli/-/pipelines/2938354390",
+  "actor": {
+    "forge": "gitlab",
+    "instance": "gitlab.com",
+    "login": "ahmed.hemdan",
+    "id": "11334402",
+    "name": "Ahmed Hemdan",
+    "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/11334402/avatar.png?v=1791801783",
+    "url": "https://gitlab.com/ahmed.hemdan",
+    "isBotHint": false
+  },
+  "createdAt": "<now>",
+  "startedAt": "<now>",
+  "completedAt": "<now>"
+}

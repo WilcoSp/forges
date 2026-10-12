@@ -1,0 +1,142 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "owner": "gitlab-org/frontend",
+        "name": "gitlab-mfe",
+        "externalId": "83118773"
+      },
+      "defaultBranch": "main",
+      "visibility": "public",
+      "visibilityRaw": "public",
+      "isFork": false,
+      "isArchived": false,
+      "topics": [],
+      "url": "https://gitlab.com/gitlab-org/frontend/gitlab-mfe",
+      "cloneUrls": {
+        "https": "https://gitlab.com/gitlab-org/frontend/gitlab-mfe.git",
+        "ssh": "git@gitlab.com:gitlab-org/frontend/gitlab-mfe.git"
+      },
+      "createdAt": "2026-06-10T19:11:52.728Z",
+      "updatedAt": "<now>",
+      "openIssueCount": 3,
+      "stars": 0,
+      "forks": 1,
+      "mergeMethods": [
+        "merge",
+        "squash"
+      ],
+      "defaultMergeMethod": "merge",
+      "deleteBranchOnMerge": true,
+      "features": {
+        "issues": true,
+        "pullRequests": true,
+        "discussions": false,
+        "wiki": true,
+        "projects": false,
+        "releases": true
+      }
+    },
+    {
+      "ref": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "owner": "gitlab-org",
+        "name": "gitlab-shell",
+        "externalId": "14022"
+      },
+      "description": "SSH access for GitLab",
+      "defaultBranch": "main",
+      "visibility": "public",
+      "visibilityRaw": "public",
+      "isFork": false,
+      "isArchived": false,
+      "topics": [
+        "Canonical",
+        "golang",
+        "hacktoberfest",
+        "infra-mgmt Managed",
+        "ssh"
+      ],
+      "url": "https://gitlab.com/gitlab-org/gitlab-shell",
+      "cloneUrls": {
+        "https": "https://gitlab.com/gitlab-org/gitlab-shell.git",
+        "ssh": "git@gitlab.com:gitlab-org/gitlab-shell.git"
+      },
+      "createdAt": "2013-10-07T16:48:29.000Z",
+      "updatedAt": "<now>",
+      "openIssueCount": 77,
+      "stars": 233,
+      "forks": 338,
+      "mergeMethods": [
+        "merge",
+        "squash"
+      ],
+      "defaultMergeMethod": "merge",
+      "deleteBranchOnMerge": true,
+      "mergeCommit": {
+        "merge": {
+          "template": "Merge branch '%{source_branch}' into '%{target_branch}'\n\n%{title}\n\n%{issues}\n\nSee merge request %{url}\n\nMerged-by: %{merged_by}\n%{approved_by}\n%{reviewed_by}\n%{co_authored_by}\n"
+        }
+      },
+      "features": {
+        "issues": true,
+        "pullRequests": true,
+        "discussions": false,
+        "wiki": false,
+        "projects": false,
+        "releases": true
+      }
+    },
+    {
+      "ref": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "owner": "gitlab-org/build/omnibus-mirror",
+        "name": "prometheus",
+        "externalId": "2715353"
+      },
+      "description": "",
+      "defaultBranch": "main",
+      "visibility": "public",
+      "visibilityRaw": "public",
+      "isFork": false,
+      "isArchived": false,
+      "topics": [],
+      "url": "https://gitlab.com/gitlab-org/build/omnibus-mirror/prometheus",
+      "cloneUrls": {
+        "https": "https://gitlab.com/gitlab-org/build/omnibus-mirror/prometheus.git",
+        "ssh": "git@gitlab.com:gitlab-org/build/omnibus-mirror/prometheus.git"
+      },
+      "createdAt": "2017-02-16T09:31:07.334Z",
+      "updatedAt": "<now>",
+      "stars": 1,
+      "forks": 0,
+      "mergeMethods": [
+        "merge",
+        "squash"
+      ],
+      "defaultMergeMethod": "merge",
+      "deleteBranchOnMerge": true,
+      "features": {
+        "issues": false,
+        "pullRequests": false,
+        "discussions": false,
+        "wiki": false,
+        "projects": false,
+        "releases": true
+      }
+    }
+  ],
+  "cursor": {
+    "nextUrl": "https://gitlab.com/api/v4/groups/gitlab-org/projects?id=gitlab-org&include_ancestor_groups=false&include_subgroups=true&order_by=updated_at&owned=false&page=2&per_page=3&simple=false&sort=desc&starred=false&visibility=public&with_custom_attributes=false&with_issues_enabled=false&with_merge_requests_enabled=false&with_security_reports=false&with_shared=false",
+    "etag": "W/\"6561eee86a17534cb5960c05c4f7af42\""
+  },
+  "rateLimit": {
+    "limit": 2000,
+    "remaining": 1961,
+    "resetAt": "<now>"
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://api.github.com/repos/h3js/h3/check-runs/114755996750"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "etag": "W/\"ab6d2954dbf8ee5486cfc462df34e01be6b9bbde714f8c9c05967f244574e3db\"",
+      "x-ratelimit-limit": "5000",
+      "x-ratelimit-remaining": "4996",
+      "x-ratelimit-reset": "1791807975"
+    },
+    "body": {
+      "id": 114755996750,
+      "name": "codecov/patch",
+      "node_id": "CR_kwDOErHI988AAAAat_2MTg",
+      "head_sha": "dd84e37fca0559506ad97022b5ac9438b427e6e2",
+      "external_id": "",
+      "url": "https://api.github.com/repos/h3js/h3/check-runs/114755996750",
+      "html_url": "https://github.com/h3js/h3/runs/114755996750",
+      "details_url": "https://app.codecov.io/gh/h3js/h3/pull/1593",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-12T09:53:12Z",
+      "completed_at": "2026-10-12T09:53:12Z",
+      "output": {
+        "title": "Coverage not affected when comparing 66cfb8a...dd84e37",
+        "summary": "[View this Pull Request on Codecov](https://app.codecov.io/gh/h3js/h3/pull/1593?dropdown=coverage&src=pr&el=h1&utm_medium=referral&utm_source=github&utm_content=checks&utm_campaign=pr+comments&utm_term=h3js)\n\nCoverage not affected when comparing 66cfb8a...dd84e37",
+        "text": null,
+        "annotations_count": 0,
+        "annotations_url": "https://api.github.com/repos/h3js/h3/check-runs/114755996750/annotations"
+      },
+      "check_suite": {
+        "id": 103583980642
+      },
+      "app": {
+        "id": 254,
+        "client_id": "Iv1.9d88ef6ecc903626",
+        "slug": "codecov",
+        "node_id": "MDM6QXBwMjU0",
+        "owner": {
+          "login": "codecov",
+          "id": 8226205,
+          "node_id": "REDACTED",
+          "avatar_url": "https://avatars.githubusercontent.com/u/8226205?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/codecov",
+          "html_url": "https://github.com/codecov",
+          "followers_url": "https://api.github.com/users/codecov/followers",
+          "following_url": "https://api.github.com/users/codecov/following{/other_user}",
+          "gists_url": "https://api.github.com/users/codecov/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/codecov/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/codecov/subscriptions",
+          "organizations_url": "https://api.github.com/users/codecov/orgs",
+          "repos_url": "https://api.github.com/users/codecov/repos",
+          "events_url": "https://api.github.com/users/codecov/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/codecov/received_events",
+          "type": "Organization",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "name": "Codecov",
+        "description": "Codecov provides highly integrated tools to group, merge, archive and compare coverage reports. Whether your team is comparing changes in a pull request or reviewing a single commit, Codecov will improve the code review workflow and quality.\r\n\r\n## Code coverage done right.®\r\n\r\n1. Upload coverage reports from your CI builds.\r\n2. Codecov merges all builds and languages into one beautiful coherent report.\r\n3. Get commit statuses, pull request comments and coverage overlay via our browser extension.\r\n\r\nWhen Codecov merges your uploads it keeps track of the CI provider (inc. build details) and user specified context, e.g. `#unittest` ~ `#smoketest` or `#oldcode` ~ `#newcode`. You can track the `#unittest` coverage independently of other groups. [Learn more here](\r\nhttp://docs.codecov.io/docs/flags)\r\n\r\nThrough **Codecov's Browser Extension** reports overlay directly in GitHub UI to assist in code review in [Chrome](https://chrome.google.com/webstore/detail/codecov/gedikamndpbemklijjkncpnolildpbgo) or Firefox (https://addons.mozilla.org/en-US/firefox/addon/codecov/)\r\n\r\n*Highly detailed* **pull request comments** and *customizable* **commit statuses** will improve your team's workflow and code coverage incrementally.\r\n\r\n**File backed configuration** all through the `codecov.yml`. \r\n\r\n## FAQ\r\n- Do you **merge multiple uploads** to the same commit? **Yes**\r\n- Do you **support multiple languages** in the same project? **Yes**\r\n- Can you **group coverage reports** by project and/or test type? **Yes**\r\n- How does **pricing** work? Only paid users can view reports and post statuses/comments. ",
+        "external_url": "https://codecov.io",
+        "html_url": "https://github.com/apps/codecov",
+        "created_at": "2016-09-25T14:18:27Z",
+        "updated_at": "2025-03-20T19:12:59Z",
+        "permissions": {
+          "administration": "read",
+          "checks": "write",
+          "contents": "read",
+          "emails": "redacted@example.invalid",
+          "issues": "read",
+          "members": "read",
+          "metadata": "read",
+          "pull_requests": "write",
+          "statuses": "write"
+        },
+        "events": [
+          "delete",
+          "fork",
+          "member",
+          "membership",
+          "organization",
+          "public",
+          "pull_request",
+          "push",
+          "release",
+          "repository",
+          "status",
+          "team_add"
+        ]
+      },
+      "pull_requests": []
+    }
+  }
+}

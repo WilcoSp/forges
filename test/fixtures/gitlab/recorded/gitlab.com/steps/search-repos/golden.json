@@ -1,0 +1,198 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "owner": "rachel.green.r",
+        "name": "ecoscan-37671564-deletion_scheduled-87522990",
+        "externalId": "87522990"
+      },
+      "description": "Free and open-source music streaming Android client for Subsonic API compatible servers",
+      "defaultBranch": "develop",
+      "visibility": "public",
+      "visibilityRaw": "public",
+      "isFork": true,
+      "isArchived": false,
+      "parent": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "owner": "ultrasonic",
+        "name": "ultrasonic",
+        "externalId": "37671564"
+      },
+      "topics": [],
+      "url": "https://gitlab.com/rachel.green.r/ecoscan-37671564-deletion_scheduled-87522990",
+      "cloneUrls": {
+        "https": "https://gitlab.com/rachel.green.r/ecoscan-37671564-deletion_scheduled-87522990.git",
+        "ssh": "git@gitlab.com:rachel.green.r/ecoscan-37671564-deletion_scheduled-87522990.git"
+      },
+      "createdAt": "<now>",
+      "updatedAt": "<now>",
+      "openIssueCount": 0,
+      "owner": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "login": "rachel.green.r",
+        "id": "39704708",
+        "name": "Rachel Green",
+        "avatarUrl": "https://secure.gravatar.com/avatar/a5d120e5d9444ff172adcba1fca512bd91f6074be4b790d65403619422965b01?s=80&d=identicon",
+        "url": "https://gitlab.com/rachel.green.r",
+        "isBotHint": false
+      },
+      "stars": 0,
+      "forks": 0,
+      "mergeMethods": [
+        "merge",
+        "squash"
+      ],
+      "defaultMergeMethod": "merge",
+      "deleteBranchOnMerge": true,
+      "features": {
+        "issues": true,
+        "pullRequests": true,
+        "discussions": false,
+        "wiki": true,
+        "projects": false,
+        "releases": true
+      },
+      "permissions": {
+        "admin": false,
+        "maintain": false,
+        "push": false,
+        "triage": false,
+        "pull": false
+      }
+    },
+    {
+      "ref": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "owner": "polyconnect",
+        "name": "omnipix-cli",
+        "externalId": "87522939"
+      },
+      "description": "Public source repository for the Omnipix command-line client.",
+      "defaultBranch": "main",
+      "visibility": "public",
+      "visibilityRaw": "public",
+      "isFork": false,
+      "isArchived": false,
+      "topics": [],
+      "url": "https://gitlab.com/polyconnect/omnipix-cli",
+      "cloneUrls": {
+        "https": "https://gitlab.com/polyconnect/omnipix-cli.git",
+        "ssh": "git@gitlab.com:polyconnect/omnipix-cli.git"
+      },
+      "createdAt": "<now>",
+      "updatedAt": "<now>",
+      "openIssueCount": 0,
+      "owner": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "login": "polyconnect",
+        "id": "3230028",
+        "name": "Ivan Kazakov",
+        "avatarUrl": "https://secure.gravatar.com/avatar/92e1221d89edc16e81ee3f771d4b0c83a8f37f94d9518cc9002cd77839edf0f6?s=80&d=identicon",
+        "url": "https://gitlab.com/polyconnect",
+        "isBotHint": false
+      },
+      "stars": 0,
+      "forks": 0,
+      "mergeMethods": [
+        "merge",
+        "squash"
+      ],
+      "defaultMergeMethod": "merge",
+      "deleteBranchOnMerge": true,
+      "features": {
+        "issues": true,
+        "pullRequests": true,
+        "discussions": false,
+        "wiki": true,
+        "projects": false,
+        "releases": true
+      },
+      "permissions": {
+        "admin": false,
+        "maintain": false,
+        "push": false,
+        "triage": false,
+        "pull": false
+      }
+    },
+    {
+      "ref": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "owner": "rachel.green.r",
+        "name": "ecoscan-5664378-deletion_scheduled-87522869",
+        "externalId": "87522869"
+      },
+      "description": ":mailbox_with_mail: Easily and securely share files from the command line. A fully featured Firefox Send client.",
+      "defaultBranch": "master",
+      "visibility": "public",
+      "visibilityRaw": "public",
+      "isFork": true,
+      "isArchived": false,
+      "parent": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "owner": "timvisee",
+        "name": "ffsend",
+        "externalId": "5664378"
+      },
+      "topics": [],
+      "url": "https://gitlab.com/rachel.green.r/ecoscan-5664378-deletion_scheduled-87522869",
+      "cloneUrls": {
+        "https": "https://gitlab.com/rachel.green.r/ecoscan-5664378-deletion_scheduled-87522869.git",
+        "ssh": "git@gitlab.com:rachel.green.r/ecoscan-5664378-deletion_scheduled-87522869.git"
+      },
+      "createdAt": "<now>",
+      "updatedAt": "<now>",
+      "openIssueCount": 0,
+      "owner": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "login": "rachel.green.r",
+        "id": "39704708",
+        "name": "Rachel Green",
+        "avatarUrl": "https://secure.gravatar.com/avatar/a5d120e5d9444ff172adcba1fca512bd91f6074be4b790d65403619422965b01?s=80&d=identicon",
+        "url": "https://gitlab.com/rachel.green.r",
+        "isBotHint": false
+      },
+      "stars": 0,
+      "forks": 0,
+      "mergeMethods": [
+        "merge",
+        "squash"
+      ],
+      "defaultMergeMethod": "merge",
+      "deleteBranchOnMerge": true,
+      "features": {
+        "issues": true,
+        "pullRequests": true,
+        "discussions": false,
+        "wiki": false,
+        "projects": false,
+        "releases": true
+      },
+      "permissions": {
+        "admin": false,
+        "maintain": false,
+        "push": false,
+        "triage": false,
+        "pull": false
+      }
+    }
+  ],
+  "cursor": {
+    "nextUrl": "https://gitlab.com/api/v4/projects?imported=false&include_hidden=false&membership=false&order_by=created_at&owned=false&page=2&per_page=3&repository_checksum_failed=false&search=cli&simple=false&sort=desc&starred=false&statistics=false&wiki_checksum_failed=false&with_custom_attributes=false&with_issues_enabled=false&with_merge_requests_enabled=false",
+    "etag": "W/\"4ee37bb2fda2cb9fd517cf69b79c5273\""
+  },
+  "rateLimit": {
+    "limit": 2000,
+    "remaining": 1933,
+    "resetAt": "<now>"
+  }
+}

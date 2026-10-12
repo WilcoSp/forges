@@ -1,0 +1,34 @@
+{
+  "ref": {
+    "forge": "gitea",
+    "instance": "gitea.com",
+    "thread": {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "repo": {
+        "forge": "gitea",
+        "instance": "gitea.com",
+        "owner": "forges-fixtures",
+        "name": "forges-fixtures"
+      },
+      "kind": "issue",
+      "number": "43",
+      "externalId": "509784"
+    },
+    "id": "1757987"
+  },
+  "body": "@roebot a mention from run 20261012113905.",
+  "author": {
+    "forge": "gitea",
+    "instance": "gitea.com",
+    "login": "danielroe",
+    "id": "250665",
+    "name": "Daniel Roe",
+    "avatarUrl": "https://gitea.com/avatars/bd278c1af0d9b9480234a82515bf67abe7651f846069ebcee84e76317b2614ab",
+    "url": "https://gitea.com/danielroe",
+    "isBotHint": false
+  },
+  "createdAt": "<now>",
+  "updatedAt": "<now>",
+  "url": "https://gitea.com/forges-fixtures/forges-fixtures/issues/43#issuecomment-1757987"
+}

@@ -1,0 +1,66 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/commits/67bb144479c23e0c1acec7312a82075aaa53eaf3/comments",
+    "body": {
+      "body": "An upserted commit comment from run 20261012113502.\n\n<!-- forges:key=forges-fixture -->"
+    }
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "etag": "\"2b5d228f3a00e1231d29441249b91e9316444e67c0db2881242a42d8d816fdf8\"",
+      "location": "https://api.github.com/repos/forges-fixtures/forges-fixtures/comments/204555979",
+      "x-ratelimit-limit": "5000",
+      "x-ratelimit-remaining": "4945",
+      "x-ratelimit-reset": "1791808503"
+    },
+    "body": {
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/comments/204555979",
+      "html_url": "https://github.com/forges-fixtures/forges-fixtures/commit/67bb144479c23e0c1acec7312a82075aaa53eaf3#commitcomment-204555979",
+      "id": 204555979,
+      "node_id": "CC_kwDOVCTdtM4MMUbL",
+      "user": {
+        "login": "danielroe-bot",
+        "id": 57801166,
+        "node_id": "REDACTED",
+        "avatar_url": "https://avatars.githubusercontent.com/u/57801166?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/danielroe-bot",
+        "html_url": "https://github.com/danielroe-bot",
+        "followers_url": "https://api.github.com/users/danielroe-bot/followers",
+        "following_url": "https://api.github.com/users/danielroe-bot/following{/other_user}",
+        "gists_url": "https://api.github.com/users/danielroe-bot/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/danielroe-bot/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/danielroe-bot/subscriptions",
+        "organizations_url": "https://api.github.com/users/danielroe-bot/orgs",
+        "repos_url": "https://api.github.com/users/danielroe-bot/repos",
+        "events_url": "https://api.github.com/users/danielroe-bot/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/danielroe-bot/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "position": null,
+      "line": null,
+      "path": null,
+      "commit_id": "67bb144479c23e0c1acec7312a82075aaa53eaf3",
+      "created_at": "2026-10-12T11:36:02Z",
+      "updated_at": "2026-10-12T11:36:02Z",
+      "body": "An upserted commit comment from run 20261012113502.\n\n<!-- forges:key=forges-fixture -->",
+      "author_association": "MEMBER",
+      "reactions": {
+        "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/comments/204555979/reactions",
+        "total_count": 0,
+        "+1": 0,
+        "-1": 0,
+        "laugh": 0,
+        "hooray": 0,
+        "confused": 0,
+        "heart": 0,
+        "rocket": 0,
+        "eyes": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "ci job",
+  "recordedAt": "2026-10-12T12:03:26.986Z",
+  "needs": [
+    "ci jobs"
+  ]
+}

@@ -1,0 +1,561 @@
+{
+  "items": [
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "42wim",
+      "id": "29577",
+      "name": "Wim",
+      "avatarUrl": "https://gitea.com/avatars/f9cf34a5ed616b04e1e33afaf7f151a7",
+      "url": "https://gitea.com/42wim",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "6543",
+      "id": "689",
+      "name": "6543",
+      "avatarUrl": "https://gitea.com/avatars/aeb6c290f1988daefa7421c5409e80dc",
+      "url": "https://gitea.com/6543",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "a1012112796",
+      "id": "1768",
+      "name": "a1012112796",
+      "avatarUrl": "https://gitea.com/avatars/dea552bed6a739635f9bfeca69019b6d",
+      "url": "https://gitea.com/a1012112796",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "Akkuman",
+      "id": "1569",
+      "avatarUrl": "https://gitea.com/avatars/2b9991a38ef770739bf5c86937486c1c",
+      "url": "https://gitea.com/Akkuman",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "appleboy",
+      "id": "4",
+      "name": "Bo-Yi Wu (吳柏毅)",
+      "avatarUrl": "https://gitea.com/avatars/265bcbb56e831266de7a9f9281aab57a",
+      "url": "https://gitea.com/appleboy",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "axifive",
+      "id": "155",
+      "name": " Alexey 〒erentyev",
+      "avatarUrl": "https://gitea.com/avatars/06683cd6b2e2c2ce0ab00fb80cc0729f",
+      "url": "https://gitea.com/axifive",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "betacat0",
+      "id": "2",
+      "name": "helong zhang",
+      "avatarUrl": "https://gitea.com/avatars/bb8f692e0d33e647eb8db971db8251ea",
+      "url": "https://gitea.com/betacat0",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "bircni",
+      "id": "173651",
+      "name": "bircni",
+      "avatarUrl": "https://gitea.com/avatars/6e5afe455623d71267c5c263a9c5a919f46f6d3a7838f4e17b4d72641b63432c",
+      "url": "https://gitea.com/bircni",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "blumia",
+      "id": "14698",
+      "avatarUrl": "https://gitea.com/avatars/4de6efb30486addc05d31e06fa14140c",
+      "url": "https://gitea.com/blumia",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "bwko",
+      "id": "11",
+      "avatarUrl": "https://gitea.com/avatars/85cee0412184c0366a44b3e83e8ddcf0",
+      "url": "https://gitea.com/bwko",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "caicandong",
+      "id": "44700",
+      "avatarUrl": "https://gitea.com/avatars/2a1b1ab96878ebecbbb2fbc271332297",
+      "url": "https://gitea.com/caicandong",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "ChristopherHX",
+      "id": "38043",
+      "avatarUrl": "https://gitea.com/avatars/f775564dc45bdddbe643a9954a3b0c2d",
+      "url": "https://gitea.com/ChristopherHX",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "davidsvantesson",
+      "id": "1337",
+      "name": "David Svantesson",
+      "avatarUrl": "https://gitea.com/avatars/bfb3d735bd1464ae8dae6624e5eed992",
+      "url": "https://gitea.com/davidsvantesson",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "delvh",
+      "id": "29154",
+      "avatarUrl": "https://gitea.com/avatars/c3d28cac0322f42ab1f512e03a701bae",
+      "url": "https://gitea.com/delvh",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "denyskon",
+      "id": "39950",
+      "name": "Denys Konovalov",
+      "avatarUrl": "https://gitea.com/avatars/02b3e4da0b3411551a942d0917448ac6",
+      "url": "https://gitea.com/denyskon",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "fuxiaohei",
+      "id": "5",
+      "name": "Fuxiaohei",
+      "avatarUrl": "https://gitea.com/avatars/f72f7454ce9d710baa506394f68f4132",
+      "url": "https://gitea.com/fuxiaohei",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "gary-kim",
+      "id": "658",
+      "name": "Gary Kim",
+      "avatarUrl": "https://gitea.com/avatars/c0f1158b87cc2227c967026624f5e9e8",
+      "url": "https://gitea.com/gary-kim",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "garymoon",
+      "id": "34734",
+      "name": "Gary Moon",
+      "avatarUrl": "https://gitea.com/avatars/4176f3a9ab7808e690c8168a55b471e6",
+      "url": "https://gitea.com/garymoon",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "giteabot",
+      "id": "469",
+      "name": "Gitea Bot",
+      "avatarUrl": "https://gitea.com/avatars/75675dd8097400d7051968a379f6799ae1cb52b95b125fbaceceb4fce6a6b9b4",
+      "url": "https://gitea.com/giteabot",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "guillep2k",
+      "id": "990",
+      "name": "Guillermo Prandi",
+      "avatarUrl": "https://gitea.com/avatars/8e1165b66a11415ff447dda7f26742c7",
+      "url": "https://gitea.com/guillep2k",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "HesterG",
+      "id": "39524",
+      "avatarUrl": "https://gitea.com/avatars/bd8770f4cb7c1448b1289bfb64bbef60",
+      "url": "https://gitea.com/HesterG",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "hiifong",
+      "id": "30153",
+      "name": "hiifong",
+      "avatarUrl": "https://gitea.com/avatars/4e42cf3226ab793ef68f61b47b4ebd95",
+      "url": "https://gitea.com/hiifong",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "jaqra",
+      "id": "1323",
+      "avatarUrl": "https://gitea.com/avatars/d74711492061731d22dffe7d0db9205a",
+      "url": "https://gitea.com/jaqra",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "jolheiser",
+      "id": "14",
+      "name": "John Olheiser",
+      "avatarUrl": "https://gitea.com/avatars/cc498b605dee7b6fb9e6422332691bb4",
+      "url": "https://gitea.com/jolheiser",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "jonasfranz",
+      "id": "17",
+      "name": "Jonas Franz",
+      "avatarUrl": "https://gitea.com/avatars/8602128ed48698e4cbbb311c40500182",
+      "url": "https://gitea.com/jonasfranz",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "jpraet",
+      "id": "20837",
+      "avatarUrl": "https://gitea.com/avatars/93c49b7c89eb156971d11161c9b52795",
+      "url": "https://gitea.com/jpraet",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "kdumontnu",
+      "id": "19985",
+      "name": "Kyle D.",
+      "avatarUrl": "https://gitea.com/avatars/1abd33802863a687b78950a31a292a8a",
+      "url": "https://gitea.com/kdumontnu",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "kemzeb",
+      "id": "71783",
+      "name": "Kemal Zebari",
+      "avatarUrl": "https://gitea.com/avatars/85fa5f911fea0aa33359034dd5e9d7d93d770c802784fd108df8ad5d67d9dc3c",
+      "url": "https://gitea.com/kemzeb",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "kerwin612",
+      "id": "44541",
+      "name": "Kerwin Bryant",
+      "avatarUrl": "https://gitea.com/avatars/93014d91e0c4c05319321137cb406443c5217e22a5a199284094962e3ac539c5",
+      "url": "https://gitea.com/kerwin612",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "khmarbaise",
+      "id": "14825",
+      "avatarUrl": "https://gitea.com/avatars/1ee6958b54c0492261c04a8e0de5a643",
+      "url": "https://gitea.com/khmarbaise",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "KN4CK3R",
+      "id": "22097",
+      "avatarUrl": "https://gitea.com/avatars/f5a0831e8daed1c3913015d3eff5c9cb",
+      "url": "https://gitea.com/KN4CK3R",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "kolaente",
+      "id": "10",
+      "avatarUrl": "https://gitea.com/avatars/30fad23dd65dfc1ecb0afded5c23d3af",
+      "url": "https://gitea.com/kolaente",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "lafriks",
+      "id": "56",
+      "name": "Lauris BH",
+      "avatarUrl": "https://gitea.com/avatars/c3776e2dacfa594d4c6f134894911819",
+      "url": "https://gitea.com/lafriks",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "lng2020",
+      "id": "48140",
+      "name": "lng2020",
+      "avatarUrl": "https://gitea.com/avatars/0ebd475edbd3309f9c35e37edd895e76",
+      "url": "https://gitea.com/lng2020",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "luhahn",
+      "id": "7926",
+      "avatarUrl": "https://gitea.com/avatars/0c0e6e662dddf2c04dfec3b825bcd065",
+      "url": "https://gitea.com/luhahn",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "lunny",
+      "id": "1",
+      "name": "Lunny Xiao",
+      "avatarUrl": "https://gitea.com/avatars/5739143ce171af62d1ff0baa027dacfd5e5ffe9c28b7b92fc4ed02d952ab1cc3",
+      "url": "https://gitea.com/lunny",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "mrsdizzie",
+      "id": "61",
+      "name": "mrsdizzie",
+      "avatarUrl": "https://gitea.com/avatars/3a4faa70da38fa71cd93eba33c85e522",
+      "url": "https://gitea.com/mrsdizzie",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "noerw",
+      "id": "1012",
+      "name": "Norwin",
+      "avatarUrl": "https://gitea.com/avatars/d900cc6f1cc26cee3e683034c2555fcd",
+      "url": "https://gitea.com/noerw",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "renovate-bot",
+      "id": "44044",
+      "name": "Renovate Bot",
+      "avatarUrl": "https://gitea.com/avatars/a7012524a51bf2c579579dca81161ad6d64bc1cc3ea8e16098d9cbec42a84216",
+      "url": "https://gitea.com/renovate-bot",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "richmahn",
+      "id": "675",
+      "avatarUrl": "https://gitea.com/avatars/f2682218d00eb0e6d5a2ac70e9c4527e",
+      "url": "https://gitea.com/richmahn",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "sapk",
+      "id": "59",
+      "avatarUrl": "https://gitea.com/avatars/50b3022788ea66ee63626699a8e30864",
+      "url": "https://gitea.com/sapk",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "screenshots",
+      "id": "100110",
+      "avatarUrl": "https://gitea.com/avatars/f90b27383d44b6743809b7b1b34237879bb1977acd254b8e9620e3360e9e5a98",
+      "url": "https://gitea.com/screenshots",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "sillyguodong",
+      "id": "29279",
+      "avatarUrl": "https://gitea.com/avatars/d27dbe8180539aae629b274714f38c2367e700ab373e287c2a1769665be5494b",
+      "url": "https://gitea.com/sillyguodong",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "silverwind",
+      "id": "2021",
+      "avatarUrl": "https://gitea.com/avatars/a21c1db8b4934f6c674229dc96ad7897",
+      "url": "https://gitea.com/silverwind",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "smartclip_tim",
+      "id": "59277",
+      "avatarUrl": "https://gitea.com/avatars/b8b6f7d6448abb0b1d03d83d965284cfbae29e20234ca7ca22404f123d4e7221",
+      "url": "https://gitea.com/smartclip_tim",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "strk",
+      "id": "288",
+      "name": "Sandro Santilli",
+      "avatarUrl": "https://gitea.com/avatars/fe2a9e759730ee64c44bf8901bf4ccc3",
+      "url": "https://gitea.com/strk",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "tboerger",
+      "id": "1545",
+      "name": "Thomas Boerger",
+      "avatarUrl": "https://gitea.com/avatars/5980a3ce5224a38ab1367850d17e8081",
+      "url": "https://gitea.com/tboerger",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "techknowlogick",
+      "id": "9",
+      "avatarUrl": "https://gitea.com/avatars/9b588dd0b384d6f6ae841c5d62302033",
+      "url": "https://gitea.com/techknowlogick",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "TheFox0x7",
+      "id": "95654",
+      "avatarUrl": "https://gitea.com/avatars/9fcf0c2f6adb1fa00eae875ba67a5e1d",
+      "url": "https://gitea.com/TheFox0x7",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "tobiasbp",
+      "id": "43551",
+      "name": "Tobias Balle-Petersen",
+      "avatarUrl": "https://gitea.com/avatars/14df0a94d58e62ce729a470e8d354cd0",
+      "url": "https://gitea.com/tobiasbp",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "typeless",
+      "id": "1111",
+      "name": "Mura Li",
+      "avatarUrl": "https://gitea.com/avatars/23463b99b62a72f26ed677cc556c44e8",
+      "url": "https://gitea.com/typeless",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "volker.raschek",
+      "id": "1641",
+      "name": "Markus Pesch",
+      "avatarUrl": "https://gitea.com/avatars/66d6a190e47924629bc0a3839112f94d",
+      "url": "https://gitea.com/volker.raschek",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "wingsallen",
+      "id": "197409",
+      "name": "Minjie Fang",
+      "avatarUrl": "https://gitea.com/avatars/2f0ef941142ca86f6117647c95cae7be9c5f107f36f755072f56d218431c2e64",
+      "url": "https://gitea.com/wingsallen",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "wolfogre",
+      "id": "458",
+      "name": "Jason Song",
+      "avatarUrl": "https://gitea.com/avatars/45b34769909179e3d7c44ae65c5ac706",
+      "url": "https://gitea.com/wolfogre",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "wxiaoguang",
+      "id": "29147",
+      "avatarUrl": "https://gitea.com/avatars/05b5f8816541d194b5b253d7f84dd452",
+      "url": "https://gitea.com/wxiaoguang",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "yp05327",
+      "id": "38031",
+      "name": "yp05327",
+      "avatarUrl": "https://gitea.com/avatars/75e2eec8205f3ce533de4ca46d457f4b1007d949ce124e6a5027ad1f45899f5d",
+      "url": "https://gitea.com/yp05327",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "zeripath",
+      "id": "12",
+      "name": "Andrew Thornton",
+      "avatarUrl": "https://gitea.com/avatars/0e1247a0bfda42c8fe2ac8a2d310d826",
+      "url": "https://gitea.com/zeripath",
+      "isBotHint": false
+    },
+    {
+      "forge": "gitea",
+      "instance": "gitea.com",
+      "login": "Zettat123",
+      "id": "39446",
+      "avatarUrl": "https://gitea.com/avatars/230ac7fa09681a12ecc1dd575f5ffe91003739cb181ab1cd9f670ab2e90eaab8",
+      "url": "https://gitea.com/Zettat123",
+      "isBotHint": false
+    }
+  ]
+}

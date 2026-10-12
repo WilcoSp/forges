@@ -1,0 +1,85 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "hook": {
+          "forge": "github",
+          "instance": "github.com",
+          "target": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures"
+          },
+          "id": "694647722"
+        },
+        "id": "3847871939886530560",
+        "guid": "30f89290-c631-11f1-995b-9564b6db6f07"
+      },
+      "event": "issues.closed",
+      "status": 502,
+      "ok": false,
+      "deliveredAt": "<now>",
+      "duration": 0
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "hook": {
+          "forge": "github",
+          "instance": "github.com",
+          "target": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures"
+          },
+          "id": "694647722"
+        },
+        "id": "3847871938097717248",
+        "guid": "3067c440-c631-11f1-8d60-cf9b7dcb1ef4"
+      },
+      "event": "issues.closed",
+      "status": 502,
+      "ok": false,
+      "deliveredAt": "<now>",
+      "duration": 0
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "hook": {
+          "forge": "github",
+          "instance": "github.com",
+          "target": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures"
+          },
+          "id": "694647722"
+        },
+        "id": "3847871926932373504",
+        "guid": "2d5728e0-c631-11f1-869e-79e6a318813e"
+      },
+      "event": "issue_comment.created",
+      "status": 502,
+      "ok": false,
+      "deliveredAt": "<now>",
+      "duration": 0
+    }
+  ],
+  "cursor": {
+    "nextUrl": "https://api.github.com/repositories/1411702196/hooks/694647722/deliveries?per_page=3&cursor=v1_3847871823278546944",
+    "etag": "W/\"3b3b113cbe3c3056840dded111c9d973c36c3b10933c5939f69d5715b9b8fa7d\""
+  },
+  "rateLimit": {
+    "limit": 500,
+    "remaining": 498,
+    "resetAt": "<now>"
+  }
+}

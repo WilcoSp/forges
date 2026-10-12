@@ -1,0 +1,12 @@
+{
+  "request": {
+    "method": "DELETE",
+    "url": "https://api.bitbucket.org/2.0/repositories/danielroe/forges-fixtures/commit/a09751980eb5/comments/21152896"
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "x-ratelimit-limit": "1000"
+    }
+  }
+}

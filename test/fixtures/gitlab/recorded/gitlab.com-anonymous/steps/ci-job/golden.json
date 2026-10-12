@@ -1,0 +1,31 @@
+{
+  "ref": {
+    "forge": "gitlab",
+    "instance": "gitlab.com",
+    "repo": {
+      "forge": "gitlab",
+      "instance": "gitlab.com",
+      "owner": "gitlab-org",
+      "name": "cli"
+    },
+    "id": "17110223356",
+    "run": {
+      "forge": "gitlab",
+      "instance": "gitlab.com",
+      "repo": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "owner": "gitlab-org",
+        "name": "cli"
+      },
+      "id": "2938354390"
+    }
+  },
+  "name": "snapcraft_release_edge",
+  "state": "success",
+  "stateRaw": "success",
+  "stage": "release",
+  "url": "https://gitlab.com/gitlab-org/cli/-/jobs/17110223356",
+  "startedAt": "<now>",
+  "completedAt": "<now>"
+}

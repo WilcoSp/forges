@@ -1,0 +1,35 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://tngl.sh/xrpc/com.atproto.repo.createRecord",
+    "body": {
+      "repo": "did:plc:7qksav5io2s4qfg67pe7iqqk",
+      "collection": "sh.tangled.repo.issue",
+      "record": {
+        "$type": "sh.tangled.repo.issue",
+        "repo": "did:plc:t73o44q7fppgagkrevtztyok",
+        "title": "forges fixture 20261012114229: duplicate",
+        "body": "Opened by run 20261012114229.",
+        "createdAt": "2026-10-12T11:42:44.932Z"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "etag": "W/\"119-JI5k+vlzpv1NQV29uZFHk8pBNkk\"",
+      "ratelimit-limit": "3000",
+      "ratelimit-remaining": "2927",
+      "ratelimit-reset": "1791805651"
+    },
+    "body": {
+      "uri": "at://did:plc:7qksav5io2s4qfg67pe7iqqk/sh.tangled.repo.issue/3mxogt6mbbn2y",
+      "cid": "bafyreicjbiwb73noqqsjt4ymzbenne2hhzxvlx7wxkgqt2ldrpsskcrdfy",
+      "commit": {
+        "cid": "bafyreiaiairozfvbahihvtx2zufmwfa572mcomcxnkdogak3vjrktcrmyu",
+        "rev": "3mxogt6musn2y"
+      },
+      "validationStatus": "unknown"
+    }
+  }
+}

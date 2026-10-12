@@ -1,0 +1,97 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "azure-devops",
+        "instance": "dev.azure.com",
+        "repo": {
+          "forge": "azure-devops",
+          "instance": "dev.azure.com",
+          "owner": "forges/forges-fixtures",
+          "name": "forges-fixtures"
+        },
+        "sha": "2be155550afa1cd0a5ca10e302e22a5a2c3a2eaf"
+      },
+      "sha": "2be155550afa1cd0a5ca10e302e22a5a2c3a2eaf",
+      "message": "Merge pull request 37 from forges-fixtures/20261012114218-3 into main",
+      "author": {
+        "name": "danielroebot outlook.com",
+        "email": "redacted@example.invalid",
+        "date": "<now>"
+      },
+      "committer": {
+        "name": "danielroebot outlook.com",
+        "email": "redacted@example.invalid",
+        "date": "<now>"
+      },
+      "parents": [],
+      "url": "https://dev.azure.com/forges/forges-fixtures/_git/forges-fixtures/commit/2be155550afa1cd0a5ca10e302e22a5a2c3a2eaf",
+      "stats": {
+        "additions": 1,
+        "deletions": 0
+      }
+    },
+    {
+      "ref": {
+        "forge": "azure-devops",
+        "instance": "dev.azure.com",
+        "repo": {
+          "forge": "azure-devops",
+          "instance": "dev.azure.com",
+          "owner": "forges/forges-fixtures",
+          "name": "forges-fixtures"
+        },
+        "sha": "79dc1c065d5654772318dc4bfa5288a221bb5998"
+      },
+      "sha": "79dc1c065d5654772318dc4bfa5288a221bb5998",
+      "message": "Merge run 20261012114218",
+      "author": {
+        "name": "danielroebot outlook.com",
+        "email": "redacted@example.invalid",
+        "date": "<now>"
+      },
+      "committer": {
+        "name": "danielroebot outlook.com",
+        "email": "redacted@example.invalid",
+        "date": "<now>"
+      },
+      "parents": [],
+      "url": "https://dev.azure.com/forges/forges-fixtures/_git/forges-fixtures/commit/79dc1c065d5654772318dc4bfa5288a221bb5998",
+      "stats": {
+        "additions": 1,
+        "deletions": 0
+      }
+    },
+    {
+      "ref": {
+        "forge": "azure-devops",
+        "instance": "dev.azure.com",
+        "repo": {
+          "forge": "azure-devops",
+          "instance": "dev.azure.com",
+          "owner": "forges/forges-fixtures",
+          "name": "forges-fixtures"
+        },
+        "sha": "522726aea94b77975eb85bacac3ca3f539cdabe2"
+      },
+      "sha": "522726aea94b77975eb85bacac3ca3f539cdabe2",
+      "message": "Merge pull request 37 from forges-fixtures/20261012114218-3 into main",
+      "author": {
+        "name": "danielroebot outlook.com",
+        "email": "redacted@example.invalid",
+        "date": "<now>"
+      },
+      "committer": {
+        "name": "danielroebot outlook.com",
+        "email": "redacted@example.invalid",
+        "date": "<now>"
+      },
+      "parents": [],
+      "url": "https://dev.azure.com/forges/forges-fixtures/_git/forges-fixtures/commit/522726aea94b77975eb85bacac3ca3f539cdabe2",
+      "stats": {
+        "additions": 1,
+        "deletions": 0
+      }
+    }
+  ]
+}

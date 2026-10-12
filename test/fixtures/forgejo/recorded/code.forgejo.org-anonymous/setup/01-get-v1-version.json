@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://code.forgejo.org/api/v1/version"
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": {
+      "version": "17.0.0-dev-609-a14eb80977+gitea-1.22.0"
+    }
+  }
+}

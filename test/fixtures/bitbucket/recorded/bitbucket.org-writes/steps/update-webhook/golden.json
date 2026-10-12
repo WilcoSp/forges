@@ -1,0 +1,27 @@
+{
+  "ref": {
+    "forge": "bitbucket",
+    "instance": "bitbucket.org",
+    "target": {
+      "forge": "bitbucket",
+      "instance": "bitbucket.org",
+      "owner": "danielroe",
+      "name": "forges-fixtures"
+    },
+    "id": "{9e802850-0c69-4230-90d6-6b40c0a310a1}"
+  },
+  "url": "https://example.com/hook",
+  "events": [
+    "comment",
+    "push",
+    "ref"
+  ],
+  "nativeEvents": [
+    "pullrequest:comment_created",
+    "pullrequest:comment_updated",
+    "pullrequest:comment_deleted",
+    "repo:push"
+  ],
+  "active": true,
+  "createdAt": "<now>"
+}

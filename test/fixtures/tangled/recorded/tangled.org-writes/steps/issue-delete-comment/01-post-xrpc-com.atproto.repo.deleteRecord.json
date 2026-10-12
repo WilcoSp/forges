@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://tngl.sh/xrpc/com.atproto.repo.deleteRecord",
+    "body": {
+      "repo": "did:plc:7qksav5io2s4qfg67pe7iqqk",
+      "collection": "sh.tangled.feed.comment",
+      "rkey": "3mxogsy5i3n2y"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "etag": "W/\"66-76lE3mMpRdSEY2lHwvR6JBEBDwM\"",
+      "ratelimit-limit": "3000",
+      "ratelimit-remaining": "2956",
+      "ratelimit-reset": "1791805651"
+    },
+    "body": {
+      "commit": {
+        "cid": "bafyreidmg3aix6zbah5jzij3have7vdmb4gscdiz3qdzm22fprqoazvea4",
+        "rev": "3mxogt2x4av2y"
+      }
+    }
+  }
+}

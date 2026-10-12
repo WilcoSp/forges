@@ -1,0 +1,40 @@
+{
+  "comment": {
+    "ref": {
+      "forge": "github",
+      "instance": "github.com",
+      "thread": {
+        "forge": "github",
+        "instance": "github.com",
+        "repo": {
+          "forge": "github",
+          "instance": "github.com",
+          "owner": "forges-fixtures",
+          "name": "forges-fixtures"
+        },
+        "kind": "commit",
+        "number": "67bb144479c23e0c1acec7312a82075aaa53eaf3"
+      },
+      "id": "204555979"
+    },
+    "body": "An upserted commit comment from run 20261012113502.\n\n<!-- forges:key=forges-fixture -->",
+    "author": {
+      "forge": "github",
+      "instance": "github.com",
+      "login": "danielroe-bot",
+      "id": "57801166",
+      "avatarUrl": "https://avatars.githubusercontent.com/u/57801166?v=4",
+      "url": "https://github.com/danielroe-bot",
+      "typeRaw": "User",
+      "isBotHint": false
+    },
+    "createdAt": "<now>",
+    "updatedAt": "<now>",
+    "url": "https://github.com/forges-fixtures/forges-fixtures/commit/67bb144479c23e0c1acec7312a82075aaa53eaf3#commitcomment-204555979",
+    "reactions": {
+      "total": 0,
+      "counts": {}
+    }
+  },
+  "created": true
+}

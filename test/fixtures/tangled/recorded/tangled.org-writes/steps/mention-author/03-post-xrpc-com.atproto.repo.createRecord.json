@@ -1,0 +1,41 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://tngl.sh/xrpc/com.atproto.repo.createRecord",
+    "body": {
+      "repo": "did:plc:uxfnwnz5wfwl6tfgqwyfrqyv",
+      "collection": "sh.tangled.feed.comment",
+      "record": {
+        "$type": "sh.tangled.feed.comment",
+        "body": {
+          "$type": "sh.tangled.markup.markdown",
+          "text": "@roebot.tngl.sh a mention from run 20261012114229.",
+          "original": "@roebot.tngl.sh a mention from run 20261012114229."
+        },
+        "subject": {
+          "uri": "at://did:plc:7qksav5io2s4qfg67pe7iqqk/sh.tangled.repo.issue/3mxogsxxwe52y",
+          "cid": "bafyreibxn33nid3yje4qjtlrv4vkiroxtoebc3gapbkntode4eumtizuva"
+        },
+        "createdAt": "2026-10-12T11:42:50.522Z"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "etag": "W/\"11b-tajCRZ1Mr2SRxRXaNjuwUmmLd4Q\"",
+      "ratelimit-limit": "3000",
+      "ratelimit-remaining": "2877",
+      "ratelimit-reset": "1791805651"
+    },
+    "body": {
+      "uri": "at://did:plc:uxfnwnz5wfwl6tfgqwyfrqyv/sh.tangled.feed.comment/3mxogtdytqf2y",
+      "cid": "bafyreigof63bvpi5zrtdmqseftxrmseojexpjvgslm3zrwdjdlghw2qldi",
+      "commit": {
+        "cid": "bafyreifnbuzix4rebhfkmtme6uiwp6hkgjk2mf56jz5a7omjnnphegexxm",
+        "rev": "3mxogtdzsyf2y"
+      },
+      "validationStatus": "unknown"
+    }
+  }
+}

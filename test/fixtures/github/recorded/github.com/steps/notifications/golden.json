@@ -1,0 +1,107 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "id": "26279135987"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "nuxt",
+            "name": "nuxt",
+            "externalId": "71995937"
+          },
+          "kind": "pull_request",
+          "typeRaw": "PullRequest",
+          "number": "36568"
+        }
+      },
+      "subjectTypeRaw": "PullRequest",
+      "reason": "author",
+      "reasonRaw": "author",
+      "unread": true,
+      "title": "refactor(webpack,rspack): inline friendly errors plugin",
+      "subjectState": "unknown",
+      "updatedAt": "<now>",
+      "lastReadAt": "<now>",
+      "url": "https://api.github.com/repos/nuxt/nuxt/pulls/36568"
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "id": "26279062147"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "nuxt",
+            "name": "nuxt",
+            "externalId": "71995937"
+          },
+          "kind": "pull_request",
+          "typeRaw": "PullRequest",
+          "number": "36567"
+        }
+      },
+      "subjectTypeRaw": "PullRequest",
+      "reason": "author",
+      "reasonRaw": "author",
+      "unread": true,
+      "title": "fix(kit): lowercase filename-derived handler method on nitro v2",
+      "subjectState": "unknown",
+      "updatedAt": "<now>",
+      "url": "https://api.github.com/repos/nuxt/nuxt/pulls/36567"
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "id": "26268012458"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "nuxt",
+            "name": "nuxt",
+            "externalId": "71995937"
+          },
+          "kind": "pull_request",
+          "typeRaw": "PullRequest",
+          "number": "36563"
+        }
+      },
+      "subjectTypeRaw": "PullRequest",
+      "reason": "review_requested",
+      "reasonRaw": "review_requested",
+      "unread": true,
+      "title": "chore(deps): update all non-major dependencies (main)",
+      "subjectState": "unknown",
+      "updatedAt": "<now>",
+      "url": "https://api.github.com/repos/nuxt/nuxt/pulls/36563"
+    }
+  ],
+  "cursor": {
+    "nextUrl": "https://api.github.com/notifications?all=false&per_page=3&page=2",
+    "etag": "W/\"d243a78468cfba92c43bbf7a8b4f126f0edf1615a6841a15d27bd727a8f4991c\""
+  },
+  "etag": "W/\"d243a78468cfba92c43bbf7a8b4f126f0edf1615a6841a15d27bd727a8f4991c\"",
+  "notModified": false
+}

@@ -1,0 +1,30 @@
+{
+  "ref": {
+    "forge": "github",
+    "instance": "github.com",
+    "repo": {
+      "forge": "github",
+      "instance": "github.com",
+      "owner": "h3js",
+      "name": "h3"
+    },
+    "id": "114755404558",
+    "run": {
+      "forge": "github",
+      "instance": "github.com",
+      "repo": {
+        "forge": "github",
+        "instance": "github.com",
+        "owner": "h3js",
+        "name": "h3"
+      },
+      "id": "38232588486"
+    }
+  },
+  "name": "tests",
+  "state": "success",
+  "stateRaw": "completed",
+  "url": "https://github.com/h3js/h3/actions/runs/38232588486/job/114755404558",
+  "startedAt": "2026-10-12T09:51:34.000Z",
+  "completedAt": "2026-10-12T09:52:17.000Z"
+}

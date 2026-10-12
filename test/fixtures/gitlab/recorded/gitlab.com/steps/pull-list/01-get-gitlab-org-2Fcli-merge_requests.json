@@ -1,0 +1,356 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/merge_requests?state=opened&order_by=created_at&sort=desc&per_page=3"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "link": "<https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/merge_requests?id=gitlab-org%2Fcli&order_by=created_at&page=2&per_page=3&sort=desc&state=opened&with_labels_details=false&with_merge_status_recheck=false>; rel=\"next\", <https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/merge_requests?id=gitlab-org%2Fcli&order_by=created_at&page=1&per_page=3&sort=desc&state=opened&with_labels_details=false&with_merge_status_recheck=false>; rel=\"first\", <https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/merge_requests?id=gitlab-org%2Fcli&order_by=created_at&page=33&per_page=3&sort=desc&state=opened&with_labels_details=false&with_merge_status_recheck=false>; rel=\"last\"",
+      "etag": "W/\"28d996910be482aec73101ae8b66b6e4\"",
+      "ratelimit-limit": "2000",
+      "ratelimit-remaining": "1992",
+      "ratelimit-reset": "1791804600",
+      "x-total": "99",
+      "x-total-pages": "33",
+      "x-next-page": "2",
+      "x-page": "1",
+      "x-per-page": "3"
+    },
+    "body": [
+      {
+        "id": 547053015,
+        "iid": 4090,
+        "project_id": 34675721,
+        "title": "Draft: fix(issue): resolve issue instance / project correctly",
+        "description": "## Description\n\nWhen passing issues to glab as URL, issues could be from other gitlab instances; but IssueFromArg / IssueFromArgs didn't return this information.\n\nAs a result, later operations (like looking up comments with `glab issue view --comments` ) were done against the wrong gitlab instance and failed.\n\nTo solve this, return a full Client / Repository / Issue tuple that can be used by the caller.\n\n## Related Issues\n\nResolves #8084\n\n## How has this been tested?\n\nVerified that `glab issue view --comments https://other-gitlab.internal/...` from a gitlab git repository now returns the correct results (used to error with 404 or 401 after querying the git repo's gitlab instance)\n\nAdded regression tests\n\n## Screenshots (if appropriate):",
+        "state": "opened",
+        "created_at": "2026-10-12T10:50:25.369Z",
+        "updated_at": "2026-10-12T11:14:34.572Z",
+        "merged_by": null,
+        "merge_user": null,
+        "merged_at": null,
+        "closed_by": null,
+        "closed_at": null,
+        "target_branch": "main",
+        "source_branch": "fix/resolve-gitlab-issue-instance",
+        "user_notes_count": 2,
+        "upvotes": 0,
+        "downvotes": 0,
+        "author": {
+          "id": 42934814,
+          "username": "secDre4mer",
+          "public_email": null,
+          "name": "Max Altgelt",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://secure.gravatar.com/avatar/384b858548f767bef64f4c91b6f003d8cbb3eddd532de9b5d3bf3c40711ce384?s=80&d=identicon",
+          "web_url": "https://gitlab.com/secDre4mer",
+          "bot": false
+        },
+        "assignees": [
+          {
+            "id": 42934814,
+            "username": "secDre4mer",
+            "public_email": null,
+            "name": "Max Altgelt",
+            "state": "active",
+            "locked": false,
+            "avatar_url": "https://secure.gravatar.com/avatar/384b858548f767bef64f4c91b6f003d8cbb3eddd532de9b5d3bf3c40711ce384?s=80&d=identicon",
+            "web_url": "https://gitlab.com/secDre4mer"
+          }
+        ],
+        "assignee": {
+          "id": 42934814,
+          "username": "secDre4mer",
+          "public_email": null,
+          "name": "Max Altgelt",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://secure.gravatar.com/avatar/384b858548f767bef64f4c91b6f003d8cbb3eddd532de9b5d3bf3c40711ce384?s=80&d=identicon",
+          "web_url": "https://gitlab.com/secDre4mer"
+        },
+        "reviewers": [],
+        "source_project_id": 87518949,
+        "target_project_id": 34675721,
+        "labels": [
+          "1st contribution",
+          "Community contribution",
+          "Hackathon",
+          "linked-issue",
+          "workflow::in dev"
+        ],
+        "draft": true,
+        "imported": false,
+        "imported_from": "none",
+        "work_in_progress": true,
+        "milestone": null,
+        "merge_when_pipeline_succeeds": false,
+        "merge_status": "can_be_merged",
+        "detailed_merge_status": "draft_status",
+        "merge_after": null,
+        "sha": "bd792c0e00929dc20e52e8831a2f857dd087b582",
+        "merge_commit_sha": null,
+        "squash_commit_sha": null,
+        "discussion_locked": null,
+        "should_remove_source_branch": null,
+        "force_remove_source_branch": true,
+        "prepared_at": "2026-10-12T10:50:28.771Z",
+        "allow_collaboration": true,
+        "allow_maintainer_to_push": true,
+        "reference": "!4090",
+        "references": {
+          "short": "!4090",
+          "relative": "!4090",
+          "full": "gitlab-org/cli!4090"
+        },
+        "web_url": "https://gitlab.com/gitlab-org/cli/-/merge_requests/4090",
+        "time_stats": {
+          "time_estimate": 0,
+          "total_time_spent": 0,
+          "human_time_estimate": null,
+          "human_total_time_spent": null
+        },
+        "squash": true,
+        "squash_on_merge": true,
+        "task_completion_status": {
+          "count": 0,
+          "completed_count": 0
+        },
+        "has_conflicts": false,
+        "blocking_discussions_resolved": true,
+        "approvals_before_merge": null
+      },
+      {
+        "id": 546876490,
+        "iid": 4089,
+        "project_id": 34675721,
+        "title": "docs: fix dead handbook and docs links in contributor docs",
+        "description": "## Description\n\nSeven links in the contributor and maintainer docs point to pages that moved. The handbook links return 404, the release docs link redirects to the root of the `release/docs` repository, and two docs.gitlab.com links use anchors that no longer exist on the page. This MR points each one at the current page. Only URLs change.\n\n| File | Old | New |\n| --- | --- | --- |\n| `docs/maintainer.md` (2 links) | `handbook/business-technology/end-user-services/onboarding-access-requests/access-requests/` (404) | `handbook/eta/corporate-it/end-user-services/access-requests/` |\n| `docs/triaging_bugs.md` | `handbook/engineering/infrastructure/engineering-productivity/issue-triage/#severity` (404) | `handbook/product-development/how-we-work/issue-triage/#severity` |\n| `SECURITY.md` | `handbook/security/product-security/application-security/vulnerability-management/#vulnerability-vs-feature-vs-bug` (404) | `handbook/security/product-security/security-platforms-architecture/application-security/vulnerability-management/#vulnerability-vs-feature-vs-bug` |\n| `docs/security_releases.md` | `release/docs/-/blob/master/general/security/developer.md` (file renamed) | `release/docs/-/blob/master/general/security/engineer.md` |\n| `CONTRIBUTING.md` | `cli_styleguide/#deprecation-messages` (no such anchor) | `cli_styleguide/#deprecations` |\n| `docs/development_process.md` | `automatic_reviewer_assignment/#assign-reviewers-with-the-recommend-reviewers-flow` (no such anchor) | `automatic_reviewer_assignment/#recommend-reviewers-flow` |\n\nEach new page covers the same topic as the old link: the Access Requests page, the Issue Triage page with its Severity section, the Application Vulnerability Management Procedure with its \"Vulnerability vs. Feature vs. Bug?\" section, the release docs engineer guide (`developer.md` was renamed to `engineer.md` in `release/docs@6f229680`), the CLI style guide Deprecations section, and the Recommend Reviewers flow section.\n\n## Related issues and merge requests\n\nNone.\n\n## Documentation\n\nNo CLI command docs change, so `make gen-docs` is not needed.\n\n## How was this checked?\n\n- `curl -sL -o /dev/null -w '%{http_code} %{url_effective}'` on each old URL: 404 for the three handbook links; the `developer.md` link ends at `release/docs/-/tree/master`.\n- Same command on each new URL: 200. Each `#anchor` is an `id` in the live page HTML.\n- `release/docs` commit `6f229680` renames `general/security/developer.md` to `general/security/engineer.md`.\n\nThis contribution was prepared with the help of an AI assistant. I reviewed the changes and take responsibility for them.",
+        "state": "opened",
+        "created_at": "2026-10-12T06:09:54.504Z",
+        "updated_at": "2026-10-12T09:14:38.070Z",
+        "merged_by": null,
+        "merge_user": null,
+        "merged_at": null,
+        "closed_by": null,
+        "closed_at": null,
+        "target_branch": "main",
+        "source_branch": "anishisbusy/contributor-docs-dead-links",
+        "user_notes_count": 6,
+        "upvotes": 0,
+        "downvotes": 0,
+        "author": {
+          "id": 25337378,
+          "username": "anishisbusy",
+          "public_email": "",
+          "name": "Anish Kumar",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/25337378/avatar.png?v=1791793279",
+          "web_url": "https://gitlab.com/anishisbusy",
+          "bot": false
+        },
+        "assignees": [
+          {
+            "id": 25337378,
+            "username": "anishisbusy",
+            "public_email": "",
+            "name": "Anish Kumar",
+            "state": "active",
+            "locked": false,
+            "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/25337378/avatar.png?v=1791793279",
+            "web_url": "https://gitlab.com/anishisbusy"
+          }
+        ],
+        "assignee": {
+          "id": 25337378,
+          "username": "anishisbusy",
+          "public_email": "",
+          "name": "Anish Kumar",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/25337378/avatar.png?v=1791793279",
+          "web_url": "https://gitlab.com/anishisbusy"
+        },
+        "reviewers": [
+          {
+            "id": 12294975,
+            "username": "jhebden",
+            "public_email": "",
+            "name": "James Hebden",
+            "state": "active",
+            "locked": false,
+            "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/12294975/avatar.png?v=1791801308",
+            "web_url": "https://gitlab.com/jhebden"
+          },
+          {
+            "id": 21826781,
+            "username": "GitLabDuo",
+            "public_email": null,
+            "name": "GitLab Duo",
+            "state": "active",
+            "locked": false,
+            "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/21826781/duo-bot.png?v=1781708173",
+            "web_url": "https://gitlab.com/GitLabDuo"
+          }
+        ],
+        "source_project_id": 45049979,
+        "target_project_id": 34675721,
+        "labels": [
+          "Community contribution",
+          "Hackathon",
+          "documentation",
+          "tw::triaged",
+          "workflow::ready for review"
+        ],
+        "draft": false,
+        "imported": false,
+        "imported_from": "none",
+        "work_in_progress": false,
+        "milestone": null,
+        "merge_when_pipeline_succeeds": false,
+        "merge_status": "can_be_merged",
+        "detailed_merge_status": "discussions_not_resolved",
+        "merge_after": null,
+        "sha": "afce4da4d5fe7d2fd0647b5b864526ea0a2827cb",
+        "merge_commit_sha": null,
+        "squash_commit_sha": null,
+        "discussion_locked": null,
+        "should_remove_source_branch": null,
+        "force_remove_source_branch": true,
+        "prepared_at": "2026-10-12T06:09:57.477Z",
+        "allow_collaboration": true,
+        "allow_maintainer_to_push": true,
+        "reference": "!4089",
+        "references": {
+          "short": "!4089",
+          "relative": "!4089",
+          "full": "gitlab-org/cli!4089"
+        },
+        "web_url": "https://gitlab.com/gitlab-org/cli/-/merge_requests/4089",
+        "time_stats": {
+          "time_estimate": 0,
+          "total_time_spent": 0,
+          "human_time_estimate": null,
+          "human_total_time_spent": null
+        },
+        "squash": true,
+        "squash_on_merge": true,
+        "task_completion_status": {
+          "count": 0,
+          "completed_count": 0
+        },
+        "has_conflicts": false,
+        "blocking_discussions_resolved": false,
+        "approvals_before_merge": null
+      },
+      {
+        "id": 546832189,
+        "iid": 4088,
+        "project_id": 34675721,
+        "title": "fix(release): close the release notes directory handle",
+        "description": "## Description\n\nRelease-note file lookup opens the repository directory with `os.OpenRoot` but never closes that handle.\nOn Windows, this prevents removal of the directory after the command returns.\nClose the directory on every return path and preserve file and directory close errors.\n\nCloses #8599\n\n## Validation\n\nThree regressions cover reading a file, falling back to text for a missing file, and a directory read error.\nEach case fails to remove its directory on the original Windows code and passes with this change.\nThe full release-create suite also passes, including the two existing cleanup failures reproduced in the issue.\nThe full affected package suite passes on Linux with Go 1.27.2.\n\n## AI assistance\n\nImplemented and tested with OpenAI Codex.",
+        "state": "opened",
+        "created_at": "2026-10-12T02:42:37.835Z",
+        "updated_at": "2026-10-12T07:13:35.199Z",
+        "merged_by": null,
+        "merge_user": null,
+        "merged_at": null,
+        "closed_by": null,
+        "closed_at": null,
+        "target_branch": "main",
+        "source_branch": "fix/8599-release-notes-root-handle",
+        "user_notes_count": 2,
+        "upvotes": 0,
+        "downvotes": 0,
+        "author": {
+          "id": 39012371,
+          "username": "vivekyarra567",
+          "public_email": "redacted@example.invalid",
+          "name": "Yarra Vivek",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://secure.gravatar.com/avatar/2e76193c97431532a49acc6f40e4aa54d6f460f91da23202bad1a76ab610ff43?s=80&d=identicon",
+          "web_url": "https://gitlab.com/vivekyarra567",
+          "bot": false
+        },
+        "assignees": [
+          {
+            "id": 39012371,
+            "username": "vivekyarra567",
+            "public_email": "redacted@example.invalid",
+            "name": "Yarra Vivek",
+            "state": "active",
+            "locked": false,
+            "avatar_url": "https://secure.gravatar.com/avatar/2e76193c97431532a49acc6f40e4aa54d6f460f91da23202bad1a76ab610ff43?s=80&d=identicon",
+            "web_url": "https://gitlab.com/vivekyarra567"
+          }
+        ],
+        "assignee": {
+          "id": 39012371,
+          "username": "vivekyarra567",
+          "public_email": "redacted@example.invalid",
+          "name": "Yarra Vivek",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://secure.gravatar.com/avatar/2e76193c97431532a49acc6f40e4aa54d6f460f91da23202bad1a76ab610ff43?s=80&d=identicon",
+          "web_url": "https://gitlab.com/vivekyarra567"
+        },
+        "reviewers": [],
+        "source_project_id": 84770277,
+        "target_project_id": 34675721,
+        "labels": [
+          "Community contribution",
+          "Hackathon",
+          "devops::ai coding",
+          "group::code review",
+          "linked-issue",
+          "section::ai",
+          "type::bug",
+          "workflow::in dev"
+        ],
+        "draft": false,
+        "imported": false,
+        "imported_from": "none",
+        "work_in_progress": false,
+        "milestone": null,
+        "merge_when_pipeline_succeeds": false,
+        "merge_status": "can_be_merged",
+        "detailed_merge_status": "not_approved",
+        "merge_after": null,
+        "sha": "717e6ad0d7051f615aabcc430f551c6e8d2c3dc5",
+        "merge_commit_sha": null,
+        "squash_commit_sha": null,
+        "discussion_locked": null,
+        "should_remove_source_branch": null,
+        "force_remove_source_branch": true,
+        "prepared_at": "2026-10-12T02:42:40.039Z",
+        "allow_collaboration": true,
+        "allow_maintainer_to_push": true,
+        "reference": "!4088",
+        "references": {
+          "short": "!4088",
+          "relative": "!4088",
+          "full": "gitlab-org/cli!4088"
+        },
+        "web_url": "https://gitlab.com/gitlab-org/cli/-/merge_requests/4088",
+        "time_stats": {
+          "time_estimate": 0,
+          "total_time_spent": 0,
+          "human_time_estimate": null,
+          "human_total_time_spent": null
+        },
+        "squash": true,
+        "squash_on_merge": true,
+        "task_completion_status": {
+          "count": 0,
+          "completed_count": 0
+        },
+        "has_conflicts": false,
+        "blocking_discussions_resolved": true,
+        "approvals_before_merge": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,276 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "repo": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "owner": "forgejo",
+          "name": "forgejo"
+        },
+        "sha": "5e50d27f1e39e2bf0ff5bda2046ea1a5c0db7a3d"
+      },
+      "sha": "5e50d27f1e39e2bf0ff5bda2046ea1a5c0db7a3d",
+      "message": "2026-10-12 security patches (#14811)\n\nReviewed-on: https://codeberg.org/forgejo/forgejo/pulls/14811\nReviewed-by: Michael Kriese <redacted@example.invalid>\n",
+      "author": {
+        "actor": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "login": "viceice",
+          "id": "76321",
+          "name": "Michael Kriese",
+          "avatarUrl": "https://codeberg.org/avatars/e97548751762c9a393bdcd89c44d6c24",
+          "url": "https://codeberg.org/viceice",
+          "isBotHint": false
+        },
+        "name": "Michael Kriese",
+        "email": "redacted@example.invalid",
+        "date": "2026-10-12T06:19:06.000Z"
+      },
+      "committer": {
+        "actor": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "login": "viceice",
+          "id": "76321",
+          "name": "Michael Kriese",
+          "avatarUrl": "https://codeberg.org/avatars/e97548751762c9a393bdcd89c44d6c24",
+          "url": "https://codeberg.org/viceice",
+          "isBotHint": false
+        },
+        "name": "Michael Kriese",
+        "email": "redacted@example.invalid",
+        "date": "2026-10-12T06:19:06.000Z"
+      },
+      "parents": [
+        "1b980f3558583271691afb2e6d5bfb96a67cc1e0",
+        "0edf5377c4040ab7f0b4b526f64e090c616769ab"
+      ],
+      "url": "https://codeberg.org/forgejo/forgejo/commit/5e50d27f1e39e2bf0ff5bda2046ea1a5c0db7a3d",
+      "stats": {
+        "additions": 0,
+        "deletions": 0,
+        "total": 0
+      },
+      "files": [
+        {
+          "path": "release-notes/14813.md",
+          "status": "added",
+          "statusRaw": "added"
+        },
+        {
+          "path": "release-notes/14814.md",
+          "status": "added",
+          "statusRaw": "added"
+        },
+        {
+          "path": "models/issues/label.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "models/issues/label_test.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "routers/api/v1/org/label.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "routers/api/v1/repo/issue_label.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "routers/api/v1/repo/label.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "routers/web/org/org_labels.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "routers/web/repo/issue_label.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "services/actions/notifier.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "tests/integration/actions_trigger_test.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "tests/integration/api_issue_label_test.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        }
+      ]
+    },
+    {
+      "ref": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "repo": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "owner": "forgejo",
+          "name": "forgejo"
+        },
+        "sha": "0edf5377c4040ab7f0b4b526f64e090c616769ab"
+      },
+      "sha": "0edf5377c4040ab7f0b4b526f64e090c616769ab",
+      "message": "chore: release notes for 2026-10-12 security patches\n",
+      "author": {
+        "actor": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "login": "mfenniak",
+          "id": "222642",
+          "name": "Mathieu Fenniak",
+          "avatarUrl": "https://codeberg.org/avatars/561ee781e72bbbfd2865db7b4ba4fbf50f64da3d3cb0f4e1897b6da25224a2a7",
+          "url": "https://codeberg.org/mfenniak",
+          "isBotHint": false
+        },
+        "name": "Mathieu Fenniak",
+        "email": "redacted@example.invalid",
+        "date": "2026-10-11T16:02:26.000Z"
+      },
+      "committer": {
+        "actor": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "login": "mfenniak",
+          "id": "222642",
+          "name": "Mathieu Fenniak",
+          "avatarUrl": "https://codeberg.org/avatars/561ee781e72bbbfd2865db7b4ba4fbf50f64da3d3cb0f4e1897b6da25224a2a7",
+          "url": "https://codeberg.org/mfenniak",
+          "isBotHint": false
+        },
+        "name": "Mathieu Fenniak",
+        "email": "redacted@example.invalid",
+        "date": "2026-10-11T16:16:07.000Z"
+      },
+      "parents": [
+        "fc24c1a9c88b435a19b01621c2ff7076d5a94407"
+      ],
+      "url": "https://codeberg.org/forgejo/forgejo/commit/0edf5377c4040ab7f0b4b526f64e090c616769ab",
+      "stats": {
+        "additions": 8,
+        "deletions": 0,
+        "total": 8
+      },
+      "files": [
+        {
+          "path": "release-notes/14813.md",
+          "status": "added",
+          "statusRaw": "added"
+        },
+        {
+          "path": "release-notes/14814.md",
+          "status": "added",
+          "statusRaw": "added"
+        }
+      ]
+    },
+    {
+      "ref": {
+        "forge": "forgejo",
+        "instance": "codeberg.org",
+        "repo": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "owner": "forgejo",
+          "name": "forgejo"
+        },
+        "sha": "fc24c1a9c88b435a19b01621c2ff7076d5a94407"
+      },
+      "sha": "fc24c1a9c88b435a19b01621c2ff7076d5a94407",
+      "message": "fix: prevent deletion of labels from org/repo with mismatched ownership\n",
+      "author": {
+        "actor": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "login": "mfenniak",
+          "id": "222642",
+          "name": "Mathieu Fenniak",
+          "avatarUrl": "https://codeberg.org/avatars/561ee781e72bbbfd2865db7b4ba4fbf50f64da3d3cb0f4e1897b6da25224a2a7",
+          "url": "https://codeberg.org/mfenniak",
+          "isBotHint": false
+        },
+        "name": "Mathieu Fenniak",
+        "email": "redacted@example.invalid",
+        "date": "2026-09-29T02:24:18.000Z"
+      },
+      "committer": {
+        "actor": {
+          "forge": "forgejo",
+          "instance": "codeberg.org",
+          "login": "mfenniak",
+          "id": "222642",
+          "name": "Mathieu Fenniak",
+          "avatarUrl": "https://codeberg.org/avatars/561ee781e72bbbfd2865db7b4ba4fbf50f64da3d3cb0f4e1897b6da25224a2a7",
+          "url": "https://codeberg.org/mfenniak",
+          "isBotHint": false
+        },
+        "name": "Mathieu Fenniak",
+        "email": "redacted@example.invalid",
+        "date": "2026-10-11T15:53:36.000Z"
+      },
+      "parents": [
+        "9cd3ee1397fc1317a4a46a72d5fda7559276ee90"
+      ],
+      "url": "https://codeberg.org/forgejo/forgejo/commit/fc24c1a9c88b435a19b01621c2ff7076d5a94407",
+      "stats": {
+        "additions": 42,
+        "deletions": 29,
+        "total": 71
+      },
+      "files": [
+        {
+          "path": "models/issues/label.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "models/issues/label_test.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "routers/api/v1/org/label.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "routers/api/v1/repo/label.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "routers/web/org/org_labels.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        },
+        {
+          "path": "routers/web/repo/issue_label.go",
+          "status": "modified",
+          "statusRaw": "modified"
+        }
+      ]
+    }
+  ],
+  "cursor": {
+    "nextUrl": "https://codeberg.org/api/v1/repos/forgejo/forgejo/commits?limit=3&page=2"
+  }
+}

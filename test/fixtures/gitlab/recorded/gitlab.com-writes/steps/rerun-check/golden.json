@@ -1,0 +1,15 @@
+{
+  "head": "1fbd50f395a26d3af5a89288311d40dbae090f57",
+  "check": {
+    "forge": "gitlab",
+    "instance": "gitlab.com",
+    "repo": {
+      "forge": "gitlab",
+      "instance": "gitlab.com",
+      "owner": "forges-fixtures",
+      "name": "forges-fixtures"
+    },
+    "id": "17094825107",
+    "type": "status"
+  }
+}
