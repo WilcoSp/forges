@@ -1,13 +1,18 @@
 import type { CommentRef, ForgeOrigin, ReleaseRef, RepoRef, ResolvedThreadRef, ThreadKind, ThreadRef } from './model.ts'
 import { isResolvedThread, normaliseRepoName } from './model.ts'
 
-/** Something with a web page. */
+/**
+ * Something with a web page. A revision (`at`, `base` or `head`) is a branch,
+ * tag or commit sha; Azure DevOps reads anything but a full commit sha as a branch.
+ */
 export type UrlTarget
   = | { repo: RepoRef }
     | { thread: ThreadRef }
     | { comment: CommentRef }
     | { release: ReleaseRef }
     | { file: { repo: RepoRef, path: string, at: string, line?: number } }
+    | { raw: { repo: RepoRef, path: string, at: string } }
+    | { commit: { repo: RepoRef, sha: string } }
     | { compare: { repo: RepoRef, base: string, head: string } }
 
 /** What a forge web URL points at. `repo` is always set; the rest when the URL is that specific. */
@@ -27,8 +32,8 @@ export interface ReferenceOptions {
 }
 
 /**
- * How a provider builds and reads its web URLs. Paths are relative to
- * `origin`; any builder may return `undefined` when the forge has no such page.
+ * How a provider builds and reads its web URLs. Builders return a path relative
+ * to `origin` or an absolute URL, and may return `undefined` when the forge has no such page.
  */
 export interface WebLinks {
   /** The origin of the forge website, such as `https://github.com`. */
@@ -43,6 +48,8 @@ export interface WebLinks {
   release?: (ref: ReleaseRef) => string | undefined
   /** The page of a file at a revision, optionally at a line. */
   file?: (repo: RepoRef, path: string, at: string, line?: number) => string | undefined
+  /** The raw bytes of a file at a revision. */
+  raw?: (repo: RepoRef, path: string, at: string) => string | undefined
   /** The page that compares two revisions. */
   compare?: (repo: RepoRef, base: string, head: string) => string | undefined
   /** Reads a URL already known to be on `origin`, split into path segments. */
@@ -64,6 +71,10 @@ function encodePath(path: string): string {
 }
 
 export function webUrlFor(web: WebLinks, target: UrlTarget): string | undefined {
+  const revision = 'file' in target ? target.file : 'raw' in target ? target.raw : 'commit' in target ? target.commit : 'compare' in target ? target.compare : undefined
+  if (revision?.repo.kind === 'namespace') {
+    return undefined
+  }
   let path: string | undefined
   if ('repo' in target) {
     path = web.repo(target.repo)
@@ -81,10 +92,17 @@ export function webUrlFor(web: WebLinks, target: UrlTarget): string | undefined 
   else if ('file' in target) {
     path = web.file?.(target.file.repo, target.file.path, target.file.at, target.file.line)
   }
+  else if ('raw' in target) {
+    path = web.raw?.(target.raw.repo, target.raw.path, target.raw.at)
+  }
+  else if ('commit' in target) {
+    const { repo, sha } = target.commit
+    path = sha ? web.thread({ forge: repo.forge, instance: repo.instance, repo, kind: 'commit', number: sha }) : undefined
+  }
   else {
     path = web.compare?.(target.compare.repo, target.compare.base, target.compare.head)
   }
-  return path === undefined ? undefined : `${web.origin}${path}`
+  return path === undefined ? undefined : path.startsWith('/') ? `${web.origin}${path}` : path
 }
 
 /** `ssh://user@host:port/path` or `git://host:port/path` with the host in group 1, or `user@host:path` with it in group 2; the path is group 3. */
@@ -142,6 +160,12 @@ export interface GitHubShape {
   commentFragment: string
   /** The path segment that leads to a file at a revision. */
   file: (at: string) => string
+  /** The path segment of commits; defaults to `commit`. */
+  commit?: string
+  /** Whether the forge serves raw files at `/raw/{at}/{path}`; defaults to `true`. */
+  raw?: boolean
+  /** The origin that serves raw files at `/{owner}/{name}/{at}/{path}`; when unset, raw files are linked at `/raw/{at}/{path}` on the forge. */
+  rawOrigin?: string
   /** The URL fragment that selects a line of a file. */
   lineFragment: (line: number) => string
   /** Reference prefix for pulls when it differs from issues. */
@@ -153,7 +177,7 @@ export interface GitHubShape {
 /** Web links for forges laid out like GitHub: `/{owner}/{name}/issues/{n}` and friends. */
 export function githubShapedWeb(origin: string, shape: GitHubShape): WebLinks {
   const repoPath = (repo: RepoRef) => `/${encodePath(repo.owner)}/${encodeURIComponent(repo.name)}`
-  const kindPath: Partial<Record<ThreadKind, string>> = { issue: 'issues', pull_request: shape.pull, commit: 'commit', ...shape.discussions ? { discussion: 'discussions' } : {} }
+  const kindPath: Partial<Record<ThreadKind, string>> = { issue: 'issues', pull_request: shape.pull, commit: shape.commit ?? 'commit', ...shape.discussions ? { discussion: 'discussions' } : {} }
   const kindOf = new Map<string, ThreadKind>(Object.entries(kindPath).map(([kind, path]) => [path, kind as ThreadKind]))
   const reserved = new Set(shape.reserved?.map(segment => segment.toLowerCase()))
   return {
@@ -165,6 +189,11 @@ export function githubShapedWeb(origin: string, shape: GitHubShape): WebLinks {
       : `${repoPath(ref.thread.repo)}/${kindPath[ref.thread.kind]}/${encodeURIComponent(ref.thread.number)}#${shape.commentFragment}${ref.id}`,
     release: ref => ref.tag ? `${repoPath(ref.repo)}/releases/tag/${encodeURIComponent(ref.tag)}` : undefined,
     file: (repo, path, at, line) => `${repoPath(repo)}${shape.file(at)}/${encodePath(path)}${line ? `#${shape.lineFragment(line)}` : ''}`,
+    raw: (repo, path, at) => shape.raw === false
+      ? undefined
+      : shape.rawOrigin
+        ? `${shape.rawOrigin}${repoPath(repo)}/${encodeURIComponent(at)}/${encodePath(path)}`
+        : `${repoPath(repo)}/raw/${encodeURIComponent(at)}/${encodePath(path)}`,
     compare: (repo, base, head) => `${repoPath(repo)}/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}`,
     parse: (segments, url, from) => {
       const [owner, name, section, id] = segments
