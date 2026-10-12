@@ -196,7 +196,7 @@ jobs:
         run: |
           set -euo pipefail
           {
-            echo '#### Identifiers renamed to those of the recordings replaced'
+            echo '#### renamed ids'
             echo
             echo '```text'
             node scripts/stabilise-recordings.ts | tr -d '`'
@@ -231,11 +231,16 @@ jobs:
           echo "::add-mask::$auth"
           git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push -q --force "https://github.com/$GITHUB_REPOSITORY.git" "HEAD:refs/heads/$BRANCH"
           {
-            echo "Recorded by the [\`fixtures\` workflow]($RUN_URL) against the live forges."
+            names=$(printf '`%s`, ' $forges)
+            echo "re-recorded the fixture $KIND for ${names%, } ([run]($RUN_URL)), with a commit per forge."
             echo
-            echo "A step whose responses differ only in rate limits, counters, activity times or the expiry of signed URLs keeps its files. A step that failed keeps its earlier recording where nothing it reads from was recorded since. Write recordings have the identifiers they created renamed to those of the recording they replace, where the renamed recording still replays to the same output."
+            echo "steps that only changed in rate limits, counters or timestamps are omitted."
+            if [ "$KIND" = writes ]; then
+              echo
+              echo "issue and PR numbers and other ids this run created have been swapped back to the ones already committed, if that doesn't affect test output."
+            fi
             echo
-            echo '<details><summary>Recorder output</summary>'
+            echo '<details><summary>recorder output</summary>'
             echo
             cat "$RUNNER_TEMP/summary.md"
             echo
