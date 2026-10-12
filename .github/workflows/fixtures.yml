@@ -135,13 +135,16 @@ jobs:
         if: always()
         run: rm -f "$RUNNER_TEMP/fixtures.env"
 
+      # The artifact holds its own `recording-<kind>-<forge>/` directory, as a
+      # download of one artifact lands without the directory named after it.
       - name: 📦 Stage the recording
         env:
           FORGE: ${{ matrix.forge }}
+          STAGED: ${{ runner.temp }}/artifact/recording-${{ needs.plan.outputs.kind }}-${{ matrix.forge }}
         run: |
-          mkdir -p "$RUNNER_TEMP/artifact"
-          cp -R "test/fixtures/$FORGE/recorded" "$RUNNER_TEMP/artifact/recorded"
-          cp "$RUNNER_TEMP/summary.md" "$RUNNER_TEMP/artifact/summary.md"
+          mkdir -p "$STAGED"
+          cp -R "test/fixtures/$FORGE/recorded" "$STAGED/recorded"
+          cp "$RUNNER_TEMP/summary.md" "$STAGED/summary.md"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -185,6 +188,7 @@ jobs:
         with:
           pattern: recording-${{ needs.plan.outputs.kind }}-*
           path: ${{ runner.temp }}/recordings
+          merge-multiple: true
 
       - name: 📥 Apply the recordings
         run: |
