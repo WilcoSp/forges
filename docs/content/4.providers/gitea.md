@@ -52,6 +52,10 @@ Because Gitea and Forgejo share an implementation, the following sections of the
 - [Listing an owner's repositories](/providers/forgejo#listing-an-owners-repositories)
 - [Search](/providers/forgejo#search)
 
+## Review replies
+
+`replyToReviewComment()` needs Gitea 1.27 or later. It replies by the comment's `ref`, and the reply joins the same review. gitea.com runs a recent build, so it works there out of the box. For a self-hosted instance, pass `instanceVersion` or call `refreshCapabilities()` first.
+
 ## Checks and CI
 
 `checks.list()` reads commit statuses, and `checks.report()` writes them.
@@ -174,6 +178,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `reviews.create` | ✅ | ❌ |
 | `reviews.submit` | ✅ | ❌ |
 | `reviews.approve` | ✅ | ❌ |
+| `reviews.reply` | ✅ | ❌ |
 | `reviews.resolveThread` | ❌ | ❌ |
 | `releases.list` | ✅ | ✅ |
 | `releases.get` | ✅ | ✅ |

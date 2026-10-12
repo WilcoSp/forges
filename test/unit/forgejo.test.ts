@@ -457,3 +457,17 @@ describe('gitea single-item reads', () => {
     await expect(provider.threads.getComment({ forge: 'gitea', instance: 'gitea.com', thread, id: '9' })).rejects.toThrow(NotFoundError)
   })
 })
+
+describe('gitea review replies', () => {
+  const auth = { type: 'token', token: 't' } as const
+
+  it('waits for Gitea 1.27 on a self-hosted instance, and Forgejo has no replies', () => {
+    expect(gitea({ auth, baseUrl: 'https://git.example.org', instanceVersion: '1.26.4' }).create().capabilities.reviews.reply).toBe(false)
+    expect(gitea({ auth, baseUrl: 'https://git.example.org', instanceVersion: '1.27.0' }).create().capabilities.reviews.reply).toBe(true)
+    expect(forgejo({ auth }).create().capabilities.reviews.reply).toBe(false)
+  })
+
+  it('asks for write scopes to reply', () => {
+    expect(gitea({ auth }).create().scopesFor('threads.replyToReviewComment')).toEqual({ token: ['write:issue', 'write:repository'] })
+  })
+})

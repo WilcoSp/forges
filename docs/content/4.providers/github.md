@@ -82,6 +82,10 @@ When the pull request is part of a stack, GitHub also merges every open pull req
 
 Two options aren't available, and they reject with `UnsupportedOperationError`. One is `whenChecksPass`, because the REST API doesn't enable auto-merge. The other is the `rebase_merge` and `fast_forward_only` methods, which GitHub doesn't have.
 
+## Review replies
+
+GitHub doesn't support replies to replies, so when you pass a reply to `replyToReviewComment()`, it posts to the comment in its `inReplyTo` instead. The new comment carries the `thread` of the comment you pass, so you can call `resolveReviewThread()` with it.
+
 ## Checks
 
 What `checks.report()` writes depends on your credential. With the credential of an app installation, it writes a check run, and with any other credential it writes a commit status. `checks.rerun()` re-requests a check run, so it can't re-run a commit status.
@@ -222,6 +226,7 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `reviews.create` | ✅ | ❌ |
 | `reviews.submit` | ✅ | ❌ |
 | `reviews.approve` | ✅ | ❌ |
+| `reviews.reply` | ✅ | ❌ |
 | `reviews.resolveThread` | ✅ | ❌ |
 | `releases.list` | ✅ | ✅ |
 | `releases.get` | ✅ | ✅ |

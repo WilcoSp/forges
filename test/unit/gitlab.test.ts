@@ -44,6 +44,13 @@ describe('gitlab provider', () => {
     expect(review.comments && review.comments[0]!.thread).toEqual({ id: 'd1', resolved: false })
   })
 
+  it('cannot reply to a comment without a discussion', async () => {
+    const { instance, calls } = provider()
+
+    await expect(instance.threads.replyToReviewComment(mr, { ref: { forge: 'gitlab', instance: 'gitlab.com', thread: mr, id: '5550001' } }, 'hi')).rejects.toThrow(UnsupportedOperationError)
+    expect(calls).toHaveLength(0)
+  })
+
   it('falls back to the user search when the profile needs credentials', async () => {
     const { fetch } = fixtureFetch('gitlab/recorded/gitlab.com', {
       'GET https://gitlab.com/api/v4/users/8420142': { status: 403, headers: {}, body: { message: '403 Forbidden - Not authorized!' } },
