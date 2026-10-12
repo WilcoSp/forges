@@ -323,8 +323,8 @@ export const STEPS: Step[] = [
     }
     return provider.search.codePage({ text: manifest.scratch.name, repo: manifest.scratch, perPage: 20 })
   } },
-  { name: 'webhooks', verb: 'webhooks.listPage', run: async (provider, manifest, context) => {
-    const result = await provider.webhooks.listPage(manifest.scratch ?? manifest.repo, page)
+  { name: 'webhooks', verb: 'webhooks.listPage', when: (_provider, manifest) => !!manifest.scratch, run: async (provider, manifest, context) => {
+    const result = await provider.webhooks.listPage(manifest.scratch!, page)
     context.webhook = result.items[0]
     return result
   } },
