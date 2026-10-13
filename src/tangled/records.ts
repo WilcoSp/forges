@@ -437,6 +437,22 @@ export function createTangledRecords({ options, instance, webUrl, context, atpro
     return count
   }
 
+  /** A repository's star and fork counts from the index, each left out when the index cannot return it. */
+  async function repoCounts(record: RecordResponse<RepoRecord>, signal?: AbortSignal): Promise<Pick<Repo, 'stars' | 'forks'>> {
+    const subject = record.value.repoDid
+    if (!subject) {
+      return {}
+    }
+    const count = (nsid: string) => api.json<{ count: number }>(`/xrpc/${nsid}`, { query: { subject }, signal }).then(({ data }) => data.count, (error: unknown) => {
+      if (signal?.aborted || !degradesToWarning(error)) {
+        throw error
+      }
+      return undefined
+    })
+    const [stars, forks] = await Promise.all([count('sh.tangled.feed.countStars'), count('sh.tangled.repo.countForks')])
+    return { stars, forks }
+  }
+
   async function toStreamEvent(message: JetstreamCommitEvent): Promise<ForgeEventInput | undefined> {
     const { commit } = message
     const uri = atUri(message.did, commit.collection, commit.rkey)
@@ -505,7 +521,7 @@ export function createTangledRecords({ options, instance, webUrl, context, atpro
     return options.sshHosts?.[knot] ?? DEFAULT_SSH_HOSTS[knot] ?? knot
   }
 
-  function toRepo(ref: RepoRef, record: RepoRecord, raw: unknown): Repo {
+  function toRepo(ref: RepoRef, record: RepoRecord, raw: unknown, counts: Pick<Repo, 'stars' | 'forks'> = {}): Repo {
     const parent = record.source ? parseAtUri(record.source) : undefined
     const path = `${ref.owner}/${ref.name}`
     return {
@@ -523,6 +539,7 @@ export function createTangledRecords({ options, instance, webUrl, context, atpro
       homepage: record.website || undefined,
       mergeMethods: ['rebase'],
       defaultMergeMethod: 'rebase',
+      ...counts,
       raw,
     }
   }
@@ -692,5 +709,5 @@ export function createTangledRecords({ options, instance, webUrl, context, atpro
     collaborators.clear()
   }
 
-  return { forgetRepos, forgetCollaborators, labelsOf, repoLabels, threadUri, reactionsPage, collaboratorsPage, permissionFor, stateAuthors, actorFor, resolveRepo, threadFor, subjectUri, activity, toStreamEvent, canonicalRepo, canonicalRef, repoDidOf, toRepo, readThread, wholePage, listPage, listComments, findSubscription }
+  return { forgetRepos, forgetCollaborators, labelsOf, repoLabels, threadUri, reactionsPage, collaboratorsPage, permissionFor, stateAuthors, actorFor, resolveRepo, threadFor, subjectUri, activity, toStreamEvent, canonicalRepo, canonicalRef, repoDidOf, toRepo, repoCounts, readThread, wholePage, listPage, listComments, findSubscription }
 }
