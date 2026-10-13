@@ -182,6 +182,73 @@ describe('web links', () => {
   })
 
   it.each([
+    ['github', gh, 'https://github.com/acme/widgets/blob/main/src/a%20b.ts#L3', { owner: 'acme', name: 'widgets' }, { at: 'main', path: 'src/a b.ts', line: 3 }],
+    ['github at a line range', gh, 'https://github.com/acme/widgets/blob/main/README.md?plain=1#L3-L5', { owner: 'acme', name: 'widgets' }, { at: 'main', path: 'README.md', line: 3 }],
+    ['github at a heading', gh, 'https://github.com/acme/widgets/blob/main/README.md#usage', { owner: 'acme', name: 'widgets' }, { at: 'main', path: 'README.md' }],
+    ['github at a branch with a slash', gh, 'https://github.com/acme/widgets/blob/feat%2Fa/README.md', { owner: 'acme', name: 'widgets' }, { at: 'feat/a', path: 'README.md' }],
+    ['github enterprise', github({ auth, baseUrl: 'https://ghe.example.com/api/v3' }).create(), 'https://ghe.example.com/acme/widgets/blob/main/README.md', { owner: 'acme', name: 'widgets' }, { at: 'main', path: 'README.md' }],
+    ['forgejo at a branch', cb, 'https://codeberg.org/acme/widgets/src/branch/main/README.md', { owner: 'acme', name: 'widgets' }, { at: 'main', path: 'README.md' }],
+    ['forgejo at a tag', cb, 'https://codeberg.org/acme/widgets/src/tag/v1.0.0/README.md', { owner: 'acme', name: 'widgets' }, { at: 'v1.0.0', path: 'README.md' }],
+    ['forgejo at a commit', cb, `https://codeberg.org/acme/widgets/src/commit/${sha}/README.md`, { owner: 'acme', name: 'widgets' }, { at: sha, path: 'README.md' }],
+    ['forgejo at a short commit', cb, 'https://codeberg.org/acme/widgets/src/commit/abc1234/README.md', { owner: 'acme', name: 'widgets' }, { at: 'abc1234', path: 'README.md' }],
+    ['forgejo at a branch with a slash', cb, 'https://codeberg.org/acme/widgets/src/branch/feat%2Fa/README.md', { owner: 'acme', name: 'widgets' }, { at: 'feat/a', path: 'README.md' }],
+    ['forgejo at a branch with a nested path', cb, 'https://codeberg.org/forgejo/forgejo/src/branch/forgejo/release-notes-published/16.0.5.md', { owner: 'forgejo', name: 'forgejo' }, { at: 'forgejo', path: 'release-notes-published/16.0.5.md' }],
+    ['forgejo at a branch without a qualifier', cb, 'https://codeberg.org/acme/widgets/src/main/README.md#L3', { owner: 'acme', name: 'widgets' }, { at: 'main', path: 'README.md', line: 3 }],
+    ['gitea', gitea({ auth }).create(), 'https://gitea.com/acme/widgets/src/branch/main/README.md', { owner: 'acme', name: 'widgets' }, { at: 'main', path: 'README.md' }],
+    ['gitee', gitee({ auth }).create(), 'https://gitee.com/acme/widgets/blob/main/README.md', { owner: 'acme', name: 'widgets' }, { at: 'main', path: 'README.md' }],
+    ['pushin', pushin({ auth }).create(), 'https://pushin.eu/acme/widgets/blob/main/README.md', { owner: 'acme', name: 'widgets' }, { at: 'main', path: 'README.md' }],
+    ['gitlab', gl, 'https://gitlab.com/acme/platform/widgets/-/blob/main/src/a%20b.ts#L3', { owner: 'acme/platform', name: 'widgets' }, { at: 'main', path: 'src/a b.ts', line: 3 }],
+    ['gitlab at a line range', gl, 'https://gitlab.com/acme/platform/widgets/-/blob/main/README.md?ref_type=heads#L3-5', { owner: 'acme/platform', name: 'widgets' }, { at: 'main', path: 'README.md', line: 3 }],
+    ['bitbucket', bb, 'https://bitbucket.org/acme/widgets/src/main/src/a%20b.ts#lines-3', { owner: 'acme', name: 'widgets' }, { at: 'main', path: 'src/a b.ts', line: 3 }],
+    ['bitbucket at a line range', bb, 'https://bitbucket.org/acme/widgets/src/main/README.md#lines-3:5', { owner: 'acme', name: 'widgets' }, { at: 'main', path: 'README.md', line: 3 }],
+    ['tangled', tg, 'https://tangled.org/acme.dev/widgets/blob/feat%2Fa/src/a%20b.ts#L3', { owner: 'acme.dev', name: 'widgets' }, { at: 'feat/a', path: 'src/a b.ts', line: 3 }],
+    ['azure-devops at a branch', az, 'https://dev.azure.com/contoso/Widgets/_git/widgets?path=%2FREADME.md&version=GBmain', { owner: 'contoso/Widgets', name: 'widgets' }, { at: 'main', path: 'README.md' }],
+    ['azure-devops at a tag', az, 'https://dev.azure.com/contoso/Widgets/_git/widgets?path=%2FREADME.md&version=GTv1.0.0', { owner: 'contoso/Widgets', name: 'widgets' }, { at: 'v1.0.0', path: 'README.md' }],
+    ['azure-devops at a commit', az, `https://dev.azure.com/contoso/Widgets/_git/widgets?path=%2FREADME.md&version=GC${sha}&line=3`, { owner: 'contoso/Widgets', name: 'widgets' }, { at: sha, path: 'README.md', line: 3 }],
+    ['azure-devops on the default branch', az, 'https://dev.azure.com/contoso/Widgets/_git/widgets?path=%2FREADME.md', { owner: 'contoso/Widgets', name: 'widgets' }, { path: 'README.md' }],
+  ] as const)('reads the file path from a %s URL', (_, provider, url, repo, file) => {
+    const parsed = provider.parseUrl(url)
+
+    expect(parsed?.repo).toMatchObject(repo)
+    expect(parsed?.file).toEqual(file)
+  })
+
+  it.each([
+    ['github', gh, { ...repo }],
+    ['forgejo', cb, { ...repo, forge: 'forgejo', instance: 'codeberg.org' }],
+    ['gitlab', gl, { ...repo, forge: 'gitlab', instance: 'gitlab.com', owner: 'acme/platform' }],
+    ['bitbucket', bb, { ...repo, forge: 'bitbucket', instance: 'bitbucket.org' }],
+    ['tangled', tg, { ...repo, forge: 'tangled', instance: 'tangled.org', owner: 'acme.dev' }],
+    ['azure-devops', az, { ...repo, forge: 'azure-devops', instance: 'dev.azure.com', owner: 'contoso/Widgets' }],
+  ] as const)('reads back the %s file URL it builds', (_, provider, target) => {
+    for (const at of ['main', 'feat/a', sha]) {
+      const file = { path: 'src/a b.ts', at, line: 3 }
+
+      expect(provider.parseUrl(provider.urlFor({ file: { repo: target, ...file } })!)?.file).toEqual(file)
+    }
+  })
+
+  it('leaves the file off a URL that is not a file page', () => {
+    expect(gh.parseUrl('https://github.com/acme/widgets')?.file).toBeUndefined()
+    expect(gh.parseUrl('https://github.com/acme/widgets/blob')?.file).toBeUndefined()
+    expect(gl.parseUrl('https://gitlab.com/acme/platform/widgets/-/blob/main')?.file).toBeUndefined()
+    expect(bb.parseUrl('https://bitbucket.org/acme/widgets/src/main')?.file).toBeUndefined()
+    expect(az.parseUrl('https://dev.azure.com/contoso/Widgets/_git/widgets?path=%2F&version=GBmain')?.file).toBeUndefined()
+    expect(cb.parseUrl('https://codeberg.org/acme/widgets/src/branch/main')?.file).toBeUndefined()
+    expect(cb.parseUrl('https://codeberg.org/acme/widgets/src/tag/v1.0.0')?.file).toBeUndefined()
+    expect(cb.parseUrl(`https://codeberg.org/acme/widgets/src/commit/${sha}`)?.file).toBeUndefined()
+  })
+
+  it('reads an azure-devops pull request with a file query as the pull request', () => {
+    expect(az.parseUrl('https://dev.azure.com/contoso/Widgets/_git/widgets/pullrequest/12?_a=files&path=%2Fsrc%2Fa.ts&version=GBmain')).toMatchObject({ thread: { kind: 'pull_request', number: '12' } })
+  })
+
+  it('reads a file URL through the aggregate', () => {
+    const forges = createForges([github({ auth })])
+    expect(forges.parseUrl('https://github.com/acme/widgets/blob/main/README.md')).toMatchObject({ file: { at: 'main', path: 'README.md' } })
+  })
+
+  it.each([
     'git@github.com:acme/widgets.git',
     'org-12345@github.com:acme/widgets.git',
     'ssh://git@github.com/acme/widgets.git',

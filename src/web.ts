@@ -25,6 +25,13 @@ export interface ParsedForgeUrl {
   thread?: ThreadRef
   comment?: CommentRef
   release?: ReleaseRef
+  /**
+   * A file page: the repository-relative `path`, the revision `at` and the first selected `line`.
+   * `at` is unset when the URL leaves the revision to the default branch. An unencoded `/` in
+   * a branch name reads as the start of `path`. Forges that address files and folders
+   * alike, such as Forgejo, Bitbucket and Azure DevOps, also set this for a folder.
+   */
+  file?: { path: string, at?: string, line?: number }
 }
 
 /** Options for `provider.referenceTo()`. */
@@ -70,6 +77,11 @@ export function sameRepo(a: RepoRef, b: RepoRef | undefined): boolean {
   }
   const [left, right] = [normaliseRepoName(a), normaliseRepoName(b)]
   return left.owner === right.owner && left.name === right.name
+}
+
+export function lineOf(value: string | null | undefined): { line?: number } {
+  const line = Number.parseInt(value ?? '', 10)
+  return line > 0 ? { line } : {}
 }
 
 function encodePath(path: string): string {
@@ -166,6 +178,8 @@ export interface GitHubShape {
   commentFragment: string
   /** The path segment that leads to a file at a revision. */
   file: (at: string) => string
+  /** Reads a file page back from the segments after the repository name; defaults to `blob/{at}/{path}`. */
+  parseFile?: (segments: string[]) => { at: string, path: string } | undefined
   /** The path segment of commits; defaults to `commit`. */
   commit?: string
   /** Whether the forge serves raw files at `/raw/{at}/{path}`; defaults to `true`. */
@@ -180,12 +194,18 @@ export interface GitHubShape {
   reserved?: readonly string[]
 }
 
+/** Reads GitHub's file route, `blob/{at}/{path}`. */
+function parseGitHubFile([route, at, ...path]: string[]): { at: string, path: string } | undefined {
+  return route === 'blob' && at && path.length ? { at, path: path.join('/') } : undefined
+}
+
 /** Web links for forges laid out like GitHub: `/{owner}/{name}/issues/{n}` and friends. */
 export function githubShapedWeb(origin: string, shape: GitHubShape): WebLinks {
   const repoPath = (repo: RepoRef) => `/${encodePath(repo.owner)}/${encodeURIComponent(repo.name)}`
   const kindPath: Partial<Record<ThreadKind, string>> = { issue: 'issues', pull_request: shape.pull, commit: shape.commit ?? 'commit', ...shape.discussions ? { discussion: 'discussions' } : {} }
   const kindOf = new Map<string, ThreadKind>(Object.entries(kindPath).map(([kind, path]) => [path, kind as ThreadKind]))
   const reserved = new Set(shape.reserved?.map(segment => segment.toLowerCase()))
+  const parseFile = shape.parseFile ?? parseGitHubFile
   return {
     origin,
     repo: repoPath,
@@ -208,6 +228,10 @@ export function githubShapedWeb(origin: string, shape: GitHubShape): WebLinks {
         return undefined
       }
       const repo: RepoRef = { ...from, owner, name: name.replace(/\.git$/, '') }
+      const file = parseFile(segments.slice(2))
+      if (file) {
+        return { repo, file: { ...file, ...lineOf(url.hash.replace(/^#L/, '')) } }
+      }
       const kind = section ? kindOf.get(section) : undefined
       if (section === 'releases' && id === 'tag' && segments[4]) {
         return { repo, release: { ...from, repo, id: segments[4], tag: segments[4] } }
