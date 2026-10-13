@@ -3,7 +3,7 @@ import type { Actor, BaseOptions, Check, Comment, Cursor, EventKind, ForgeEventI
 import type { AnonymousAuth, BulkNotificationOptions, ForgeOptionsBase, TokenAuth, VerbScopes } from '../provider.ts'
 import type { ForgeVerb } from '../supports.ts'
 import type { WebLinks } from '../web.ts'
-import type { GiteeBranch, GiteeCheckRun, GiteeComment, GiteeCommit, GiteeCommitFile, GiteeCompare, GiteeContentFile, GiteeHook, GiteeIssue, GiteeLabel, GiteeNotification, GiteeOperateLog, GiteePullRequest, GiteeRelease, GiteeRepository, GiteeTag, GiteeTree, GiteeUser } from './types.ts'
+import type { GiteeBranch, GiteeCheckRun, GiteeComment, GiteeCommit, GiteeCommitFile, GiteeCompare, GiteeContentFile, GiteeContributor, GiteeHook, GiteeIssue, GiteeLabel, GiteeNotification, GiteeOperateLog, GiteePullRequest, GiteeRelease, GiteeRepository, GiteeTag, GiteeTree, GiteeUser } from './types.ts'
 import { fromBase64, toFileContent } from '../contents.ts'
 import { defineForgeProvider, perKind, verb } from '../define.ts'
 import { ForgeError, MergeMethodRequiredError, NotFoundError, toMergeError, UnsupportedOperationError } from '../errors.ts'
@@ -363,6 +363,17 @@ function setupGitee({ instance, origin: context, fetcher, baseUrl }: ProviderCon
           })),
           cursor: page.cursor,
           ...page.total !== undefined ? { total: page.total } : {},
+        }
+      }),
+      contributorsPage: verb(true, async (repo, listOptions = {}) => {
+        const { data } = await fetcher.json<GiteeContributor[]>(`${repoPath(repo)}/contributors`, { signal: listOptions.signal })
+        const all = data ?? []
+        const offset = Number(listOptions.cursor?.token ?? 0)
+        const end = listOptions.perPage === undefined ? all.length : offset + listOptions.perPage
+        return {
+          items: all.slice(offset, end).map(raw => ({ name: raw.name || undefined, email: raw.email || undefined, contributions: raw.contributions, raw })),
+          cursor: end < all.length ? { token: String(end) } : undefined,
+          total: all.length,
         }
       }),
     },

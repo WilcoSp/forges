@@ -49,6 +49,10 @@ GitLab projects can live in nested groups, so `RepoRef.owner` holds the full nam
 
 `repos.byOwner()` lists the projects of a group, or of a user when no group has that path. It leaves out projects that other groups share with the group, and it includes the projects of subgroups when you pass `subgroups: true`. GitLab doesn't record pushes, so `sort: 'pushed'` sorts by last activity, which also counts new issues and merge requests, and adds a `sort_unsupported` warning.
 
+## Contributors
+
+GitLab counts commits per author email, so `repos.contributors()` returns one contributor per email, with a `name` and an `email` but no `actor`.
+
 ## Notifications are to-dos
 
 On GitLab, `notifications.list()` reads the to-dos of the user. A to-do is either pending or done, and there is no separate read state, which affects how the notification operations behave:
@@ -132,6 +136,7 @@ If you create a hook with `webhooks.create()`, `nativeEvents` takes the names of
 | `repos.createLabel` | ✅ | ❌ |
 | `repos.milestones` | ✅ | ❌ |
 | `repos.collaborators` | ✅ | ❌ |
+| `repos.contributors` | ✅ | ✅ |
 | `repos.permissionFor` | ✅ | ❌ |
 | `repos.addCollaborator` | ✅ | ❌ |
 | `repos.assignableUsers` | ✅ | ✅ |

@@ -69,6 +69,10 @@ export interface GitHubCollaborator extends GitHubUser {
   permissions?: { admin?: boolean, maintain?: boolean, push?: boolean, triage?: boolean, pull?: boolean }
 }
 
+export type GitHubContributor
+  = | (GitHubUser & { contributions: number })
+    | { type: 'Anonymous', name?: string, email?: string, contributions: number }
+
 export interface GitHubReactions {
   'total_count'?: number
   '+1'?: number

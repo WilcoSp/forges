@@ -788,6 +788,34 @@
     "description": "The difference between two revisions.",
     "x-forges-type": "Comparison"
   },
+  "Contributor": {
+    "type": "object",
+    "properties": {
+      "actor": {
+        "$ref": "#/components/schemas/Actor",
+        "description": "The account, where the forge links the author to one."
+      },
+      "name": {
+        "type": "string",
+        "description": "The git author name, where the forge reports one."
+      },
+      "email": {
+        "type": "string",
+        "description": "The git author email, where the forge reports one."
+      },
+      "contributions": {
+        "type": "number",
+        "description": "Commits attributed to the contributor, as the forge counts them."
+      },
+      "raw": {}
+    },
+    "required": [
+      "contributions",
+      "raw"
+    ],
+    "description": "A commit author on a repository, as `repos.contributors()` reads it.",
+    "x-forges-type": "Contributor"
+  },
   "Cursor": {
     "type": "object",
     "properties": {
@@ -1338,6 +1366,10 @@
             "$ref": "#/components/schemas/Support",
             "description": "Support for `repos.collaborators()` and `repos.collaboratorsPage()`."
           },
+          "contributors": {
+            "$ref": "#/components/schemas/Support",
+            "description": "Support for `repos.contributors()` and `repos.contributorsPage()`."
+          },
           "permissionFor": {
             "$ref": "#/components/schemas/Support",
             "description": "Support for `repos.permissionFor()`."
@@ -1363,6 +1395,7 @@
           "createLabel",
           "milestones",
           "collaborators",
+          "contributors",
           "permissionFor",
           "addCollaborator",
           "assignableUsers",

@@ -1,0 +1,23 @@
+{
+  "items": [
+    {
+      "name": "Gitee",
+      "email": "redacted@example.invalid",
+      "contributions": 339
+    },
+    {
+      "name": "pengfusheng",
+      "email": "redacted@example.invalid",
+      "contributions": 124
+    },
+    {
+      "name": "pangchao",
+      "email": "redacted@example.invalid",
+      "contributions": 114
+    }
+  ],
+  "cursor": {
+    "token": "3"
+  },
+  "total": 72
+}

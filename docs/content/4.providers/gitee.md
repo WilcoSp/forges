@@ -39,6 +39,10 @@ If you leave out `auth`, the provider makes anonymous reads of public data.
 
 The instance is `gitee.com`. The `baseUrl` defaults to `https://gitee.com`, and the provider appends `/api/v5` itself.
 
+## Contributors
+
+Gitee counts commits per author email, so `repos.contributors()` returns one contributor per email, with a `name` and an `email` but no `actor`.
+
 ## Issue numbers and states
 
 Issue numbers on Gitee are alphanumeric, such as `I8ABCD`, while pull request numbers are integers.
@@ -111,6 +115,7 @@ You can manage webhooks on repositories only. Gitee doesn't keep a delivery log,
 | `repos.createLabel` | unverified | ❌ |
 | `repos.milestones` | ❌ | ❌ |
 | `repos.collaborators` | ✅ | ✅ |
+| `repos.contributors` | ✅ | ✅ |
 | `repos.permissionFor` | ❌ | ❌ |
 | `repos.addCollaborator` | ❌ | ❌ |
 | `repos.assignableUsers` | ❌ | ❌ |

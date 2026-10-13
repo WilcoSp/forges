@@ -100,6 +100,19 @@ export interface Collaborator {
   raw: unknown
 }
 
+/** A commit author on a repository, as `repos.contributors()` reads it. */
+export interface Contributor {
+  /** The account, where the forge links the author to one. */
+  actor?: Actor
+  /** The git author name, where the forge reports one. */
+  name?: string
+  /** The git author email, where the forge reports one. */
+  email?: string
+  /** Commits attributed to the contributor, as the forge counts them. */
+  contributions: number
+  raw: unknown
+}
+
 /** What `repos.addCollaborator()` did. */
 export interface AddCollaboratorResult {
   /**
