@@ -17,7 +17,7 @@
  * pull request can write them.
  */
 import type { SupportLevel } from './capabilities.ts'
-import type { CapabilitySnapshot, SnapshotProvider, SupportMap } from './capability-snapshot.ts'
+import type { CapabilitySnapshot, SnapshotCredential, SnapshotProvider, SupportMap } from './capability-snapshot.ts'
 import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
@@ -32,6 +32,8 @@ interface CapabilityChange {
   key: string
   authenticated?: Transition
   anonymous?: Transition
+  /** Kinds of credential whose support changed other than `authenticated` did. */
+  credentials?: Array<{ id: string, label: string, transition: Transition }>
 }
 
 export interface ProviderDiff {
@@ -44,6 +46,8 @@ export interface ProviderDiff {
   experimental?: boolean
   authAdded: string[]
   authRemoved: string[]
+  /** The ids of the kinds of credential either snapshot tells apart, in `head` order. */
+  credentials?: string[]
   changes: CapabilityChange[]
 }
 
@@ -81,7 +85,7 @@ function snapshotProvider(value: unknown, index: number): SnapshotProvider {
   if (!isRecord(value)) {
     invalid(`provider ${index} is not an object`)
   }
-  const { slug, name, experimental, auth, capabilities, anonymous } = value
+  const { slug, name, experimental, auth, capabilities, anonymous, credentials } = value
   if (typeof slug !== 'string' || !/^[a-z\d-]{1,40}$/.test(slug)) {
     invalid(`provider ${index} has an unexpected slug`)
   }
@@ -94,7 +98,34 @@ function snapshotProvider(value: unknown, index: number): SnapshotProvider {
   if (!Array.isArray(auth) || auth.length > 16 || !auth.every(kind => typeof kind === 'string' && /^[a-z_]{1,32}$/.test(kind))) {
     invalid(`${slug} has unexpected auth kinds`)
   }
-  return { slug, name, experimental, auth: [...auth] as string[], capabilities: supportMap(capabilities, slug), anonymous: supportMap(anonymous, `${slug} anonymous`) }
+  return {
+    slug,
+    name,
+    experimental,
+    auth: [...auth] as string[],
+    capabilities: supportMap(capabilities, slug),
+    anonymous: supportMap(anonymous, `${slug} anonymous`),
+    ...credentials !== undefined && { credentials: snapshotCredentials(credentials, slug) },
+  }
+}
+
+function snapshotCredentials(value: unknown, slug: string): SnapshotCredential[] {
+  if (!Array.isArray(value) || value.length > 16) {
+    invalid(`${slug} has unexpected credentials`)
+  }
+  const credentials = value.map((credential: unknown) => {
+    if (!isRecord(credential) || typeof credential.id !== 'string' || !/^[a-z][a-z\d-]{0,31}$/.test(credential.id)) {
+      invalid(`${slug} has a credential with an unexpected id`)
+    }
+    if (typeof credential.label !== 'string' || !/^[\w .()-]{1,40}$/.test(credential.label)) {
+      invalid(`${slug} has a credential with an unexpected label`)
+    }
+    return { id: credential.id, label: credential.label, capabilities: supportMap(credential.capabilities, `${slug} ${credential.id}`) }
+  })
+  if (new Set(credentials.map(credential => credential.id)).size !== credentials.length) {
+    invalid(`${slug} has two credentials with one id`)
+  }
+  return credentials
 }
 
 /** Parses and validates a snapshot, keeping only the fields it knows. */
@@ -208,6 +239,11 @@ export function diffSnapshots(base: CapabilitySnapshot, head: CapabilitySnapshot
   }
 }
 
+/** Support with one kind of credential, or with any where the snapshot does not tell them apart. */
+function credentialSupport(provider: SnapshotProvider, id: string): SupportMap {
+  return provider.credentials?.find(credential => credential.id === id)?.capabilities ?? provider.capabilities
+}
+
 function providerDiffs(base: CapabilitySnapshot, head: CapabilitySnapshot): ProviderDiff[] {
   const before = new Map(base.providers.map(provider => [provider.slug, provider]))
   const kept = new Set(head.providers.map(provider => provider.slug))
@@ -218,13 +254,18 @@ function providerDiffs(base: CapabilitySnapshot, head: CapabilitySnapshot): Prov
       diffs.push({ slug: provider.slug, name: provider.name, status: 'added', coverage: coverageOf({}, provider.capabilities), authAdded: [], authRemoved: [], changes: [] })
       continue
     }
-    const keys = new Set([...Object.keys(provider.capabilities), ...Object.keys(provider.anonymous), ...Object.keys(previous.capabilities), ...Object.keys(previous.anonymous)])
+    const credentials = [...new Map([...provider.credentials ?? [], ...previous.credentials ?? []].map(({ id, label }) => [id, label]))]
+    const keys = new Set([provider, previous].flatMap(side => [side.capabilities, side.anonymous, ...(side.credentials ?? []).map(credential => credential.capabilities)].flatMap(map => Object.keys(map))))
     const changes: CapabilityChange[] = []
     for (const key of keys) {
       const authenticated = transition(previous.capabilities, provider.capabilities, key)
       const anonymous = transition(previous.anonymous, provider.anonymous, key)
-      if (authenticated || anonymous) {
-        changes.push({ key, ...authenticated && { authenticated }, ...anonymous && { anonymous } })
+      const byCredential = credentials.flatMap(([id, label]) => {
+        const item = transition(credentialSupport(previous, id), credentialSupport(provider, id), key)
+        return item && item.join() !== authenticated?.join() ? [{ id, label, transition: item }] : []
+      })
+      if (authenticated || anonymous || byCredential.length) {
+        changes.push({ key, ...authenticated && { authenticated }, ...anonymous && { anonymous }, ...byCredential.length && { credentials: byCredential } })
       }
     }
     const diff: ProviderDiff = {
@@ -235,6 +276,7 @@ function providerDiffs(base: CapabilitySnapshot, head: CapabilitySnapshot): Prov
       ...previous.experimental !== provider.experimental && { experimental: provider.experimental },
       authAdded: provider.auth.filter(kind => !previous.auth.includes(kind)),
       authRemoved: previous.auth.filter(kind => !provider.auth.includes(kind)),
+      ...credentials.length && { credentials: credentials.map(([id]) => id) },
       changes,
     }
     if (changes.length || diff.experimental !== undefined || diff.authAdded.length || diff.authRemoved.length) {
@@ -273,6 +315,11 @@ function isRegression([from, to]: Transition): boolean {
 
 function regresses(change: CapabilityChange): boolean {
   return [change.authenticated, change.anonymous].some(item => item && isRegression(item))
+}
+
+/** Whether the change shows with or without credentials, rather than for some kinds of credential only. */
+function isShared(change: CapabilityChange): boolean {
+  return !!(change.authenticated || change.anonymous)
 }
 
 function arrow([from, to]: Transition): string {
@@ -380,7 +427,7 @@ function providerNotes(diff: ProviderDiff): string[] {
 /** One list per provider, for changes that touch one or two providers. */
 function byProvider(diffs: ProviderDiff[], rows: CapabilityDiff['rows']): string[] {
   return diffs.flatMap((diff) => {
-    const lines = diff.changes.map(({ key, authenticated, anonymous }) => {
+    const lines = diff.changes.filter(isShared).map(({ key, authenticated, anonymous }) => {
       const without = !anonymous
         ? ''
         : !authenticated
@@ -391,13 +438,11 @@ function byProvider(diffs: ProviderDiff[], rows: CapabilityDiff['rows']): string
       const text = authenticated ? `${arrow(authenticated)} {label}${without}` : without
       return { key, text, regression: regresses({ key, authenticated, anonymous }), row: (authenticated ? rows.authenticated : rows.anonymous).get(key)! }
     })
-    return [
-      `**${diff.name}**`,
-      '',
+    const items = [
       ...providerNotes(diff).map(note => `- ${note}`),
       ...merged(lines, (label, text, regression) => `- ${text.replace('{label}', label)}${regression ? ' ⚠️' : ''}`),
-      '',
     ]
+    return items.length ? [`**${diff.name}**`, '', ...items, ''] : []
   })
 }
 
@@ -431,6 +476,45 @@ function byCapability(diffs: ProviderDiff[], rows: CapabilityDiff['rows']): stri
     ...authenticated.length ? [...authenticated, ''] : [],
     ...anonymous.length ? ['Without credentials:', '', ...anonymous, ''] : [],
   ]
+}
+
+/** Lists with more capabilities than this name only how many there are. */
+const MAX_LISTED = 12
+
+/** Capabilities across namespaces as one label, as `notifications` list, get, `sources.poll`. */
+function listLabel(keys: string[]): string {
+  const namespaces = new Map<string, string[]>()
+  for (const key of keys) {
+    const namespace = key.split(/[.:]/)[0]!
+    namespaces.set(namespace, [...namespaces.get(namespace) ?? [], key])
+  }
+  return [...namespaces.values()].map(groupLabel).join(', ')
+}
+
+/** One list per provider of the changes that apply to some kinds of credential only. */
+function byCredential(diffs: ProviderDiff[]): string[] {
+  return diffs.flatMap((diff) => {
+    const groups = new Map<string, { id: string, label: string, transition: Transition, keys: string[] }>()
+    for (const { key, credentials = [] } of diff.changes) {
+      for (const { id, label, transition } of credentials) {
+        const group = groups.get(`${id} ${transition.join()}`) ?? { id, label, transition, keys: [] }
+        group.keys.push(key)
+        groups.set(`${id} ${transition.join()}`, group)
+      }
+    }
+    if (!groups.size) {
+      return []
+    }
+    return [
+      `**${diff.name}**`,
+      '',
+      ...[...groups.values()].toSorted((a, b) => diff.credentials!.indexOf(a.id) - diff.credentials!.indexOf(b.id)).map(({ id, label, transition, keys }) => {
+        const what = keys.length > MAX_LISTED ? `${keys.length} capabilities` : listLabel(keys)
+        return `- \`${id}\` (${label}): ${arrow(transition)} ${what}${isRegression(transition) ? ' ⚠️' : ''}`
+      }),
+      '',
+    ]
+  })
 }
 
 const BAR_WIDTH = 10
@@ -482,17 +566,21 @@ export function renderDiff({ providers: diffs, columns: providers, rows }: Capab
     return url ? `<a href="https://forges.link/providers/${slug}"><img src="${url}" alt="${name}" title="${name}" width="16" height="16"></a>` : name
   }
   const columns = providers.map(heading)
-  const cells = diffs.flatMap(diff => diff.changes).map(change => regresses(change) ? 'lost' : cellOf(...(change.authenticated ?? change.anonymous)!))
+  const cells = diffs.flatMap(diff => diff.changes).filter(isShared).map(change => regresses(change) ? 'lost' : cellOf(...(change.authenticated ?? change.anonymous)!))
   const count = (cell: Cell) => cells.filter(item => item === cell).length
   const lost = count('lost') + diffs.filter(diff => diff.status === 'removed' || diff.authRemoved.length).length
   const everywhere = [...rows.authenticated.values()].filter(({ cells, before, after }) => after === cells.length && before < after).length
+  const credentialChanges = diffs.flatMap(diff => diff.changes.filter(change => change.credentials).map(change => `${diff.slug} ${change.key}`)).length
   const summary = [
     count('gained') && `🟩 **${count('gained')}** gained`,
     count('changed') && `🟨 **${count('changed')}** changed`,
     lost && `🟥 **${lost}** removed or downgraded`,
     everywhere && `✨ **${everywhere}** now on every provider`,
+    credentialChanges && `🔑 **${credentialChanges}** changed for some kinds of credential`,
   ].filter(Boolean).join(' · ')
-  const body = diffs.filter(diff => diff.changes.length).length >= 3 ? byCapability(diffs, rows) : byProvider(diffs, rows)
+  const body = diffs.filter(diff => diff.changes.some(isShared)).length >= 3 ? byCapability(diffs, rows) : byProvider(diffs, rows)
+  const credentials = byCredential(diffs)
+  const credentialsLost = diffs.some(diff => diff.changes.some(change => change.credentials?.some(credential => isRegression(credential.transition))))
   const same = (key: string) => rows.anonymous.get(key)?.cells.join() === rows.authenticated.get(key)?.cells.join()
   const open = new Set([...rows.authenticated.keys()].filter(same))
   const differing = new Map([...rows.anonymous].filter(([key]) => !same(key)))
@@ -505,11 +593,8 @@ export function renderDiff({ providers: diffs, columns: providers, rows }: Capab
     ...options.coverage ? coverage(diffs, heading) : [],
     ...grid(columns, rows.authenticated, open),
     ...anonymous.length ? [`<details${anonymousLost ? ' open' : ''}><summary>Without credentials, where that differs</summary>`, '', ...anonymous, '</details>', ''] : [],
-    '<details><summary>In detail</summary>',
-    '',
-    ...body,
-    '</details>',
-    '',
+    ...credentials.length ? [`<details${credentialsLost ? ' open' : ''}><summary>With some kinds of credential, where that differs</summary>`, '', ...credentials, '</details>', ''] : [],
+    ...body.length ? ['<details><summary>In detail</summary>', '', ...body, '</details>', ''] : [],
   ].join('\n')
   return `${markdown}\n${legend(markdown)}`
 }

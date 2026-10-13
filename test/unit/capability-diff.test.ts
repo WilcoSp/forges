@@ -45,6 +45,8 @@ describe('capability snapshots', () => {
     ['Markdown in a name', snapshot(provider('github', '[GitHub](https://example.com)'))],
     ['a prototype key', JSON.parse('{"version":1,"providers":[{"slug":"github","name":"GitHub","experimental":false,"auth":[],"capabilities":{"__proto__":"native"},"anonymous":{}}]}')],
     ['two providers with one slug', snapshot(provider('github', 'GitHub'), provider('github', 'GitHub'))],
+    ['Markdown in a credential label', snapshot(provider('github', 'GitHub', { credentials: [{ id: 'app', label: '[App](https://example.com)', capabilities: {} }] }))],
+    ['two credentials with one id', snapshot(provider('github', 'GitHub', { credentials: [{ id: 'app', label: 'App', capabilities: {} }, { id: 'app', label: 'App', capabilities: {} }] }))],
   ])('rejects %s', (_, value) => {
     expect(() => parseSnapshot(JSON.stringify(value))).toThrow(/Invalid capability snapshot/)
   })
@@ -244,6 +246,63 @@ describe('capability diff', () => {
       '',
       legend('🟦 verified', '🟩 newly verified', '🟥 no longer verified', '🔓 same without credentials'),
     ].join('\n'))
+  })
+
+  it('lists changes that apply to some kinds of credential only, in the order of the credentials', () => {
+    const github = (narrowed: boolean) => provider('github', 'GitHub', {
+      capabilities: { 'notifications.list': 'native', 'repos.get': 'native', 'installations.list': 'native' },
+      credentials: [
+        { id: 'classic', label: 'Classic token', capabilities: { 'notifications.list': 'native', 'repos.get': 'native', 'installations.list': narrowed ? 'none' : 'native' } },
+        { id: 'fine-grained', label: 'Fine-grained token', capabilities: { 'notifications.list': narrowed ? 'none' : 'native', 'repos.get': 'native', 'installations.list': narrowed ? 'none' : 'native' } },
+      ],
+    })
+    const output = render(snapshot(github(false), provider('gitlab', 'GitLab')), snapshot(github(true), provider('gitlab', 'GitLab')))
+
+    expect(output).toBe([
+      '### Capability changes',
+      '',
+      '🔑 **2** changed for some kinds of credential',
+      '',
+      '<details open><summary>With some kinds of credential, where that differs</summary>',
+      '',
+      '**GitHub**',
+      '',
+      '- `classic` (Classic token): ✅ → ❌ `installations.list` ⚠️',
+      '- `fine-grained` (Fine-grained token): ✅ → ❌ `notifications.list`, `installations.list` ⚠️',
+      '',
+      '</details>',
+      '',
+      legend('✅ native', '❌ not available'),
+    ].join('\n'))
+  })
+
+  it('compares a kind of credential with the provider\'s support where a snapshot does not tell them apart', () => {
+    const base = provider('github', 'GitHub', { capabilities: { 'notifications.list': 'native', 'repos.get': 'native' } })
+    const head = provider('github', 'GitHub', {
+      capabilities: { 'notifications.list': 'native', 'repos.get': 'native' },
+      credentials: [
+        { id: 'classic', label: 'Classic token', capabilities: { 'notifications.list': 'native', 'repos.get': 'native' } },
+        { id: 'app', label: 'App', capabilities: { 'notifications.list': 'none', 'repos.get': 'none' } },
+      ],
+    })
+
+    expect(render(snapshot(base), snapshot(head))).toContain('- `app` (App): ✅ → ❌ `notifications.list`, `repos.get` ⚠️')
+  })
+
+  it('leaves out kinds of credential whose support changed as the provider\'s did, and counts long lists', () => {
+    const many = (level: 'native' | 'none') => Object.fromEntries(Array.from({ length: 13 }, (_, index) => [`repos.c${index}`, level])) as SupportMap
+    const github = (gained: boolean) => provider('github', 'GitHub', {
+      capabilities: { ...many('native'), 'releases.create': gained ? 'native' : 'none' },
+      credentials: [
+        { id: 'classic', label: 'Classic token', capabilities: { ...many('native'), 'releases.create': gained ? 'native' : 'none' } },
+        { id: 'app', label: 'App', capabilities: { ...many(gained ? 'none' : 'native'), 'releases.create': gained ? 'native' : 'none' } },
+      ],
+    })
+    const output = render(snapshot(github(false)), snapshot(github(true)))
+
+    expect(output).toContain('- `app` (App): ✅ → ❌ 13 capabilities ⚠️')
+    expect(output).not.toContain('`releases.create` ⚠️')
+    expect(output).toContain('- ❌ → ✅ `releases.create`')
   })
 
   it('treats a capability missing from one snapshot as not available', () => {

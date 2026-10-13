@@ -18,15 +18,24 @@ import { capabilityData } from './capabilities.ts'
 /** Support levels keyed by capability path, or `<path>:<kind>` for capabilities declared per kind. */
 export type SupportMap = Record<string, SupportLevel>
 
+/** Support with one kind of credential, for providers where support depends on the kind. */
+export interface SnapshotCredential {
+  /** Short name, such as `fine-grained`. */
+  id: string
+  label: string
+  capabilities: SupportMap
+}
+
 export interface SnapshotProvider {
   slug: string
   name: string
   experimental: boolean
   auth: string[]
-  /** Support with credentials. */
+  /** Support with credentials: the strongest support any kind of credential has. */
   capabilities: SupportMap
   /** Support for the provider created without credentials. */
   anonymous: SupportMap
+  credentials?: SnapshotCredential[]
 }
 
 /** The capability matrix of one commit. */
@@ -38,10 +47,10 @@ export interface CapabilitySnapshot {
 export function capabilitySnapshot(): CapabilitySnapshot {
   const { providers, groups } = capabilityData(forges)
   const rows = groups.flatMap(group => group.rows)
-  const flatten = (cells: (row: typeof rows[number]) => SupportCell[], index: number) => {
+  const flatten = (cellOf: (row: typeof rows[number]) => SupportCell) => {
     const map: SupportMap = {}
     for (const row of rows) {
-      const cell = cells(row)[index]!
+      const cell = cellOf(row)
       for (const { kind, level } of cell.kinds ?? [{ kind: '', level: cell.level }]) {
         map[kind ? `${row.capability}:${kind}` : row.capability] = level
       }
@@ -50,13 +59,16 @@ export function capabilitySnapshot(): CapabilitySnapshot {
   }
   return {
     version: 1,
-    providers: providers.map(({ slug, name, experimental, auth }, index) => ({
+    providers: providers.map(({ slug, name, experimental, auth, credentials }, index) => ({
       slug,
       name,
       experimental,
       auth,
-      capabilities: flatten(row => row.cells, index),
-      anonymous: flatten(row => row.anonymousCells, index),
+      capabilities: flatten(row => row.cells[index]!),
+      anonymous: flatten(row => row.anonymousCells[index]!),
+      ...credentials && {
+        credentials: credentials.map(({ id, label }) => ({ id, label, capabilities: flatten(row => row.cells[index]!.byCredential![id]!) })),
+      },
     })),
   }
 }
