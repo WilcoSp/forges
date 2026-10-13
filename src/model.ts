@@ -113,6 +113,29 @@ export interface Contributor {
   raw: unknown
 }
 
+/** A contributor's commit activity over time, as `repos.contributorStats()` reads it. */
+export interface ContributorStats {
+  /** The account, where the forge links the commits to one. */
+  actor?: Actor
+  /** Commits by the contributor across all weeks. */
+  commits: number
+  /** One entry per week, oldest first. */
+  weeks: ContributorWeek[]
+  raw: unknown
+}
+
+/** One week of a contributor's commit activity. */
+export interface ContributorWeek {
+  /** Start of the week. */
+  week: Date
+  /** Lines added. */
+  additions: number
+  /** Lines deleted. */
+  deletions: number
+  /** Commits that week. */
+  commits: number
+}
+
 /** What `repos.addCollaborator()` did. */
 export interface AddCollaboratorResult {
   /**
@@ -1808,7 +1831,7 @@ export interface Installation extends ForgeOrigin {
 }
 
 /** Every `Date` field in the model, by name. */
-export const DATE_FIELDS: ReadonlySet<string> = new Set(['closedAt', 'completedAt', 'createdAt', 'date', 'deliveredAt', 'dismissedAt', 'dueOn', 'expiresAt', 'lastActivityAt', 'lastReadAt', 'occurredAt', 'publishedAt', 'pushedAt', 'resetAt', 'startedAt', 'submittedAt', 'updatedAt'])
+export const DATE_FIELDS: ReadonlySet<string> = new Set(['closedAt', 'completedAt', 'createdAt', 'date', 'deliveredAt', 'dismissedAt', 'dueOn', 'expiresAt', 'lastActivityAt', 'lastReadAt', 'occurredAt', 'publishedAt', 'pushedAt', 'resetAt', 'startedAt', 'submittedAt', 'updatedAt', 'week'])
 
 const UNNORMALISED_FIELDS: ReadonlySet<string> = new Set(['payload', 'raw'])
 

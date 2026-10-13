@@ -73,6 +73,13 @@ export type GitHubContributor
   = | (GitHubUser & { contributions: number })
     | { type: 'Anonymous', name?: string, email?: string, contributions: number }
 
+export interface GitHubContributorStats {
+  author: GitHubUser | null
+  total: number
+  /** `w` is the start of the week in Unix seconds; `a`, `d` and `c` count additions, deletions and commits. */
+  weeks: Array<{ w: number, a?: number, d?: number, c?: number }>
+}
+
 export interface GitHubTeam {
   id: number
   node_id?: string

@@ -114,6 +114,7 @@ export interface ProviderSpec {
     milestonesPage?: Verb<ReposApi['milestonesPage']>
     collaboratorsPage?: Verb<ReposApi['collaboratorsPage']>
     contributorsPage?: Verb<ReposApi['contributorsPage']>
+    contributorStats?: Verb<ReposApi['contributorStats']>
     permissionFor?: Verb<ReposApi['permissionFor']>
     addCollaborator?: Verb<ReposApi['addCollaborator']>
     assignableUsersPage?: Verb<ReposApi['assignableUsersPage']>

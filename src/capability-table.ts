@@ -43,6 +43,7 @@ const TABLE = [
   { capability: 'repos.milestones', listing: true },
   { capability: 'repos.collaborators', listing: true },
   { capability: 'repos.contributors', listing: true },
+  { capability: 'repos.contributorStats' },
   { capability: 'repos.permissionFor' },
   { capability: 'repos.addCollaborator', write: true },
   { capability: 'repos.assignableUsers', listing: true },

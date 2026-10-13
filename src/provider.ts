@@ -24,6 +24,7 @@ import type {
   CommitSearchQuery,
   Comparison,
   Contributor,
+  ContributorStats,
   Cursor,
   DownloadAssetOptions,
   FileContent,
@@ -201,6 +202,8 @@ export interface ForgeCapabilities {
     collaborators: Support
     /** Support for `repos.contributors()` and `repos.contributorsPage()`. */
     contributors: Support
+    /** Support for `repos.contributorStats()`. */
+    contributorStats: Support
     /** Support for `repos.permissionFor()`. */
     permissionFor: Support
     /** Support for `repos.addCollaborator()`. */
@@ -863,6 +866,11 @@ export interface ReposApi {
   contributors: (repo: RepoRef, options?: PageOptions) => ForgeIterable<Contributor>
   /** One page of `contributors()`. */
   contributorsPage: (repo: RepoRef, options?: PageOptions) => Promise<Page<Contributor>>
+  /**
+   * Weekly commit activity of each contributor to a repository. Where the forge computes the statistics in the
+   * background, the provider waits for them, and throws a `ForgeApiError` with status `202` if they are still not ready.
+   */
+  contributorStats: (repo: RepoRef, options?: BaseOptions) => Promise<ContributorStats[]>
   /** One account's role on the repository; `'none'` when it has no access. */
   permissionFor: (repo: RepoRef, actor: string | Actor, options?: BaseOptions) => Promise<RepoRole>
   /** Gives an account a role on a repository, or invites it where the forge asks the account to accept first. */

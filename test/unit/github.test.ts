@@ -565,6 +565,44 @@ describe('github organisation teams', () => {
   })
 })
 
+describe('github contributor statistics', () => {
+  it('retries while GitHub reports the statistics are not ready', async () => {
+    const responses = [
+      new Response(null, { status: 202 }),
+      Response.json([{ author: { login: 'octocat', id: 583231 }, total: 2, weeks: [{ w: 1704067200, a: 1, d: 0, c: 2 }] }]),
+    ]
+    let calls = 0
+    const provider = github({ fetch: async () => responses[calls++]! }).create()
+
+    const stats = await provider.repos.contributorStats(repo)
+
+    expect(calls).toBe(2)
+    expect(stats).toHaveLength(1)
+    expect(stats[0]!.actor?.login).toBe('octocat')
+    expect(stats[0]!.weeks[0]).toEqual({ week: new Date('2024-01-01T00:00:00Z'), additions: 1, deletions: 0, commits: 2 })
+  })
+
+  it('throws once GitHub still reports the statistics are not ready', async () => {
+    let calls = 0
+    const provider = github({ fetch: async () => {
+      calls++
+      return new Response('{}', { status: 202 })
+    } }).create()
+    vi.useFakeTimers()
+    try {
+      const stats = provider.repos.contributorStats(repo)
+      const settled = expect(stats).rejects.toMatchObject({ name: 'ForgeApiError', status: 202 })
+      await vi.runAllTimersAsync()
+      await settled
+    }
+    finally {
+      vi.useRealTimers()
+    }
+
+    expect(calls).toBe(6)
+  })
+})
+
 describe('github reviews', () => {
   it('lists reviews with their inline comments and resolution state', async () => {
     const { provider, calls } = tokenProvider()

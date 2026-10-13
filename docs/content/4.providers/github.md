@@ -82,6 +82,10 @@ With `visibility: 'public'`, `repos.byOwner()` lists the repositories of a user 
 
 GitHub links at most the first 500 author emails in a repository to accounts. A contributor from `repos.contributors()` whose email is not linked has a `name` and an `email` but no `actor`. GitHub does not list the contributors of a repository whose history is too large.
 
+## Contributor statistics
+
+GitHub computes the statistics behind `repos.contributorStats()` in the background, and responds with `202 Accepted` until they are ready. The provider asks again for about 15 seconds, and then throws a `ForgeApiError` with status `202`, so you can try again later. The statistics leave out merge commits and empty commits. In a repository with 10,000 or more commits, GitHub reports `0` lines added and deleted for every week.
+
 ## Merging
 
 If you call `merge()` without a `method`, the provider asks GitHub which merge methods the repository allows. When exactly one method is allowed, it uses that one. When several are allowed, it can't choose for you and throws `MergeMethodRequiredError`.
@@ -183,6 +187,7 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `repos.milestones` | ✅ | ✅ |
 | `repos.collaborators` | ✅ | ❌ |
 | `repos.contributors` | ✅ | ✅ |
+| `repos.contributorStats` | ✅ | ✅ |
 | `repos.permissionFor` | ✅ | ❌ |
 | `repos.addCollaborator` | ✅ | ❌ |
 | `repos.assignableUsers` | ✅ | ✅ |
