@@ -269,6 +269,17 @@ describe('tangled activity feeds', () => {
     expect(page).toEqual({ items: [], notModified: true, etag: 'rev1' })
     expect(lists).toEqual([])
   })
+
+  it('dates a record without `createdAt` by when it was read, not 1970', async () => {
+    const before = Date.now()
+    const page = await accountFeedPage({ atproto, recordEvent: async (activity, source, fallbackTime, threads, signal) => ({
+      ...await recordEvent(activity, source, fallbackTime, threads, signal),
+      occurredAt: fallbackTime,
+    }) }, did, { perPage: 2 })
+
+    expect(page.items).toHaveLength(2)
+    expect(page.items.every(item => item.occurredAt.getTime() >= before)).toBe(true)
+  })
 })
 
 describe('fake activity feeds', () => {
