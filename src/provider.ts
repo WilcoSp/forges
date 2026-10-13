@@ -213,6 +213,8 @@ export interface ForgeCapabilities {
     get: Support
     /** Support for `users.me()`. */
     me: Support
+    /** Support for `users.sponsorable()`. */
+    sponsorable: Support
   }
   threads: {
     /** Support for `threads.get()`, per thread kind. */
@@ -973,6 +975,18 @@ export interface UsersApi {
    * ```
    */
   me: (options?: BaseOptions) => Promise<User>
+  /**
+   * Whether an account accepts sponsorship on the forge, such as through a GitHub Sponsors listing. Rejects with
+   * `NotFoundError` when no account has the login.
+   * @param login The account to check.
+   * @example
+   * ```ts
+   * if (await provider.users.sponsorable('danielroe')) {
+   *   console.log('https://github.com/sponsors/danielroe')
+   * }
+   * ```
+   */
+  sponsorable: (login: string, options?: BaseOptions) => Promise<boolean>
 }
 
 /** Ways to receive events: polling, webhooks and push subscriptions. */

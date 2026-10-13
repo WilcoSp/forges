@@ -6,7 +6,7 @@ import { gitee } from '../../src/gitee/index.ts'
 import { github } from '../../src/github/index.ts'
 import { toActor } from '../../src/github/normalise.ts'
 import { gitlab } from '../../src/gitlab/index.ts'
-import { UnsupportedOperationError } from '../../src/index.ts'
+import { NotFoundError, UnsupportedOperationError } from '../../src/index.ts'
 import { tangled } from '../../src/tangled/index.ts'
 import { fixtureFetch } from '../../src/testing/index.ts'
 
@@ -50,6 +50,29 @@ describe('users.get', () => {
   it('ties a GitHub App bot account to its app', () => {
     expect(toActor('github.com', { login: 'renovate[bot]', id: 2, type: 'Bot' })?.app).toEqual({ slug: 'renovate' })
     expect(toActor('github.com', { login: 'octocat', id: 1, type: 'User' })?.app).toBeUndefined()
+  })
+})
+
+describe('users.sponsorable', () => {
+  const auth = { type: 'token', token: 't' } as const
+
+  it('rejects with NotFoundError for an unknown login', async () => {
+    const { fetch } = fixtureFetch([], { 'POST https://api.github.com/graphql Sponsorable': { status: 200, body: { data: { repositoryOwner: null } } } })
+
+    await expect(github({ auth, fetch }).create().users.sponsorable('nobody')).rejects.toThrow(NotFoundError)
+  })
+
+  it('is supported for a GitHub App installation', () => {
+    expect(github({ auth: { type: 'app', appId: 1, privateKey: 'k', installationId: 2 } }).create().can('users.sponsorable')).toBe(true)
+  })
+
+  it('is unsupported without a credential, as an app without an installation, on GitHub Enterprise Server, and on a forge that cannot report it', async () => {
+    const app = github({ auth: { type: 'app', appId: 1, privateKey: 'k' } }).create()
+    const ghes = github({ baseUrl: 'https://ghe.example.com/api/v3', auth }).create()
+    for (const provider of [github({}).create(), app, ghes, bitbucket({}).create()]) {
+      expect(provider.can('users.sponsorable')).toBe(false)
+      await expect(provider.users.sponsorable('danielroe')).rejects.toThrow(UnsupportedOperationError)
+    }
   })
 })
 
