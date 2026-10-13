@@ -18,6 +18,7 @@ import type {
   CommitSearchQuery,
   ContributorStats,
   Cursor,
+  EventFeedOptions,
   FileContent,
   FileOptions,
   ForgeEventInput,
@@ -97,6 +98,7 @@ import type {
   GitHubContentFile,
   GitHubContributor,
   GitHubContributorStats,
+  GitHubFeedEvent,
   GitHubHook,
   GitHubHookDelivery,
   GitHubInstallation,
@@ -122,7 +124,7 @@ import { defineForgeProvider, perKind, supportOnly, verb } from '../define.ts'
 import { ForbiddenError, ForgeApiError, ForgeError, ForgeTimeoutError, InsufficientScopeError, MergeBlockedError, NotFoundError, ReadOnlyError, soleMergeMethod, toMergeError, UnsupportedOperationError } from '../errors.ts'
 import { anySignal, sleep } from '../fetch.ts'
 import { isNamespaceRef, isResolvedThread, reactionContent } from '../model.ts'
-import { actorLogin, createListing, forgeIterable, getManyConcurrently, hostOf, iteratePages, memo, milestoneId, phased, requireIssueOrPull, requireThread, resolveToken, summariseChecks, teamOrg, toDate, toPage, toWarning, versionAtLeast } from '../utils.ts'
+import { actorLogin, createListing, forgeIterable, getManyConcurrently, hostOf, iteratePages, memo, milestoneId, phased, requireIssueOrPull, requireThread, resolveToken, summariseChecks, teamOrg, toDate, toPage, toWarning, versionAtLeast, withEtag } from '../utils.ts'
 import { githubShapedWeb } from '../web.ts'
 import { nativeEventsFor } from '../webhooks.ts'
 import { createAppCredentials, createAuthHeaders, tokenKindOf } from './auth.ts'
@@ -1204,6 +1206,28 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
     }), warnings)
   }
 
+  /** When each feed may be read again, from GitHub's `X-Poll-Interval`. */
+  const nextPoll = new Map<string, number>()
+
+  async function feedPage(path: string, listOptions: EventFeedOptions = {}): Promise<Page<ForgeEventInput>> {
+    const first = !listOptions.cursor?.nextUrl
+    if (first && !listOptions.force && Date.now() < (nextPoll.get(path) ?? 0)) {
+      return { items: [], throttled: true, ...listOptions.cursor?.etag ? { etag: listOptions.cursor.etag } : {} }
+    }
+    const result = await fetcher.page<GitHubFeedEvent>(path, {
+      query: { per_page: listOptions.perPage },
+      cursor: listOptions.cursor,
+      etag: listOptions.cursor?.etag,
+      signal: listOptions.signal,
+    })
+    const interval = Number(result.response.headers.get('x-poll-interval'))
+    if (first && interval > 0) {
+      nextPoll.set(path, Date.now() + interval * 1000)
+    }
+    const { toFeedEvent } = await import('./events.ts')
+    return withEtag(toPage(result, raw => toFeedEvent(instance, raw)), result, listOptions.cursor)
+  }
+
   function createInstallationsApi(app: AppCredentials): Omit<InstallationsApi, 'list' | 'repos'> {
     const appFetcher = createFetcher({ baseUrl, authHeaders: async () => ({ authorization: `Bearer ${await app.appJwt()}` }) })
     const auth = options.auth as Extract<GitHubAuth, { type: 'app' }>
@@ -1618,6 +1642,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         }
         return data.repositoryOwner.hasSponsorsListing
       }),
+      eventsPage: verb(true, (login, listOptions) => feedPage(`/users/${encodeURIComponent(login)}/events`, listOptions)),
     },
     repos: {
       get: verb(true, async (ref, options) => {
@@ -1659,6 +1684,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         const author = (await get(ref, listOptions)).author?.login
         return toPage(page, raw => raw.login === author ? undefined : toActor(instance, raw)!)
       }),
+      eventsPage: verb(true, (repo, listOptions) => feedPage(`${repoPath(repo)}/events`, listOptions)),
     },
     orgs: {
       teamsPage: verb(!anonymous, (org, listOptions = {}) => list(

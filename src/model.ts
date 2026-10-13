@@ -1211,7 +1211,8 @@ export type EventDetail
     | { type: 'state_change', state?: ThreadState, draft?: boolean }
     | { type: 'label', label: string }
     | { type: 'assignment', assignee?: Actor }
-    | { type: 'push', ref: string, before?: string, after?: string, commitCount: number, forced: boolean, commits: PushCommit[] }
+    /** A push. `commitCount` is absent when the forge reports neither the commits nor how many there were. */
+    | { type: 'push', ref: string, before?: string, after?: string, commitCount?: number, forced: boolean, commits: PushCommit[] }
     | { type: 'ref', ref: string, refType: 'branch' | 'tag' | (string & {}) }
     | { type: 'repo_renamed', from: string, to: string }
     | { type: 'repo_transferred', fromOwner?: string, toOwner?: string }
@@ -1238,6 +1239,8 @@ export interface ForgeEvent extends ForgeOrigin {
   actor?: Actor
   repo?: RepoRef
   thread?: ThreadRef
+  /** Whether anyone can see the event, where the forge says so. `false` covers private and internal repositories alike. */
+  isPublic?: boolean
   /** The details that belong to the kind of event. */
   detail?: EventDetail
   /** App installation the delivery belongs to, for app webhooks. */
@@ -1357,6 +1360,11 @@ export interface Page<T> {
   etag?: string
   /** True when the forge reported no change since `cursor.etag`. */
   notModified?: boolean
+  /**
+   * True when the provider sent no request, because the forge asked to wait longer between reads of this feed. The
+   * page has no items; read it again later, or pass `force: true`.
+   */
+  throttled?: boolean
   /** The non-fatal problems that came up while reading the page. */
   warnings?: ForgeWarning[]
 }
@@ -1365,6 +1373,16 @@ export interface Page<T> {
 export interface ListOptions extends PageOptions {
   /** Only items updated at or after this time. */
   since?: Date
+}
+
+/** Options for `repos.events()` and `users.events()`. */
+export interface EventFeedOptions extends PageOptions {
+  /**
+   * Read the first page even when the forge asked to wait longer between reads, as GitHub does with
+   * `X-Poll-Interval`. Without it, such a read returns a `throttled` page.
+   * @default false
+   */
+  force?: boolean
 }
 
 /** Options for `notifications.list()`. */

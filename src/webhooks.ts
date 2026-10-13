@@ -54,7 +54,10 @@ export interface RefChange {
   commitCount?: number
 }
 
-/** The kind, detail and summary of one ref update in a push: a deletion, a creation, or new commits. */
+/**
+ * The kind, detail and summary of one ref update in a push: a deletion, a creation, or new commits. Without
+ * `commits` or `commitCount`, the detail has no `commitCount`.
+ */
 export function refEvent(who: string, change: RefChange): Pick<ForgeEventInput, 'kind' | 'action' | 'detail' | 'summary'> {
   const name = change.ref.replace(/^refs\/(?:heads|tags)\//, '')
   const refType = change.refType ?? (change.ref.startsWith('refs/tags/') ? 'tag' : 'branch')
@@ -66,12 +69,11 @@ export function refEvent(who: string, change: RefChange): Pick<ForgeEventInput, 
       summary: `${who} ${change.deleted ? 'deleted' : 'created'} ${name}`,
     }
   }
-  const commits = change.commits ?? []
-  const count = change.commitCount ?? commits.length
+  const count = change.commitCount ?? change.commits?.length
   return {
     kind: 'push',
-    detail: { type: 'push', ref: change.ref, before: change.before, after: change.after, commitCount: count, forced: change.forced ?? false, commits },
-    summary: `${who} pushed ${count} commit(s) to ${name}`,
+    detail: { type: 'push', ref: change.ref, before: change.before, after: change.after, commitCount: count, forced: change.forced ?? false, commits: change.commits ?? [] },
+    summary: count === undefined ? `${who} pushed to ${name}` : `${who} pushed ${count} commit(s) to ${name}`,
   }
 }
 

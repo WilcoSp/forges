@@ -189,6 +189,20 @@ const { repository } = await forge.graphql(Stars, { owner: 'danielroe', name: 'f
 
 A read-only provider runs queries and rejects mutations with `ReadOnlyError`. GitHub's GraphQL API needs a credential, so an anonymous provider can't use it. Accounts in the data model carry the numeric ID, which GraphQL calls `databaseId`, so select that field to compare them with your results.
 
+## Activity feeds
+
+`repos.events()` and `users.events()` read GitHub's events API. A feed holds up to 300 events from the last 30 days, and GitHub can take from 30 seconds to 6 hours to add an event to it. Events come in the order GitHub added them, so an event that arrived late can follow one that happened after it. When the credential belongs to the account you read, `users.events()` includes its private activity too.
+
+GitHub asks clients to wait between reads of a feed, usually 60 seconds, in its `X-Poll-Interval` header. The provider remembers that wait for each feed. If you read the first page of a feed again before it's over, you get a page with `throttled: true` and no items, and no request is sent. The page keeps the `etag` you passed. To read anyway, pass `force: true`:
+
+```ts
+const page = await gh.repos.eventsPage(repo, { force: true })
+```
+
+The provider only remembers the wait for as long as it exists, so a job that creates a new provider for every run isn't held back.
+
+Feed items are smaller than webhook deliveries. On GitHub.com, a push has no commits and no commit count, so its `detail` has no `commitCount` and its summary leaves the number out. GitHub Enterprise Server still sends both, and they fill in the detail there. A pull request event has no title, and GitHub reports a merge as the action `merged`, which the provider reads as `kind: 'state_change'` and `action: 'merged'`.
+
 ## Webhook management
 
 If the credential lacks `admin:repo_hook` or `admin:org_hook`, GitHub responds with a `404` on its webhook endpoints. The provider raises this response as a `ForbiddenError` with `reason: 'resource_protected'`, so check the scopes of your credential when you see it.
@@ -239,6 +253,7 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `users.get` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `users.me` | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `users.sponsorable` | ✅ | ✅ | ✅ | ❌ | ❌ |
+| `users.events` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `repos.list` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `repos.byOwner` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `repos.labels` | ✅ | ✅ | ✅ | ❌ | ✅ |
@@ -251,6 +266,7 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `repos.addCollaborator` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `repos.assignableUsers` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `repos.reviewerCandidates` | emulated | emulated | emulated | ❌ | ❌ |
+| `repos.events` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `orgs.teams` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `orgs.teamMembers` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `threads.get` | issue, PR, discussion, commit | issue, PR, discussion, commit | issue, PR, discussion, commit | ❌ | issue, PR, commit |
