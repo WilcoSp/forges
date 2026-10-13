@@ -1,8 +1,4 @@
 {
   "name": "mention author",
-  "recordedAt": "2026-10-12T22:05:27.487Z",
-  "needs": [
-    "author",
-    "create issue"
-  ]
+  "recordedAt": "2026-10-12T11:39:47.561Z"
 }

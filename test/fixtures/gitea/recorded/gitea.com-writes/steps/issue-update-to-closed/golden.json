@@ -9,12 +9,12 @@
       "name": "forges-fixtures"
     },
     "kind": "issue",
-    "number": "55",
-    "externalId": "509991"
+    "number": "43",
+    "externalId": "509784"
   },
   "kind": "issue",
-  "title": "forges fixture 20261012220452: issue, edited",
-  "body": "Edited by run 20261012220452.",
+  "title": "forges fixture 20261012113905: issue, edited",
+  "body": "Edited by run 20261012113905.",
   "state": "closed",
   "stateRaw": "closed",
   "isDraft": false,
@@ -41,12 +41,12 @@
   "reviewers": [],
   "labels": [
     {
-      "name": "forges-fixture-20261012220452",
+      "name": "forges-fixture-20261012113905",
       "colour": "0e8a16",
-      "description": "Created by run 20261012220452"
+      "description": "Created by run 20261012113905"
     }
   ],
-  "url": "https://gitea.com/forges-fixtures/forges-fixtures/issues/55",
+  "url": "https://gitea.com/forges-fixtures/forges-fixtures/issues/43",
   "createdAt": "<now>",
   "updatedAt": "<now>",
   "closedAt": "<now>",

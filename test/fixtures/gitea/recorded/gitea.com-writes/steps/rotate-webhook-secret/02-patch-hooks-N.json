@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "PATCH",
-    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/hooks/48094",
+    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/hooks/48091",
     "body": {
       "config": {
         "url": "https://example.com/hook",
@@ -14,7 +14,7 @@
     "status": 200,
     "headers": {},
     "body": {
-      "id": 48094,
+      "id": 48091,
       "name": "",
       "type": "gitea",
       "branch_filter": "",

@@ -13,11 +13,11 @@
         "kind": "namespace"
       },
       "kind": "issue",
-      "number": "27"
+      "number": "24"
     },
-    "id": "1412792"
+    "id": "1412683"
   },
-  "body": "An edited comment from run 20261012220452.",
+  "body": "An edited comment from run 20261012114218.",
   "author": {
     "forge": "azure-devops",
     "instance": "dev.azure.com",

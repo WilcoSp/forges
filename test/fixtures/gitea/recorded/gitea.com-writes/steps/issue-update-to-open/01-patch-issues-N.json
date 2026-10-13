@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "PATCH",
-    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/issues/55",
+    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/issues/43",
     "body": {
       "state": "open",
       "assignees": []
@@ -11,10 +11,10 @@
     "status": 201,
     "headers": {},
     "body": {
-      "id": 509991,
-      "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/issues/55",
-      "html_url": "https://gitea.com/forges-fixtures/forges-fixtures/issues/55",
-      "number": 55,
+      "id": 509784,
+      "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/issues/43",
+      "html_url": "https://gitea.com/forges-fixtures/forges-fixtures/issues/43",
+      "number": 43,
       "user": {
         "id": 253592,
         "login": "roebot",
@@ -35,8 +35,8 @@
       },
       "original_author": "",
       "original_author_id": 0,
-      "title": "forges fixture 20261012220452: issue, edited",
-      "body": "Edited by run 20261012220452.",
+      "title": "forges fixture 20261012113905: issue, edited",
+      "body": "Edited by run 20261012113905.",
       "ref": "",
       "assets": [],
       "labels": [],

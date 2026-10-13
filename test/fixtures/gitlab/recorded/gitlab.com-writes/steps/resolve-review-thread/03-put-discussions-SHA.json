@@ -1,26 +1,26 @@
 {
   "request": {
     "method": "PUT",
-    "url": "https://gitlab.com/api/v4/projects/forges-fixtures%2Fforges-fixtures/merge_requests/42/discussions/fd27582d289bf87aafa9acc523f5eba8bfe8bebe?resolved=true"
+    "url": "https://gitlab.com/api/v4/projects/forges-fixtures%2Fforges-fixtures/merge_requests/36/discussions/cc946452121469c1f72107e1c9f41e768d2fd2b0?resolved=true"
   },
   "response": {
     "status": 200,
     "headers": {
-      "etag": "W/\"1b7408feade6b223d15556d907630afc\"",
+      "etag": "W/\"faa612c49fbbc535d7a6103a3e4dd4b5\"",
       "ratelimit-limit": "2000",
       "ratelimit-remaining": "1920",
       "ratelimit-reset": "1791842700"
     },
     "body": {
-      "id": "fd27582d289bf87aafa9acc523f5eba8bfe8bebe",
+      "id": "cc946452121469c1f72107e1c9f41e768d2fd2b0",
       "individual_note": false,
       "resolvable": true,
       "resolved": true,
       "notes": [
         {
-          "id": 4000962296,
+          "id": 3997721268,
           "type": "DiscussionNote",
-          "body": "A review comment from run 20261012220341.",
+          "body": "A review comment from run 20261012113957.",
           "author": {
             "id": 2179675,
             "username": "danielroe",
@@ -34,7 +34,7 @@
           "created_at": "2026-10-12T22:04:21.974Z",
           "updated_at": "2026-10-12T22:04:25.236Z",
           "system": false,
-          "noteable_id": 547385077,
+          "noteable_id": 547090208,
           "noteable_type": "MergeRequest",
           "project_id": 87428720,
           "resolvable": true,
@@ -54,13 +54,13 @@
           "internal": false,
           "imported": false,
           "imported_from": "none",
-          "noteable_iid": 42,
+          "noteable_iid": 36,
           "commands_changes": {}
         },
         {
-          "id": 4000962409,
+          "id": 4000855936,
           "type": "DiscussionNote",
-          "body": "A reply from run 20261012220341.",
+          "body": "A reply from run 20261012113957.",
           "author": {
             "id": 43193323,
             "username": "roebot",
@@ -74,7 +74,7 @@
           "created_at": "2026-10-12T22:04:24.182Z",
           "updated_at": "2026-10-12T22:04:25.236Z",
           "system": false,
-          "noteable_id": 547385077,
+          "noteable_id": 547090208,
           "noteable_type": "MergeRequest",
           "project_id": 87428720,
           "resolvable": true,
@@ -94,7 +94,7 @@
           "internal": false,
           "imported": false,
           "imported_from": "none",
-          "noteable_iid": 42,
+          "noteable_iid": 36,
           "commands_changes": {}
         }
       ]

@@ -9,12 +9,12 @@
       "name": "forges-fixtures"
     },
     "kind": "issue",
-    "number": "35",
-    "externalId": "206338566"
+    "number": "29",
+    "externalId": "206267439"
   },
   "kind": "issue",
-  "title": "forges fixture 20261012220341: labelled issue",
-  "body": "Opened by run 20261012220341.",
+  "title": "forges fixture 20261012113957: labelled issue",
+  "body": "Opened by run 20261012113957.",
   "state": "open",
   "stateRaw": "opened",
   "isDraft": false,
@@ -42,12 +42,12 @@
     "url": "https://gitlab.com/roebot",
     "isBotHint": false
   },
-  "url": "https://gitlab.com/forges-fixtures/forges-fixtures/-/work_items/35",
+  "url": "https://gitlab.com/forges-fixtures/forges-fixtures/-/work_items/29",
   "createdAt": "<now>",
   "updatedAt": "<now>",
   "labels": [
     {
-      "name": "forges-fixture-20261012220341"
+      "name": "forges-fixture-20261012113957"
     }
   ],
   "commentCount": 0,

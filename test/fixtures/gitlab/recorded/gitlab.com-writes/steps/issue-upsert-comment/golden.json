@@ -13,12 +13,12 @@
           "name": "forges-fixtures"
         },
         "kind": "issue",
-        "number": "34",
-        "externalId": "206338555"
+        "number": "28",
+        "externalId": "206267420"
       },
-      "id": "4000960393"
+      "id": "3997717982"
     },
-    "body": "An upserted comment from run 20261012220341.\n\n<!-- forges:key=forges-fixture -->",
+    "body": "An upserted comment from run 20261012113957.\n\n<!-- forges:key=forges-fixture -->",
     "author": {
       "forge": "gitlab",
       "instance": "gitlab.com",

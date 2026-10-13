@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "https://dev.azure.com/forges/forges-fixtures/_apis/git/repositories/forges-fixtures/pullRequests/38/threads?api-version=7.1"
+    "url": "https://dev.azure.com/forges/forges-fixtures/_apis/git/repositories/forges-fixtures/pullRequests/35/threads?api-version=7.1"
   },
   "response": {
     "status": 200,
@@ -10,7 +10,7 @@
       "value": [
         {
           "pullRequestThreadContext": null,
-          "id": 158,
+          "id": 145,
           "publishedDate": "2026-10-12T22:04:59.15Z",
           "lastUpdatedDate": "2026-10-12T22:04:59.677Z",
           "comments": [
@@ -38,16 +38,16 @@
               "usersLiked": [],
               "_links": {
                 "self": {
-                  "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/38/threads/158/comments/1"
+                  "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/35/threads/145/comments/1"
                 },
                 "repository": {
                   "href": "https://dev.azure.com/forges/b2332e32-1afe-4c85-9407-12e7af2bf24c/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7"
                 },
                 "threads": {
-                  "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/38/threads/158"
+                  "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/35/threads/145"
                 },
                 "pullRequests": {
-                  "href": "https://dev.azure.com/forges/_apis/git/pullRequests/38"
+                  "href": "https://dev.azure.com/forges/_apis/git/pullRequests/35"
                 }
               }
             }
@@ -59,7 +59,7 @@
           "isDeleted": true,
           "_links": {
             "self": {
-              "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/38/threads/158"
+              "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/35/threads/145"
             },
             "repository": {
               "href": "https://dev.azure.com/forges/b2332e32-1afe-4c85-9407-12e7af2bf24c/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7"
@@ -68,7 +68,7 @@
         },
         {
           "pullRequestThreadContext": null,
-          "id": 159,
+          "id": 146,
           "publishedDate": "2026-10-12T22:04:59.52Z",
           "lastUpdatedDate": "2026-10-12T22:04:59.52Z",
           "comments": [
@@ -88,7 +88,7 @@
                 "imageUrl": "https://dev.azure.com/forges/_apis/GraphProfile/MemberAvatars/aad.MzE2OTUzNzAtY2RlZS03NzVkLWEwYjctMzUwYTkyZTJhMjc5",
                 "descriptor": "aad.MzE2OTUzNzAtY2RlZS03NzVkLWEwYjctMzUwYTkyZTJhMjc5"
               },
-              "content": "An upserted comment from run 20261012220452.\n\n<!-- forges:key=forges-fixture -->",
+              "content": "An upserted comment from run 20261012114218.\n\n<!-- forges:key=forges-fixture -->",
               "publishedDate": "2026-10-12T22:04:59.52Z",
               "lastUpdatedDate": "2026-10-12T22:04:59.52Z",
               "lastContentUpdatedDate": "2026-10-12T22:04:59.52Z",
@@ -96,16 +96,16 @@
               "usersLiked": [],
               "_links": {
                 "self": {
-                  "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/38/threads/159/comments/1"
+                  "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/35/threads/146/comments/1"
                 },
                 "repository": {
                   "href": "https://dev.azure.com/forges/b2332e32-1afe-4c85-9407-12e7af2bf24c/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7"
                 },
                 "threads": {
-                  "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/38/threads/159"
+                  "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/35/threads/146"
                 },
                 "pullRequests": {
-                  "href": "https://dev.azure.com/forges/_apis/git/pullRequests/38"
+                  "href": "https://dev.azure.com/forges/_apis/git/pullRequests/35"
                 }
               }
             }
@@ -117,7 +117,7 @@
           "isDeleted": false,
           "_links": {
             "self": {
-              "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/38/threads/159"
+              "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/35/threads/146"
             },
             "repository": {
               "href": "https://dev.azure.com/forges/b2332e32-1afe-4c85-9407-12e7af2bf24c/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7"
@@ -126,7 +126,7 @@
         },
         {
           "pullRequestThreadContext": null,
-          "id": 160,
+          "id": 147,
           "publishedDate": "2026-10-12T22:05:00.44Z",
           "lastUpdatedDate": "2026-10-12T22:05:00.44Z",
           "comments": [
@@ -154,16 +154,16 @@
               "usersLiked": [],
               "_links": {
                 "self": {
-                  "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/38/threads/160/comments/1"
+                  "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/35/threads/147/comments/1"
                 },
                 "repository": {
                   "href": "https://dev.azure.com/forges/b2332e32-1afe-4c85-9407-12e7af2bf24c/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7"
                 },
                 "threads": {
-                  "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/38/threads/160"
+                  "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/35/threads/147"
                 },
                 "pullRequests": {
-                  "href": "https://dev.azure.com/forges/_apis/git/pullRequests/38"
+                  "href": "https://dev.azure.com/forges/_apis/git/pullRequests/35"
                 }
               }
             }
@@ -230,7 +230,7 @@
           "isDeleted": false,
           "_links": {
             "self": {
-              "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/38/threads/160"
+              "href": "https://dev.azure.com/forges/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7/pullRequests/35/threads/147"
             },
             "repository": {
               "href": "https://dev.azure.com/forges/b2332e32-1afe-4c85-9407-12e7af2bf24c/_apis/git/repositories/c67c02dd-cbca-45aa-a679-021bd4d2c4a7"

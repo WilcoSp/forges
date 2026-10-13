@@ -10,12 +10,12 @@
       "kind": "namespace"
     },
     "kind": "issue",
-    "number": "27",
+    "number": "24",
     "typeRaw": "Issue"
   },
   "kind": "issue",
-  "title": "forges fixture 20261012220452: issue, edited",
-  "body": "Edited by run 20261012220452.",
+  "title": "forges fixture 20261012114218: issue, edited",
+  "body": "Edited by run 20261012114218.",
   "state": "closed",
   "stateRaw": "Done",
   "stateReason": "Completed",
@@ -45,10 +45,10 @@
   "reviewers": [],
   "labels": [
     {
-      "name": "forges-fixture-20261012220452"
+      "name": "forges-fixture-20261012114218"
     }
   ],
-  "url": "https://dev.azure.com/forges/b2332e32-1afe-4c85-9407-12e7af2bf24c/_workitems/edit/27",
+  "url": "https://dev.azure.com/forges/b2332e32-1afe-4c85-9407-12e7af2bf24c/_workitems/edit/24",
   "createdAt": "<now>",
   "updatedAt": "<now>",
   "closedAt": "<now>",
