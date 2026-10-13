@@ -454,8 +454,10 @@ export function createFetcher(options: FetcherOptions): Fetcher {
           { cause },
         )
       }
+      const inner = cause instanceof Error ? cause.cause as { code?: unknown, message?: unknown } | undefined : undefined
+      const reason = typeof inner?.code === 'string' ? inner.code : inner?.message
       throw new ForgeNetworkError(
-        `Request to ${url} failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+        `Request to ${url} failed: ${cause instanceof Error ? cause.message : String(cause)}${typeof reason === 'string' && reason ? ` (${reason})` : ''}`,
         { ...options.context, url, method: options_.method ?? 'GET' },
         { cause },
       )

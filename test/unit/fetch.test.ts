@@ -1,6 +1,6 @@
 import type { ForgeRawRequestOptions, RawResponse } from '../../src/fetch.ts'
 import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
-import { AuthenticationRequiredError, ForbiddenError, ForgeApiError, InsufficientScopeError, RateLimitedError, ReadOnlyError } from '../../src/errors.ts'
+import { AuthenticationRequiredError, ForbiddenError, ForgeApiError, ForgeNetworkError, InsufficientScopeError, RateLimitedError, ReadOnlyError } from '../../src/errors.ts'
 import { createFetcher, createRequest, parseLinkHeader } from '../../src/fetch.ts'
 import { github } from '../../src/github/index.ts'
 
@@ -286,6 +286,31 @@ describe('createFetcher', () => {
     expect(error).toBeInstanceOf(ForgeApiError)
     expect((error as ForgeApiError).status).toBe(404)
     expect((error as ForgeApiError).body).toContain('Not Found')
+  })
+
+  it('names the code of a failed connection', async () => {
+    const fetcher = createFetcher({
+      baseUrl: 'https://api.example',
+      fetch: async () => {
+        throw new TypeError('fetch failed', { cause: Object.assign(new Error('read ECONNRESET'), { code: 'ECONNRESET' }) })
+      },
+    })
+
+    const error = await fetcher.json('/thing').catch((error: unknown) => error)
+
+    expect(error).toBeInstanceOf(ForgeNetworkError)
+    expect((error as Error).message).toBe('Request to https://api.example/thing failed: fetch failed (ECONNRESET)')
+  })
+
+  it('names the reason of a failed connection without a code', async () => {
+    const fetcher = createFetcher({
+      baseUrl: 'https://api.example',
+      fetch: async () => {
+        throw new TypeError('fetch failed', { cause: new Error('bad port') })
+      },
+    })
+
+    await expect(fetcher.json('/thing')).rejects.toThrow('Request to https://api.example/thing failed: fetch failed (bad port)')
   })
 
   it('keeps the digits of an integer beyond the safe range, leaving other numbers as numbers', async () => {
