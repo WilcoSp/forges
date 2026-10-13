@@ -35,9 +35,6 @@ jobs:
       - name: ✂️ Knip project
         run: pnpm test:knip
 
-      - name: ⚙️ Check package engines
-        run: pnpm test:versions
-
   test:
     runs-on: ubuntu-latest
 

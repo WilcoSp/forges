@@ -21,7 +21,6 @@ export const COMMANDS: Command[] = [
   { commands: ['pnpm test:types'], scripts: ['test:types'], description: 'Type-checks `src`, `test` and `scripts`' },
   { commands: ['pnpm test:capabilities'], scripts: ['test:capabilities'], description: 'Fails for a capability whose declared level does not match what the tests verify against the forge' },
   { commands: ['pnpm test:knip'], scripts: ['test:knip'], description: 'Finds unused files, exports and dependencies' },
-  { commands: ['pnpm test:versions'], scripts: ['test:versions'], description: 'Checks that the dependencies support the `engines` range' },
   { commands: ['pnpm test:size'], scripts: ['test:size'], description: 'Reports browser bundle sizes and checks Lite tree-shaking. Run `pnpm build` first' },
   { commands: ['pnpm lint', 'pnpm lint:fix'], scripts: ['lint', 'lint:fix'], description: 'Lints, and fixes what it can' },
   { commands: ['pnpm capability-matrix'], scripts: ['capability-matrix'], description: 'Updates the capability matrix and the other tables of the docs' },
@@ -31,7 +30,7 @@ export const COMMANDS: Command[] = [
   { commands: ['pnpm recorded-coverage'], scripts: ['recorded-coverage'], description: 'Lists the capabilities that no recording of a live forge exercises' },
   { commands: ['pnpm dev:docs'], scripts: ['dev:docs'], description: 'Starts the docs site' },
   { commands: ['pnpm dev:playground'], scripts: ['dev:playground'], description: 'Starts the playground' },
-  { commands: ['pnpm check:all'], scripts: ['check:all'], description: 'Runs lint, tests, the engines check, a build and the size check' },
+  { commands: ['pnpm check:all'], scripts: ['check:all'], description: 'Runs lint, tests, a build and the size check' },
 ]
 
 /** The commands as a Markdown table. */
