@@ -107,6 +107,7 @@ import type {
   GitHubRepositoryDetail,
   GitHubReview,
   GitHubReviewComment,
+  GitHubTeam,
   GitHubTimelineEntry,
   GitHubTree,
   GitHubUserDetail,
@@ -119,7 +120,7 @@ import { defineForgeProvider, perKind, verb } from '../define.ts'
 import { ForbiddenError, ForgeApiError, ForgeError, ForgeTimeoutError, InsufficientScopeError, MergeBlockedError, NotFoundError, soleMergeMethod, toMergeError, UnsupportedOperationError } from '../errors.ts'
 import { anySignal, sleep } from '../fetch.ts'
 import { isNamespaceRef, isResolvedThread, reactionContent } from '../model.ts'
-import { actorLogin, createListing, forgeIterable, getManyConcurrently, hostOf, iteratePages, memo, milestoneId, phased, requireIssueOrPull, requireThread, resolveToken, summariseChecks, toDate, toPage, toWarning, versionAtLeast } from '../utils.ts'
+import { actorLogin, createListing, forgeIterable, getManyConcurrently, hostOf, iteratePages, memo, milestoneId, phased, requireIssueOrPull, requireThread, resolveToken, summariseChecks, teamOrg, toDate, toPage, toWarning, versionAtLeast } from '../utils.ts'
 import { githubShapedWeb } from '../web.ts'
 import { nativeEventsFor } from '../webhooks.ts'
 import { createAppCredentials, createAuthHeaders } from './auth.ts'
@@ -150,6 +151,7 @@ import {
   toSecretScanningAlert,
   toStatusCheck,
   toTag,
+  toTeam,
   toThread,
   toTreeEntry,
   toUser,
@@ -1595,6 +1597,18 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         return toPage(page, raw => raw.login === author ? undefined : toActor(instance, raw)!)
       }),
     },
+    orgs: {
+      teamsPage: verb(!anonymous, (org, listOptions = {}) => list(
+        `/orgs/${encodeURIComponent(org.owner)}/teams`,
+        listOptions,
+        (raw: GitHubTeam) => toTeam(instance, teamOrg(org), raw),
+      )),
+      teamMembersPage: verb(!anonymous, (team, listOptions = {}) => list(
+        `/orgs/${encodeURIComponent(team.org.owner)}/teams/${encodeURIComponent(team.slug)}/members`,
+        listOptions,
+        (raw: GitHubUserDetail) => toActor(instance, raw)!,
+      )),
+    },
     notifications: {
       listPage: verb(true, notificationPage),
       markRead: verb(true, async (ref: NotificationRef, options) => {
@@ -1868,6 +1882,9 @@ export function githubScopesFor(verb: ForgeVerb): VerbScopes {
   }
   if (group === 'users' || group === 'search') {
     return { token: ['read:user'], permissions: {} }
+  }
+  if (group === 'orgs') {
+    return { token: ['read:org'], permissions: { members: 'read' } }
   }
   if (group === 'ci' || (group === 'checks' && name !== 'report')) {
     return { token: ['repo'], permissions: { actions: 'read', checks: name === 'rerun' ? 'write' : 'read' } }

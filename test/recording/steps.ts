@@ -1,4 +1,4 @@
-import type { Branch, Check, CiJob, CiRun, Comment, Page, Release, Repo, RepoRef, Review, SecurityAlertKind, Thread, ThreadRef, TreeEntry, Webhook } from '../../src/model.ts'
+import type { Branch, Check, CiJob, CiRun, Comment, Page, Release, Repo, RepoRef, Review, SecurityAlertKind, Team, Thread, ThreadRef, TreeEntry, Webhook } from '../../src/model.ts'
 import type { ForgeProvider, ForgeVerb } from '../../src/provider.ts'
 import { sha256Hex } from '../../src/crypto.ts'
 import { ForbiddenError, InsufficientScopeError, NotFoundError } from '../../src/errors.ts'
@@ -56,6 +56,7 @@ export interface StepContext {
   review?: Review
   checks?: Check[]
   discussion?: Thread
+  teams?: Team[]
 }
 
 export interface Step {
@@ -87,6 +88,24 @@ async function orScratch<T>(manifest: RecordingManifest, read: (repo: RepoRef) =
     }
     return read(manifest.scratch)
   }
+}
+
+/** The teams of the scratch repository's owner, whose teams the fixtures set up, or else of the recorded repository's owner. */
+async function orgTeams(provider: ForgeProvider, manifest: RecordingManifest): Promise<Page<Team>> {
+  if (manifest.scratch) {
+    try {
+      const teams = await provider.orgs.teamsPage(namespaceOf(manifest.scratch, manifest.scratch.owner), page)
+      if (teams.items.length) {
+        return teams
+      }
+    }
+    catch (error) {
+      if (!(error instanceof ForbiddenError || error instanceof InsufficientScopeError || error instanceof NotFoundError)) {
+        throw error
+      }
+    }
+  }
+  return provider.orgs.teamsPage(namespaceOf(manifest.repo, manifest.repo.owner), page)
 }
 
 async function firstWithJobs(provider: ForgeProvider, runs: CiRun[]): Promise<Page<CiJob> | undefined> {
@@ -217,6 +236,12 @@ export const STEPS: Step[] = [
   { name: 'collaborators', verb: 'repos.collaboratorsPage', run: (provider, manifest) => orScratch(manifest, repo => provider.repos.collaboratorsPage(repo, page)) },
   { name: 'contributors', verb: 'repos.contributorsPage', run: (provider, manifest) => provider.repos.contributorsPage(manifest.repo, page) },
   { name: 'assignable users', verb: 'repos.assignableUsersPage', run: (provider, manifest) => provider.repos.assignableUsersPage(manifest.repo, page) },
+  { name: 'org teams', verb: 'orgs.teamsPage', run: async (provider, manifest, context) => {
+    const teams = await orgTeams(provider, manifest)
+    context.teams = teams.items
+    return teams
+  } },
+  { name: 'org team members', verb: 'orgs.teamMembersPage', run: (provider, _manifest, context) => provider.orgs.teamMembersPage(need(context.teams?.[0], 'a team').ref, page) },
   ...threadSteps('pull_request', 'pull'),
   ...threadSteps('issue', 'issue'),
   ...threadSteps('discussion', 'discussion'),

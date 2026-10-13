@@ -116,6 +116,10 @@ When an update to an issue or merge request changes labels, assignees or reviewe
 
 If you create a hook with `webhooks.create()`, `nativeEvents` takes the names of GitLab's event flags, such as `issues_events`.
 
+## Organisation teams
+
+GitLab has no teams, so a subgroup stands in for one. `orgs.teams()` reads `GET /groups/{id}/descendant_groups` and lists every subgroup of a group, nested ones included, which GitLab serves for a public group without a credential. A nested subgroup's `parent` is the subgroup it belongs to. `orgs.teamMembers()` reads `GET /groups/{id}/members`, which lists the subgroup's direct members but not those it inherits from the groups above it, and needs a token. It addresses the subgroup by the ref's `id`. The `slug` is the subgroup's path below the group, so for a ref with only the group `acme` and the slug `platform/web`, it reads `GET /groups/acme%2Fplatform%2Fweb/members`.
+
 <!-- capabilities:start -->
 ## Capabilities
 
@@ -142,6 +146,8 @@ If you create a hook with `webhooks.create()`, `nativeEvents` takes the names of
 | `repos.addCollaborator` | ✅ | ❌ |
 | `repos.assignableUsers` | ✅ | ✅ |
 | `repos.reviewerCandidates` | emulated | emulated |
+| `orgs.teams` | ✅ | ✅ |
+| `orgs.teamMembers` | ✅ | ❌ |
 | `threads.get` | issue, PR, commit | issue, PR, commit |
 | `threads.list` | issue, PR | issue, PR |
 | `threads.getMany` | ✅ | ✅ |

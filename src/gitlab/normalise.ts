@@ -29,6 +29,7 @@ import type {
   SecurityAlert,
   SecuritySeverity,
   Tag,
+  Team,
   Thread,
   ThreadKind,
   ThreadRef,
@@ -38,7 +39,7 @@ import type {
   WebhookDeliveryRecord,
   WebhookRef,
 } from '../model.ts'
-import type { GitLabBranch, GitLabCommit, GitLabCommitComment, GitLabCommitDetail, GitLabCommitStatus, GitLabDiff, GitLabDiscussion, GitLabHook, GitLabHookEvent, GitLabIssue, GitLabJob, GitLabLabel, GitLabMilestone, GitLabNote, GitLabNoteDetail, GitLabPipeline, GitLabProjectDetail, GitLabRelease, GitLabTag, GitLabTodo, GitLabTreeEntry, GitLabUser, GitLabVulnerability } from './types.ts'
+import type { GitLabBranch, GitLabCommit, GitLabCommitComment, GitLabCommitDetail, GitLabCommitStatus, GitLabDiff, GitLabDiscussion, GitLabGroup, GitLabHook, GitLabHookEvent, GitLabIssue, GitLabJob, GitLabLabel, GitLabMilestone, GitLabNote, GitLabNoteDetail, GitLabPipeline, GitLabProjectDetail, GitLabRelease, GitLabTag, GitLabTodo, GitLabTreeEntry, GitLabUser, GitLabVulnerability } from './types.ts'
 import { toDate } from '../utils.ts'
 import { eventKindsOf } from '../webhooks.ts'
 import { GITLAB_NATIVE_EVENTS } from './webhook-events.ts'
@@ -88,6 +89,21 @@ export function toNamespaceRef(instance: string, fullPath: string, id?: number):
     owner: fullPath,
     name: '',
     externalId: id === undefined ? undefined : String(id),
+  }
+}
+
+/** GitLab has no teams of its own; a subgroup stands in for one, with its path below `org` as the slug. */
+export function toTeam(instance: string, org: RepoRef, raw: GitLabGroup): Team {
+  const slug = raw.full_path.slice(org.owner.length + 1)
+  const parent = slug.includes('/') ? slug.slice(0, slug.lastIndexOf('/')) : undefined
+  return {
+    ref: { forge: FORGE, instance, org, id: String(raw.id), slug },
+    name: raw.name ?? raw.path ?? slug,
+    description: raw.description || undefined,
+    visibilityRaw: raw.visibility,
+    parent: parent === undefined ? undefined : { forge: FORGE, instance, org, id: raw.parent_id == null ? undefined : String(raw.parent_id), slug: parent },
+    url: raw.web_url,
+    raw,
   }
 }
 

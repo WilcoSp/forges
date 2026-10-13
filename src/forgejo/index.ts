@@ -68,6 +68,7 @@ import type {
   ForgejoRepositoryDetail,
   ForgejoReview,
   ForgejoReviewComment,
+  ForgejoTeam,
   ForgejoTimelineEntry,
   ForgejoTree,
   ForgejoUser,
@@ -80,10 +81,10 @@ import { fromBase64, toFileContent } from '../contents.ts'
 import { defineForgeProvider, perKind, verb } from '../define.ts'
 import { ForgeError, NotFoundError, soleMergeMethod, toMergeError, UnsupportedOperationError } from '../errors.ts'
 import { isNamespaceRef, reactionContent } from '../model.ts'
-import { actorLogin, createListing, getManyConcurrently, hasEveryLabel, hexColour, hostOf, memo, memoBy, milestoneId, requireIssueOrPull, requireThread, resolveToken, summariseChecks, toDate, toPage, toWarning, versionAtLeast } from '../utils.ts'
+import { actorLogin, createListing, getManyConcurrently, hasEveryLabel, hexColour, hostOf, memo, memoBy, milestoneId, requireIssueOrPull, requireThread, resolveToken, summariseChecks, teamOrg, toDate, toPage, toWarning, versionAtLeast } from '../utils.ts'
 import { githubShapedWeb } from '../web.ts'
 import { nativeEventsFor } from '../webhooks.ts'
-import { ACTION_STATES, actionBranch, GITEA_ACTION_STATES, numberFromUrl, toActionJob, toActionRun, toActor, toBranch, toChangedFile, toComment, toCommit, toEvent, toGiteaActionJob, toGiteaActionRun, toLabel, toMilestone, toNotification, toRelease, toRepo, toReview, toReviewComment, toRole, toStatusCheck, toStatusChecks, toTag, toThread, toThreadKind, toTreeEntry, toWebhook } from './normalise.ts'
+import { ACTION_STATES, actionBranch, GITEA_ACTION_STATES, numberFromUrl, toActionJob, toActionRun, toActor, toBranch, toChangedFile, toComment, toCommit, toEvent, toGiteaActionJob, toGiteaActionRun, toLabel, toMilestone, toNotification, toRelease, toRepo, toReview, toReviewComment, toRole, toStatusCheck, toStatusChecks, toTag, toTeam, toThread, toThreadKind, toTreeEntry, toWebhook } from './normalise.ts'
 import { countedNextUrl, countedPages } from './pages.ts'
 import { FORGEJO_HEADERS, FORGEJO_NATIVE_EVENTS } from './webhook-events.ts'
 import { forgejoWebhooks } from './webhooks.ts'
@@ -500,6 +501,15 @@ function setupForgejo({ options, origin, fetcher: baseFetcher, baseUrl }: Provid
   /** Gitea lists runs and serves job logs only with a token. */
   const giteaAnonymous = isGitea && anonymous
 
+  /** Team ids of an organisation by lowercased name, which Forgejo and Gitea keep unique. */
+  const teamIdsOf = memoBy(async (org: string) => {
+    const map = new Map<string, number>()
+    for await (const team of fetcher.items<ForgejoTeam>(`/orgs/${encodeURIComponent(org)}/teams`)) {
+      map.set(team.name.toLowerCase(), team.id)
+    }
+    return map
+  })
+
   /** One page of an Actions listing, read from `key` and continued from `total_count` when no `Link` header is sent. */
   async function actionsPage<T>(path: string, key: 'workflow_runs' | 'jobs', query: Record<string, string | number | undefined>, pageOptions: PageOptions): Promise<FetchResult<T[]>> {
     const url = pageOptions.cursor?.nextUrl ? fetcher.resolve(pageOptions.cursor.nextUrl) : fetcher.resolve(path, query)
@@ -596,6 +606,20 @@ function setupForgejo({ options, origin, fetcher: baseFetcher, baseUrl }: Provid
       }),
       assignableUsersPage: verb(!anonymous, (repo, listOptions = {}) => list(`${repoPath(repo)}/assignees`, listOptions, (raw: ForgejoUser) => toActor(origin, raw)!)),
       reviewerCandidatesPage: verb(!anonymous, (thread, listOptions = {}) => list(`${repoPath(requireThread(thread, context).repo)}/reviewers`, listOptions, (raw: ForgejoUser) => toActor(origin, raw)!)),
+    },
+    orgs: {
+      teamsPage: verb(!anonymous, (org, listOptions = {}) => list(
+        `/orgs/${encodeURIComponent(org.owner)}/teams`,
+        listOptions,
+        (raw: ForgejoTeam) => toTeam(origin, teamOrg(org), raw),
+      )),
+      teamMembersPage: verb(!anonymous, async (team, listOptions = {}) => {
+        const id = team.id ?? (await teamIdsOf(team.org.owner)).get(team.slug.toLowerCase())
+        if (id === undefined) {
+          throw new NotFoundError(`${team.org.owner} has no team named ${team.slug}`, 404, '', context)
+        }
+        return list(`/teams/${encodeURIComponent(id)}/members`, listOptions, (raw: ForgejoUser) => toActor(origin, raw)!)
+      }),
     },
     notifications: {
       listPage: verb(true, notificationPage),
@@ -974,6 +998,9 @@ export function forgejoScopesFor(verb: ForgeVerb): VerbScopes {
   }
   if (group === 'users' || group === 'search') {
     return { token: ['read:user'] }
+  }
+  if (group === 'orgs') {
+    return { token: ['read:organization'] }
   }
   if (group === 'threads' || group === 'repos' || group === 'contents' || group === 'releases' || group === 'checks' || group === 'ci') {
     return { token: [write ? 'write:issue' : 'read:issue', write ? 'write:repository' : 'read:repository'] }

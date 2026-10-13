@@ -1,13 +1,13 @@
 import type { ProviderContext, ProviderDefinition, ProviderFactoryFunction, ProviderSpec } from '../define.ts'
-import type { Actor, BaseOptions, Check, CheckState, Comment, CommentRef, Cursor, ForgeEventInput, ForgeWarning, ListOptions, MergeMethod, Page, RepoRef, ResolvedThreadRef, Review, ReviewInput, SearchQuery, Thread, ThreadQuery, ThreadRef } from '../model.ts'
+import type { Actor, BaseOptions, Check, CheckState, Comment, CommentRef, Cursor, ForgeEventInput, ForgeWarning, ListOptions, MergeMethod, Page, PageOptions, RepoRef, ResolvedThreadRef, Review, ReviewInput, SearchQuery, Thread, ThreadQuery, ThreadRef } from '../model.ts'
 import type { AnonymousAuth, BasicAuth, ForgeOptionsBase, TokenAuth } from '../provider.ts'
 import type { WebLinks } from '../web.ts'
-import type { AzureCommit, AzureCommitDiffs, AzureIdentity, AzureItem, AzurePolicyEvaluation, AzurePullRequest, AzureRef, AzureRepository, AzureReviewer, AzureStatus, AzureThread, AzureWorkItem, AzureWorkItemComment, AzureWorkItemUpdate } from './types.ts'
+import type { AzureCommit, AzureCommitDiffs, AzureIdentity, AzureItem, AzurePolicyEvaluation, AzurePullRequest, AzureRef, AzureRepository, AzureReviewer, AzureStatus, AzureTeam, AzureTeamMember, AzureThread, AzureWorkItem, AzureWorkItemComment, AzureWorkItemUpdate } from './types.ts'
 import { toFileContent } from '../contents.ts'
 import { defineForgeProvider, perKind, verb } from '../define.ts'
 import { ForgeError, MergeMethodRequiredError, NotFoundError, toMergeError, UnsupportedOperationError } from '../errors.ts'
-import { actorLogin, getManyConcurrently, memo, mergeCommitMessage, phased, requireIssueOrPull, requireThread, resolveToken, summariseChecks, syntheticReview, toWarning } from '../utils.ts'
-import { FORGE, isConversationThread, projectRef, toActor, toBranch, toChangedFile, toCommit, toPolicyCheck, toPullComment, toPullThread, toRepo, toRepoRef, toStatusCheck, toTag, toThreadEvents, toTreeEntry, toWorkItemComment, toWorkItemEvents, toWorkItemThread } from './normalise.ts'
+import { actorLogin, getManyConcurrently, memo, mergeCommitMessage, phased, requireIssueOrPull, requireThread, resolveToken, summariseChecks, syntheticReview, teamOrg, toWarning } from '../utils.ts'
+import { FORGE, isConversationThread, projectRef, toActor, toBranch, toChangedFile, toCommit, toPolicyCheck, toPullComment, toPullThread, toRepo, toRepoRef, toStatusCheck, toTag, toTeam, toThreadEvents, toTreeEntry, toWorkItemComment, toWorkItemEvents, toWorkItemThread } from './normalise.ts'
 import { azureWeb } from './web.ts'
 import { azureDevOpsWebhooks } from './webhooks.ts'
 
@@ -161,6 +161,21 @@ function setupAzure({ options, instance, origin: context, fetcher, baseUrl }: Pr
       result.warnings = [...result.warnings ?? [], toWarning('checks_unreadable', error, ref.number)]
     }
     return result
+  }
+
+  /** One page of a project's teams, or of a team's members, which Azure DevOps pages with `$top` and `$skip`. */
+  async function teamsListing<R, T>(org: RepoRef, path: string, listOptions: PageOptions, map: (raw: R) => T | undefined): Promise<Page<T>> {
+    const { org: organization, project } = scope(org)
+    const skip = Number(listOptions.cursor?.token ?? 0)
+    const top = listOptions.perPage ?? PER_PAGE
+    const { data } = await fetcher.json<{ value: R[] }>(`/${enc(organization)}/_apis/projects/${enc(project)}/teams${path}`, {
+      query: { $top: top, $skip: skip },
+      signal: listOptions.signal,
+    })
+    return {
+      items: data.value.flatMap(raw => map(raw) ?? []),
+      cursor: data.value.length === top ? { token: String(skip + top) } : undefined,
+    }
   }
 
   async function pullPage(repo: RepoRef, status: string, query: ThreadQuery, cursor?: Cursor): Promise<Page<Thread>> {
@@ -384,6 +399,13 @@ function setupAzure({ options, instance, origin: context, fetcher, baseUrl }: Pr
         const items = data.value.map(raw => toRepo(instance, scope(owner).org, raw))
         return query.sort ? { items, warnings: [{ code: 'sort_unsupported', message: 'Azure DevOps lists the repositories of a project in its own order' }] } : { items }
       }),
+    },
+    orgs: {
+      /** Teams belong to a project, so `org` is a project namespace ref (`owner: 'organization/project'`). */
+      teamsPage: verb(!anonymous, (org, listOptions = {}) =>
+        teamsListing(org, '', listOptions, (raw: AzureTeam) => toTeam(instance, teamOrg(org), raw))),
+      teamMembersPage: verb(!anonymous, (team, listOptions = {}) =>
+        teamsListing(team.org, `/${enc(team.id ?? team.slug)}/members`, listOptions, (member: AzureTeamMember) => toActor(instance, member.identity))),
     },
     contents: {
       file: verb(true, async (repo, path, fileOptions = {}) => {
@@ -670,9 +692,15 @@ function setupAzure({ options, instance, origin: context, fetcher, baseUrl }: Pr
     web: azureWeb(baseUrl),
     webhooks: {
     },
-    scopes: verb => verb.startsWith('webhooks.')
-      ? { token: ['vso.work_full'], note: 'Service hook subscriptions need project administrator rights' }
-      : { token: ['vso.code', 'vso.work'] },
+    scopes: (verb) => {
+      if (verb.startsWith('webhooks.')) {
+        return { token: ['vso.work_full'], note: 'Service hook subscriptions need project administrator rights' }
+      }
+      if (verb.startsWith('orgs.')) {
+        return { token: ['vso.project'], note: 'Read projects and their teams' }
+      }
+      return { token: ['vso.code', 'vso.work'] }
+    },
   }
 }
 

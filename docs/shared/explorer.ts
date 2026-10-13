@@ -6,7 +6,7 @@ export type ExplorerField
   = | 'owner' | 'name' | 'kind' | 'number' | 'state' | 'path' | 'ref' | 'sha' | 'tag' | 'releaseId' | 'base' | 'head'
     | 'login' | 'query' | 'runId' | 'title' | 'body' | 'labels' | 'assignees' | 'reviewers' | 'method' | 'reaction'
     | 'reviewEvent' | 'reviewId' | 'reviewThread' | 'closeReason' | 'milestone' | 'canonical' | 'targetOwner'
-    | 'targetName' | 'labelName' | 'colour' | 'role' | 'key' | 'commentId' | 'notificationId' | 'webhookId'
+    | 'targetName' | 'labelName' | 'colour' | 'role' | 'team' | 'key' | 'commentId' | 'notificationId' | 'webhookId'
     | 'deliveryId' | 'webhookUrl' | 'secret' | 'checkName' | 'checkState' | 'checkId'
 
 /** The values a form holds. Lists are comma-separated. */
@@ -64,6 +64,7 @@ export const EXPLORER_FIELDS: Record<ExplorerField, ExplorerFieldConfig> = {
   labelName: { label: 'Label', default: 'needs triage' },
   colour: { label: 'Colour', placeholder: 'six-digit hex', default: 'fbca04' },
   role: { label: 'Role', items: options('read', 'triage', 'write', 'maintain', 'admin'), default: 'write' },
+  team: { label: 'Team', default: 'stewards' },
   key: { label: 'Key', default: 'release-notes' },
   commentId: { label: 'Comment id', default: '123' },
   notificationId: { label: 'Notification id', default: '1' },
@@ -254,6 +255,10 @@ export const EXPLORER_OPERATIONS: ExplorerOperation[] = [
   operation('repos.createLabel', { returns: 'Label', fields: fields('labelName', 'colour'), args: ({ value }) => `repo, { name: ${value('labelName')}, colour: ${value('colour')} }` }),
   operation('repos.addCollaborator', { returns: 'AddCollaboratorResult', fields: fields('login', 'role'), args: ({ value }) => `repo, ${value('login')}, ${value('role')}` }),
 
+  // Organisation teams
+  operation('orgs.teams', { method: 'orgs.teamsPage', returns: 'Page<Team>', uses: 'none', fields: fields('owner'), args: ({ origin, value }) => `{ ${origin}, owner: ${value('owner')}, name: '', kind: 'namespace' }, { perPage: 5 }`, run: (p, input, { origin }) => p.orgs.teamsPage({ ...origin, owner: input.owner, name: '', kind: 'namespace' }, perPage) }),
+  operation('orgs.teamMembers', { method: 'orgs.teamMembersPage', returns: 'Page<Actor>', uses: 'none', fields: fields('owner', 'team'), args: ({ origin, value }) => `{ ${origin}, org: { ${origin}, owner: ${value('owner')}, name: '', kind: 'namespace' }, slug: ${value('team')} }, { perPage: 5 }` }),
+
   // Threads
   threadRead('threads.get', 'Thread', (p, _, { thread }) => p.threads.get(thread)),
   operation('threads.getMany', { returns: 'GetManyResult[]', uses: 'thread', fields: fields('kind', 'number'), kind: threadKind, args: () => '[thread]', run: (p, _, { thread }) => p.threads.getMany([thread]) }),
@@ -353,6 +358,22 @@ export const EXPLORER_OPERATIONS: ExplorerOperation[] = [
   operation('search.repos', { method: 'search.reposPage', returns: 'Page<Repo>', uses: 'none', fields: fields('query'), args: ({ value }) => `{ text: ${value('query')}, perPage: 5 }`, run: (p, input) => p.search.reposPage({ text: input.query, perPage: 5 }) }),
   operation('search.commits', { method: 'search.commitsPage', returns: 'Page<Commit>', fields: fields('query'), args: ({ value }) => `{ repo, text: ${value('query')}, perPage: 5 }`, run: (p, input, { repo }) => p.search.commitsPage({ repo, text: input.query, perPage: 5 }) }),
 ]
+
+/** The explorer picker's groups, in order: each namespace of the operations above, with its title. */
+export const EXPLORER_NAMESPACE_TITLES: Record<string, string> = {
+  threads: 'Issues and pull requests',
+  repos: 'Repositories',
+  orgs: 'Organisation teams',
+  contents: 'Contents',
+  releases: 'Releases',
+  checks: 'Checks',
+  ci: 'CI',
+  securityAlerts: 'Security alerts',
+  notifications: 'Notifications',
+  webhooks: 'Webhooks',
+  users: 'Accounts',
+  search: 'Search',
+}
 
 /** Whether the explorer has an operation for `verb`. */
 export function explorable(verb: string): boolean {

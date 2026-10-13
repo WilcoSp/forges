@@ -1,5 +1,5 @@
-import type { Actor, Branch, ChangedFile, Check, CheckState, Comment, Commit, ForgeEventInput, Repo, RepoRef, ResolvedThreadRef, ReviewState, Tag, Thread, ThreadRef, TreeEntry } from '../model.ts'
-import type { AzureChange, AzureComment, AzureCommit, AzureIdentity, AzureItem, AzurePolicyEvaluation, AzurePullRequest, AzureRef, AzureRepository, AzureReviewer, AzureStatus, AzureThread, AzureWorkItem, AzureWorkItemComment, AzureWorkItemUpdate } from './types.ts'
+import type { Actor, Branch, ChangedFile, Check, CheckState, Comment, Commit, ForgeEventInput, Repo, RepoRef, ResolvedThreadRef, ReviewState, Tag, Team, Thread, ThreadRef, TreeEntry } from '../model.ts'
+import type { AzureChange, AzureComment, AzureCommit, AzureIdentity, AzureItem, AzurePolicyEvaluation, AzurePullRequest, AzureRef, AzureRepository, AzureReviewer, AzureStatus, AzureTeam, AzureThread, AzureWorkItem, AzureWorkItemComment, AzureWorkItemUpdate } from './types.ts'
 import { toDate } from '../utils.ts'
 
 export const FORGE = 'azure-devops' as const
@@ -29,6 +29,16 @@ export function toRepoRef(instance: string, organization: string, repo: AzureRep
 /** Work items belong to a project rather than a repository. */
 export function projectRef(instance: string, organization: string, project: string): RepoRef {
   return { forge: FORGE, instance, owner: `${organization}/${project}`, name: '', kind: 'namespace' }
+}
+
+/** A team belongs to a project, so its ref carries the project as a namespace. */
+export function toTeam(instance: string, org: RepoRef, raw: AzureTeam): Team {
+  return {
+    ref: { forge: FORGE, instance, org, id: raw.id, slug: raw.name },
+    name: raw.name,
+    description: raw.description || undefined,
+    raw,
+  }
 }
 
 export function toRepo(instance: string, organization: string, raw: AzureRepository): Repo {

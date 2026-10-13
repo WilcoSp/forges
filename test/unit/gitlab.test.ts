@@ -689,3 +689,35 @@ describe('gitlab thread updates', () => {
     expect(JSON.parse(calls[0]!.body!)).toEqual({ state_event: 'close', labels: '', assignee_ids: [] })
   })
 })
+
+describe('gitlab organisation subgroups and members', () => {
+  const org = { forge: 'gitlab', instance: 'gitlab.com', owner: 'acme', name: '', kind: 'namespace' } as const
+
+  it('lists nested subgroups as teams, with their path below the group as the slug', async () => {
+    const { instance } = provider()
+
+    const teams = await Array.fromAsync(instance.orgs.teams(org))
+
+    expect(teams.map(team => [team.ref.slug, team.ref.id, team.name, team.parent?.slug, team.parent?.id])).toEqual([
+      ['platform', '20', 'Platform', undefined, undefined],
+      ['platform/web', '21', 'Web', 'platform', '20'],
+    ])
+  })
+
+  it('lists the direct members of a nested subgroup, addressed by its path without an id', async () => {
+    const { instance, calls } = provider()
+
+    const members = await Array.fromAsync(instance.orgs.teamMembers({ forge: 'gitlab', instance: 'gitlab.com', org, slug: 'platform/web' }))
+
+    expect(members.map(member => member.login)).toEqual(['octocat', 'hubot'])
+    expect(calls.map(call => `${call.method} ${new URL(call.url).pathname}`)).toEqual([
+      'GET /api/v4/groups/acme%2Fplatform%2Fweb/members',
+    ])
+  })
+
+  it('reports subgroup members unsupported without a credential', () => {
+    const anonymous = gitlab({}).create()
+
+    expect(anonymous.can('orgs.teamMembers')).toBe(false)
+  })
+})

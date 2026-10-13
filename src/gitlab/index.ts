@@ -63,6 +63,7 @@ import type {
   GitLabDiff,
   GitLabDiscussion,
   GitLabFile,
+  GitLabGroup,
   GitLabHook,
   GitLabHookEvent,
   GitLabIssue,
@@ -84,7 +85,7 @@ import { fromBase64, toFileContent } from '../contents.ts'
 import { defineForgeProvider, perKind, verb } from '../define.ts'
 import { AuthenticationRequiredError, InsufficientScopeError, NotFoundError, soleMergeMethod, TokenRevokedError, toMergeError, UnresolvedThreadError, UnsupportedOperationError } from '../errors.ts'
 import { isNamespaceRef, reactionContent } from '../model.ts'
-import { createListing, degradesToWarning, getManyConcurrently, hexColour, memo, memoBy, mergeCommitMessage, milestoneId, phased, requireIssueOrPull, requireThread, resolveToken, syntheticReview, toDate, toPage, toWarning, versionAtLeast } from '../utils.ts'
+import { createListing, degradesToWarning, getManyConcurrently, hexColour, memo, memoBy, mergeCommitMessage, milestoneId, phased, requireIssueOrPull, requireThread, resolveToken, syntheticReview, teamOrg, toDate, toPage, toWarning, versionAtLeast } from '../utils.ts'
 import { webUrlFor } from '../web.ts'
 import { nativeEventsFor } from '../webhooks.ts'
 import {
@@ -115,6 +116,7 @@ import {
   toRole,
   toStatusCheck,
   toTag,
+  toTeam,
   toThread,
   toTreeEntry,
   toVulnerability,
@@ -731,6 +733,17 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
         assignableUsersPage: verb(true, (repo, listOptions = {}) => list(`${projectPath(repo)}/users`, listOptions, (raw: GitLabUser) => toActor(instance, raw)!)),
         reviewerCandidatesPage: verb('emulated', (thread, listOptions = {}) => list(`${projectPath(requireThread(thread, context).repo)}/users`, listOptions, (raw: GitLabUser) => toActor(instance, raw)!)),
       },
+      orgs: {
+        /** GitLab has no teams, so a subgroup stands in for one. With a token, GitLab lists only the account's own subgroups unless `all_available` is set. */
+        teamsPage: verb(true, (org, listOptions = {}) => list(
+          `/groups/${encodeURIComponent(org.externalId ?? org.owner)}/descendant_groups`,
+          listOptions,
+          (raw: GitLabGroup) => toTeam(instance, teamOrg(org), raw),
+          { query: { all_available: true } },
+        )),
+        teamMembersPage: verb(!anonymous, (team, listOptions = {}) =>
+          list(`/groups/${encodeURIComponent(team.id ?? `${team.org.owner}/${team.slug}`)}/members`, listOptions, (raw: GitLabMember) => toActor(instance, raw)!)),
+      },
       notifications: {
         listPage: verb(true, notificationPage),
         markDone: verb(true, async (ref, options) => {
@@ -1148,6 +1161,9 @@ export function gitlabScopesFor(verb: ForgeVerb): VerbScopes {
   const [group = '', name = ''] = verb.split('.')
   if (group === 'webhooks') {
     return name === 'verify' || name === 'ingest' ? {} : { token: ['api'], note: 'Maintainer on the project, or Owner on the group' }
+  }
+  if (group === 'orgs') {
+    return { token: ['read_api'], note: 'A member of the group, for a private group' }
   }
   const reads = new Set(['get', 'list', 'listPage', 'byOwner', 'byOwnerPage', 'page', 'events', 'eventsPage', 'comments', 'commentsPage', 'getMany', 'reviews', 'reviewsPage', 'checks', 'files', 'filesPage', 'commits', 'commitsPage', 'code', 'codePage', 'subscription', 'unreadCount', 'threads', 'threadsPage', 'repos', 'reposPage', 'tree', 'treePage', 'branches', 'branchesPage', 'tags', 'tagsPage', 'file', 'compare', 'resolveRef', 'commit', 'latest', 'getByTag', 'downloadAsset', 'runs', 'runsPage', 'run', 'jobs', 'jobsPage', 'log', 'permissionFor', 'labels', 'labelsPage', 'milestones', 'milestonesPage', 'collaborators', 'collaboratorsPage', 'contributors', 'contributorsPage', 'assignableUsers', 'assignableUsersPage', 'reviewerCandidates', 'reviewerCandidatesPage'])
   return { token: [reads.has(name) ? 'read_api' : 'api'] }
