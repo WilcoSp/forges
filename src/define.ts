@@ -461,6 +461,7 @@ function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extend
     fetch: options.fetch,
     timeout: options.timeout,
     onRetry: options.onRetry,
+    onRateLimit: options.onRateLimit,
     headers,
     query: definition.query,
     context: origin,

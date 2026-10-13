@@ -30,6 +30,11 @@ export interface FetcherOptions {
    * `retry-after` of at most a minute is retried once, after that wait.
    */
   onRetry?: (retry: { url: string, method: string, wait: number }) => void
+  /**
+   * Called with the rate limit that a response from the base URL's origin reports, including a response that fails
+   * or is `304 Not Modified`. Responses without rate limit headers don't call it.
+   */
+  onRateLimit?: (event: { url: string, method: string, rateLimit: RateLimit }) => void
 }
 
 /** Options for one request of a fetcher. */
@@ -255,10 +260,12 @@ export function rateLimitOf(response: Response): RateLimit | undefined {
   if (limit === undefined && remaining === undefined && reset === undefined) {
     return undefined
   }
+  const resource = response.headers.get('x-ratelimit-resource') || response.headers.get('ratelimit-name') || undefined
   return {
     ...limit === undefined ? {} : { limit },
     ...remaining === undefined ? {} : { remaining },
     ...reset === undefined ? {} : { resetAt: reset },
+    ...resource === undefined ? {} : { resource },
   }
 }
 
@@ -464,6 +471,13 @@ export function createFetcher(options: FetcherOptions): Fetcher {
     }
     finally {
       clearTimeout(timer)
+    }
+
+    if (options.onRateLimit && target.origin === baseOrigin) {
+      const rateLimit = rateLimitOf(response)
+      if (rateLimit) {
+        options.onRateLimit({ url, method: options_.method ?? 'GET', rateLimit })
+      }
     }
 
     if (response.type === 'opaqueredirect' && options_.redirect !== 'manual') {

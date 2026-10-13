@@ -1378,6 +1378,11 @@ export interface RateLimit {
   remaining?: number
   /** When `remaining` resets. */
   resetAt?: Date
+  /**
+   * The name of the budget, where the forge has several and names them, such as GitHub's `core`, `search` or
+   * `graphql`, or GitLab's `throttle_authenticated_api`.
+   */
+  resource?: string
 }
 
 /**

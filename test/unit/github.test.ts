@@ -1019,6 +1019,28 @@ describe('github search', () => {
     expect(items[0]!.title).toBe('Widget crashes on load')
   })
 
+  it('reports the search budget apart from the core budget', async () => {
+    const { fetch: replay } = fixtureFetch('github')
+    const resources: Array<string | undefined> = []
+    const provider = github({
+      auth: { type: 'token', token: 't' },
+      fetch: async (input, init) => {
+        const response = await replay(input, init)
+        const headers = new Headers(response.headers)
+        headers.set('x-ratelimit-remaining', '10')
+        headers.set('x-ratelimit-resource', new URL(String(input)).pathname.startsWith('/search/') ? 'search' : 'core')
+        return new Response(response.body, { status: response.status, headers })
+      },
+      onRateLimit: ({ rateLimit }) => resources.push(rateLimit.resource),
+    }).create()
+
+    const page = await provider.search.threadsPage({ text: 'crash', repo, kind: 'issue', state: 'open', sort: 'updated', direction: 'desc' })
+    await provider.repos.get(repo)
+
+    expect(page.rateLimit).toEqual({ remaining: 10, resource: 'search' })
+    expect(resources).toEqual(['search', 'core'])
+  })
+
   it('warns rather than filtering when a repository sort is unsupported', async () => {
     const { provider } = tokenProvider()
 

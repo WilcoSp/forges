@@ -168,6 +168,11 @@ export interface ForgeOptionsBase {
   readOnly?: boolean
   /** Called before a request is retried after a secondary rate limit, with the wait in milliseconds. */
   onRetry?: FetcherOptions['onRetry']
+  /**
+   * Called with the rate limit of every API response that reports one, so that you can follow the budget without
+   * reading `page.rateLimit`. `rateLimit.resource` names the budget where the forge has several.
+   */
+  onRateLimit?: FetcherOptions['onRateLimit']
 }
 
 /** Per-thread-kind support. `'other'` subjects have no verbs, so they have no entry. */
