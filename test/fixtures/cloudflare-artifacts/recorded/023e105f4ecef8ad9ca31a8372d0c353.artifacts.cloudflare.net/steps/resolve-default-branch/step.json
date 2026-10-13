@@ -1,0 +1,7 @@
+{
+  "name": "resolve default branch",
+  "recordedAt": "2026-10-13T16:12:26.223Z",
+  "needs": [
+    "repo"
+  ]
+}
