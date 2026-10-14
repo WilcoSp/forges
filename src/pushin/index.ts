@@ -1,5 +1,5 @@
 import type { ProviderContext, ProviderDefinition, ProviderFactoryFunction, ProviderSpec } from '../define.ts'
-import type { BaseOptions, Comment, ForgeEventInput, ListOptions, Page, RepoRef, ResolvedThreadRef, Thread, ThreadQuery, ThreadRef } from '../model.ts'
+import type { BaseOptions, Comment, ForgeEventInput, ListOptions, Page, PageOptions, Release, RepoRef, ResolvedThreadRef, Thread, ThreadQuery, ThreadRef } from '../model.ts'
 import type { AnonymousAuth, ForgeOptionsBase, TokenAuth, VerbScopes } from '../provider.ts'
 import type { ForgeVerb } from '../supports.ts'
 import type { WebLinks } from '../web.ts'
@@ -91,6 +91,10 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
     }
   }
 
+  async function releasesPage(repo: RepoRef, listOptions: PageOptions = {}): Promise<Page<Release>> {
+    return list(`${repoPath(repo)}/releases`, listOptions, (raw: PushinRelease) => toRelease(repo, raw))
+  }
+
   return {
     traits: {
       eventKinds: 'native',
@@ -131,8 +135,9 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
     webhooks: {},
     scopes: pushinScopesFor,
     releases: {
-      get: verb('unverified', async (ref, options) => toRelease(ref.repo, (await fetcher.json<PushinRelease>(`${repoPath(ref.repo)}/releases/${encodeURIComponent(ref.id)}`, { signal: options?.signal })).data)),
-      latest: verb('unverified', async (repo, options) => {
+      get: verb('experimental', async (ref, options) => toRelease(ref.repo, (await fetcher.json<PushinRelease>(`${repoPath(ref.repo)}/releases/${encodeURIComponent(ref.id)}`, { signal: options?.signal })).data)),
+      getByTag: verb('experimental', async (repo, tag, options) => toRelease(repo, (await fetcher.json<PushinRelease>(`${repoPath(repo)}/releases/tags/${encodeURIComponent(tag)}`, { signal: options?.signal })).data)),
+      latest: verb('experimental', async (repo, options) => {
         try {
           return toRelease(repo, (await fetcher.json<PushinRelease>(`${repoPath(repo)}/releases/latest`, { signal: options?.signal })).data)
         }
@@ -143,6 +148,7 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
           throw error
         }
       }),
+      listPage: verb('experimental', releasesPage),
     },
   }
 }
@@ -167,4 +173,4 @@ export function pushinScopesFor(_verb: ForgeVerb): VerbScopes {
   return { note: 'A personal access token created in Settings; Pushin.eu does not scope tokens per resource' }
 }
 
-export { toActor as toPushinActor, toComment as toPushinComment, toRepo as toPushinRepo }
+export { toActor as toPushinActor, toComment as toPushinComment, toRelease as toPushinRelease, toRepo as toPushinRepo }
