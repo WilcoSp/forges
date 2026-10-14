@@ -25,15 +25,28 @@ function within(url: string, prefixes: string[]): boolean {
   return prefixes.some(prefix => url === prefix || url.startsWith(prefix.endsWith('/') ? prefix : `${prefix}/`) || url.startsWith(`${prefix}?`))
 }
 
-/** Every string that is an id: under a key naming one (`id`, `labelIds`), or shaped like a GitHub node id. */
+/** Every string that is an id: under a key naming one (`id`, `labelIds`), or shaped like a GitHub node id. The zero oid names no object. */
 function ids(value: unknown, key = ''): string[] {
   if (typeof value === 'string') {
+    if (/^0{40}$/.test(value)) {
+      return []
+    }
     return /ids?$/i.test(key) || /^[A-Z][A-Z_]{0,5}_[\w-]{8,}$/i.test(value) || /^MD[A-Z0-9+/]{8,}={0,2}$/i.test(value) ? [value] : []
   }
   if (Array.isArray(value)) {
     return value.flatMap(item => ids(item, key))
   }
   return value && typeof value === 'object' ? Object.entries(value).flatMap(([name, item]) => ids(item, name)) : []
+}
+
+/** Every `owner/name` that `value` names under `repositoryNameWithOwner`, as `createCommitOnBranch` takes it. */
+function namesWithOwner(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap(namesWithOwner)
+  }
+  return value && typeof value === 'object'
+    ? Object.entries(value).flatMap(([key, item]) => key === 'repositoryNameWithOwner' && typeof item === 'string' ? [item] : namesWithOwner(item))
+    : []
 }
 
 function strings(value: unknown, into: Set<string>): void {
@@ -67,6 +80,9 @@ export function guardedFetch(fetch: FetchLike, options: GuardOptions): FetchLike
       const known = namedIds.every(id => seen.has(id))
       if (/^\s*mutation\b/.test(query) && (!known || !namedIds.length)) {
         throw new Error(`Refused the GraphQL mutation ${operationName ?? ''}: it names an id that did not come from the scratch repository`)
+      }
+      if (namesWithOwner(variables).some(name => !options.repos.some(repo => `${repo.owner}/${repo.name}` === name))) {
+        throw new Error(`Refused the GraphQL request ${operationName ?? ''}: it names a repository other than the scratch repositories`)
       }
       // A query that names neither a repository nor an id is not tied to the scratch repository, so its ids stay untrusted.
       trusted = known && (scoped(variables) ? named(variables) : namedIds.length > 0)

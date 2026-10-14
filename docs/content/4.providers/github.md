@@ -133,6 +133,14 @@ What `checks.report()` writes depends on your credential. With the credential of
 
 Files over 1 MB are read through the Git blobs API, so the result of `contents.file()` has `encoding: 'none'` for them. When GitHub truncates a large tree, `contents.tree()` adds a `tree_truncated` warning to the result.
 
+## Committing files
+
+Without `author`, `contents.commitFiles()` makes the commit with one GraphQL `createCommitOnBranch` mutation, so GitHub signs it and attributes it to the account of the credential. With `author`, the provider writes the commit through the Git database API instead, and moves the branch with the GraphQL `updateRefs` mutation, which checks that the branch is still where the change started. GitHub doesn't sign that commit, and it records `author` as the committer too.
+
+Without `author`, `createFrom` creates the branch before the commit. If the commit fails, the provider deletes the branch again, unless it has moved since.
+
+A file keeps its mode when you write over it: an executable file stays executable, and a symlink stays a symlink, pointing at the new contents.
+
 ## Search
 
 GitHub gives search a lower rate limit than the rest of its API, and commit search has a limit of its own, separate from issue and repository search. After a search, `page.rateLimit` reports the limit that the search used.
@@ -335,6 +343,7 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `contents.commits` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `contents.commit` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `contents.compare` | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `contents.commitFiles` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `contents.threadFiles` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `contents.threadCommits` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `reviews.list` | ✅ | ✅ | ✅ | ❌ | ✅ |
