@@ -71,7 +71,7 @@ export function renderBundleSizeDiff(base: BundleSnapshot, head: BundleSnapshot)
     '<!-- forges:bundle-size -->',
     '## Bundle size',
     '',
-    'Browser entry bundles compared with the PR base. All sizes are in bytes; lazy chunks are minified and loaded on demand.',
+    'Browser entry bundles compared with the PR base. All sizes are in bytes. Lazy totals the minified chunks besides the entry, which load on demand or never.',
     '',
     '| Bundle | Minified | Gzip | Lazy |',
     '| --- | ---: | ---: | ---: |',
@@ -81,7 +81,7 @@ export function renderBundleSizeDiff(base: BundleSnapshot, head: BundleSnapshot)
       return `| ${name} | ${cell(previous?.minified, current?.minified)} | ${cell(previous?.gzipped, current?.gzipped)} | ${cell(previous?.lazy, current?.lazy)} |`
     }),
     '',
-    'Size changes are informational. Lite bundles are checked separately for webhook code.',
+    'Size changes are informational. `pnpm test:size` checks Lite bundles for webhook code, and the provider-free bundle against its budget.',
     '',
   ].join('\n')
 }
