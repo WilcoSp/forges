@@ -3,11 +3,12 @@ import type { BaseOptions, Comment, ForgeEventInput, ListOptions, Page, RepoRef,
 import type { AnonymousAuth, ForgeOptionsBase, TokenAuth, VerbScopes } from '../provider.ts'
 import type { ForgeVerb } from '../supports.ts'
 import type { WebLinks } from '../web.ts'
-import type { PushinCollaborator, PushinComment, PushinLabel, PushinNotification, PushinRepository, PushinThread, PushinUser } from './types.ts'
+import type { PushinCollaborator, PushinComment, PushinLabel, PushinNotification, PushinRelease, PushinRepository, PushinThread, PushinUser } from './types.ts'
 import { defineForgeProvider, perKind, verb } from '../define.ts'
+import { NotFoundError } from '../errors.ts'
 import { createListing, getManyConcurrently, requireIssueOrPull, resolveToken, toPage } from '../utils.ts'
 import { githubShapedWeb } from '../web.ts'
-import { FORGE, toActor, toCollaborator, toComment, toLabel, toNotification, toRepo, toThread } from './normalise.ts'
+import { FORGE, toActor, toCollaborator, toComment, toLabel, toNotification, toRelease, toRepo, toThread } from './normalise.ts'
 
 /** A personal access token created in Settings (`pun_pat_…`), sent as `Authorization: Bearer`. */
 export type PushinAuth = TokenAuth | AnonymousAuth
@@ -129,6 +130,20 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
     }),
     webhooks: {},
     scopes: pushinScopesFor,
+    releases: {
+      get: verb('unverified', async (ref, options) => toRelease(ref.repo, (await fetcher.json<PushinRelease>(`${repoPath(ref.repo)}/releases/${encodeURIComponent(ref.id)}`, { signal: options?.signal })).data)),
+      latest: verb('unverified', async (repo, options) => {
+        try {
+          return toRelease(repo, (await fetcher.json<PushinRelease>(`${repoPath(repo)}/releases/latest`, { signal: options?.signal })).data)
+        }
+        catch (error) {
+          if (error instanceof NotFoundError) {
+            return undefined
+          }
+          throw error
+        }
+      }),
+    },
   }
 }
 
@@ -139,7 +154,7 @@ const PUSHIN: ProviderDefinition<PushinOptions, undefined, true> = {
   anonymous: true,
   baseUrl: 'https://pushin.eu',
   apiPath: '/api/v1',
-  headers: { accept: 'application/vnd.github+json' },
+  headers: { accept: 'application/json' },
   authHeaders: ({ options: { auth } }) => auth?.type === 'token' ? async () => ({ authorization: `Bearer ${await resolveToken(auth)}` }) : undefined,
   setup: setupPushin,
 }
