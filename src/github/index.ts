@@ -2080,7 +2080,7 @@ const GITHUB: ProviderDefinition<GitHubOptions, AppCredentials | undefined, true
   instance: webHost,
   headers: { 'accept': 'application/vnd.github+json', 'x-github-api-version': '2022-11-28' },
   prepare: ({ options, baseUrl, headers, state }) => options.auth?.type === 'app'
-    ? state ?? createAppCredentials(options.auth, { baseUrl, fetch: options.fetch, timeout: options.timeout, headers })
+    ? state ?? createAppCredentials(options.auth, { baseUrl, fetch: options.fetch, timeout: options.timeout, onRetry: options.onRetry, onRateLimit: options.onRateLimit, headers })
     : undefined,
   authHeaders: ({ options, state }) => createAuthHeaders(options.auth, state),
   setup: setupGitHub,

@@ -434,6 +434,34 @@ describe('github app installations', () => {
     expect(calls.at(-1)!.authorization).toBe('Bearer ghs_fixtureinstallationtoken')
   })
 
+  it('reports the retries and rate limits of the installation token exchange', async () => {
+    const { fetch: replay } = fixtureFetch('github')
+    const onRetry = vi.fn()
+    const onRateLimit = vi.fn()
+    let limited = false
+    const provider = github({
+      auth: { type: 'app', appId: 12345, privateKey, installationId: 55123 },
+      fetch: async (input, init) => {
+        if (String(input).endsWith('/access_tokens') && !limited) {
+          limited = true
+          return new Response('{"message":"You have exceeded a secondary rate limit."}', { status: 403, headers: { 'retry-after': '0' } })
+        }
+        const response = await replay(input, init)
+        const headers = new Headers(response.headers)
+        headers.set('x-ratelimit-remaining', '10')
+        return new Response(response.body, { status: response.status, headers })
+      },
+      onRetry,
+      onRateLimit,
+    }).create()
+
+    await provider.repos.get(repo)
+
+    const exchange = 'https://api.github.com/app/installations/55123/access_tokens'
+    expect(onRetry).toHaveBeenCalledExactlyOnceWith({ url: exchange, method: 'POST', wait: 0 })
+    expect(onRateLimit.mock.calls.map(([{ url, method }]) => `${method} ${url}`)).toEqual([`POST ${exchange}`, 'GET https://api.github.com/repos/acme/widgets'])
+  })
+
   it('lists installations and their repositories', async () => {
     const { provider } = appProvider()
     const installations = []

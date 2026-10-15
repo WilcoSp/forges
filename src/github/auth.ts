@@ -1,4 +1,4 @@
-import type { FetchLike } from '../fetch.ts'
+import type { FetcherOptions } from '../fetch.ts'
 import type { BaseOptions, InstallationToken } from '../model.ts'
 import type { AnonymousAuth, AppAuth, TokenAuth } from '../provider.ts'
 import type { GitHubInstallationToken } from './types.ts'
@@ -32,12 +32,7 @@ export function tokenKindOf(auth: GitHubTokenAuth, token: string | undefined = t
   return auth.kind ?? (token === undefined ? undefined : TOKEN_PREFIXES.find(([prefix]) => token.startsWith(prefix))?.[1])
 }
 
-export interface AuthContext {
-  baseUrl: string
-  fetch?: FetchLike
-  timeout?: number
-  headers: Record<string, string>
-}
+export type AuthContext = Pick<FetcherOptions, 'baseUrl' | 'fetch' | 'timeout' | 'headers' | 'onRetry' | 'onRateLimit'>
 
 /**
  * App-level credential state, shared with the per-installation providers
@@ -72,10 +67,7 @@ export function createAppCredentials(auth: AppAuth, context: AuthContext): AppCr
   }
 
   const fetcher = createFetcher({
-    baseUrl: context.baseUrl,
-    fetch: context.fetch,
-    timeout: context.timeout,
-    headers: context.headers,
+    ...context,
     authHeaders: async () => ({ authorization: `Bearer ${await appJwt()}` }),
   })
 
