@@ -217,24 +217,17 @@ function retryAfterMs(response: Response): number | undefined {
   return Number.isNaN(date) ? undefined : Math.max(0, date - Date.now())
 }
 
-/**
- * `x-ratelimit-reset` is a Unix time in seconds. The IETF `ratelimit-reset`
- * is seconds from now, though some forges send a Unix time there too.
- */
-function resetDate(response: Response): Date | undefined {
-  const epoch = headerNumber(response, 'x-ratelimit-reset')
-  if (epoch !== undefined) {
-    return new Date(epoch * 1000)
-  }
-  const reset = headerNumber(response, 'ratelimit-reset')
+/** `x-ratelimit-reset` and `ratelimit-reset` hold a Unix time in seconds on some forges, and seconds from now on others. */
+function resetDate(response: Response, now: number): Date | undefined {
+  const reset = headerNumber(response, 'x-ratelimit-reset', 'ratelimit-reset')
   if (reset === undefined) {
     return undefined
   }
-  return new Date(reset > 1_000_000_000 ? reset * 1000 : Date.now() + reset * 1000)
+  return new Date(reset > 1_000_000_000 ? reset * 1000 : now + reset * 1000)
 }
 
 function rateLimitReset(response: Response): Date | undefined {
-  const reset = resetDate(response)
+  const reset = resetDate(response, Date.now())
   if (reset) {
     return reset
   }
@@ -242,10 +235,11 @@ function rateLimitReset(response: Response): Date | undefined {
   return after === undefined ? undefined : new Date(Date.now() + after)
 }
 
+/** The leading number of the first of `names` to hold one, such as `60` of `60, 60;w=3600`. */
 function headerNumber(response: Response, ...names: string[]): number | undefined {
   for (const name of names) {
-    const value = response.headers.get(name)
-    if (value !== null && value !== '' && Number.isFinite(Number(value))) {
+    const value = response.headers.get(name)?.split(/[,;]/, 1)[0]!.trim()
+    if (value && Number.isFinite(Number(value))) {
       return Number(value)
     }
   }
@@ -253,10 +247,10 @@ function headerNumber(response: Response, ...names: string[]): number | undefine
 }
 
 /** The request budget a response reports, from `x-ratelimit-*` or `ratelimit-*` headers. */
-export function rateLimitOf(response: Response): RateLimit | undefined {
+export function rateLimitOf(response: Response, now: number = Date.now()): RateLimit | undefined {
   const limit = headerNumber(response, 'x-ratelimit-limit', 'ratelimit-limit')
   const remaining = headerNumber(response, 'x-ratelimit-remaining', 'ratelimit-remaining')
-  const reset = resetDate(response)
+  const reset = resetDate(response, now)
   if (limit === undefined && remaining === undefined && reset === undefined) {
     return undefined
   }

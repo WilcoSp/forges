@@ -533,6 +533,12 @@ describe('cancellation and rate-limit resets', () => {
     expect(Math.round((error.resetAt!.getTime() - Date.now()) / 1000)).toBe(30)
   })
 
+  it('reads the leading number of a limit list and an `x-ratelimit-reset` in seconds from now', () => {
+    const response = new Response(null, { headers: { 'x-ratelimit-limit': '60, 60;w=3600', 'x-ratelimit-remaining': '59', 'x-ratelimit-reset': '3476' } })
+
+    expect(rateLimitOf(response, 1_800_000_000_000)).toEqual({ limit: 60, remaining: 59, resetAt: new Date(1_800_003_476_000) })
+  })
+
   it('reads a Unix time in `ratelimit-reset`', async () => {
     const fetcher = createFetcher({ baseUrl: 'https://api.example', fetch: async () => new Response('', { status: 429, headers: { 'ratelimit-reset': '2000000000' } }) })
     const error = await fetcher.json('/a').catch((error: unknown) => error) as RateLimitedError

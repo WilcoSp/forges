@@ -111,7 +111,8 @@
     "etag": "W/\"482388cbcf6f99511c9a085ac18b8327\""
   },
   "rateLimit": {
+    "limit": 60,
     "remaining": 41,
-    "resetAt": "1970-01-01T00:57:54.000Z"
+    "resetAt": "<now>"
   }
 }
