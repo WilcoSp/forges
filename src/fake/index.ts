@@ -1117,7 +1117,7 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
             head,
             aheadBy: between.length,
             behindBy: 0,
-            commits: between,
+            commits: between.toReversed(),
             files: between.flatMap(commit => commit.files ?? []),
             raw: { base, head },
           }
