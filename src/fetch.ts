@@ -227,7 +227,7 @@ function resetDate(response: Response, now: number): Date | undefined {
 }
 
 function rateLimitReset(response: Response): Date | undefined {
-  const reset = resetDate(response, Date.now())
+  const reset = rateLimitOf(response)?.resetAt
   if (reset) {
     return reset
   }
@@ -246,13 +246,41 @@ function headerNumber(response: Response, ...names: string[]): number | undefine
   return undefined
 }
 
-/** The request budget a response reports, from `x-ratelimit-*` or `ratelimit-*` headers. */
+/** The members of a structured-field list such as `"burst";r=10;t=5, "day";r=900;t=3600`, by name. */
+function fieldMembers(response: Response, name: string): Map<string, Record<string, number>> {
+  const members = new Map<string, Record<string, number>>()
+  for (const member of response.headers.get(name)?.split(',') ?? []) {
+    const [key = '', ...params] = member.split(';')
+    members.set(key.trim().replace(/^"(.*)"$/, '$1'), Object.fromEntries(params.map((param) => {
+      const [field = '', value] = param.split('=')
+      return [field.trim(), Number(value)]
+    })))
+  }
+  return members
+}
+
+/** The IETF `ratelimit` and `ratelimit-policy` fields, for the policy with the fewest requests left. */
+function structuredRateLimit(response: Response, now: number): RateLimit | undefined {
+  const [name, state] = [...fieldMembers(response, 'ratelimit')].filter(([, params]) => Number.isFinite(params.r)).sort(([, a], [, b]) => a.r! - b.r!)[0] ?? []
+  if (!state) {
+    return undefined
+  }
+  const limit = fieldMembers(response, 'ratelimit-policy').get(name!)?.q
+  return {
+    ...Number.isFinite(limit) ? { limit } : {},
+    remaining: state.r,
+    ...Number.isFinite(state.t) ? { resetAt: new Date(now + state.t! * 1000) } : {},
+    ...name ? { resource: name } : {},
+  }
+}
+
+/** The request budget a response reports, from `x-ratelimit-*` or `ratelimit-*` headers, or the IETF `ratelimit` field. */
 export function rateLimitOf(response: Response, now: number = Date.now()): RateLimit | undefined {
   const limit = headerNumber(response, 'x-ratelimit-limit', 'ratelimit-limit')
   const remaining = headerNumber(response, 'x-ratelimit-remaining', 'ratelimit-remaining')
   const reset = resetDate(response, now)
   if (limit === undefined && remaining === undefined && reset === undefined) {
-    return undefined
+    return structuredRateLimit(response, now)
   }
   const resource = response.headers.get('x-ratelimit-resource') || response.headers.get('ratelimit-name') || undefined
   return {
@@ -267,12 +295,12 @@ function isRateLimited(response: Response): boolean {
   if (response.status === 429) {
     return true
   }
+  const rateLimit = rateLimitOf(response)
   // A zero budget never resets; the request needs other credentials.
-  if (response.status !== 403 || headerNumber(response, 'x-ratelimit-limit', 'ratelimit-limit') === 0) {
+  if (response.status !== 403 || rateLimit?.limit === 0) {
     return false
   }
-  return response.headers.get('x-ratelimit-remaining') === '0'
-    || response.headers.get('ratelimit-remaining') === '0'
+  return rateLimit?.remaining === 0
     || response.headers.has('retry-after')
 }
 

@@ -539,6 +539,26 @@ describe('cancellation and rate-limit resets', () => {
     expect(rateLimitOf(response, 1_800_000_000_000)).toEqual({ limit: 60, remaining: 59, resetAt: new Date(1_800_003_476_000) })
   })
 
+  it('reads the IETF `ratelimit` field for the policy with the fewest requests left', () => {
+    const now = 1_800_000_000_000
+    const codeberg = new Response(null, { headers: { 'ratelimit-policy': '"baseline";q=2000;w=600', 'ratelimit': '"baseline";r=1900;t=600' } })
+    const several = new Response(null, { headers: { 'ratelimit-policy': '"burst";q=100;w=60, "day";q=1000;w=86400', 'ratelimit': '"burst";r=90;t=30, "day";r=5;t=3600' } })
+    const unnamed = new Response(null, { headers: { ratelimit: '"other";r=7' } })
+
+    expect(rateLimitOf(codeberg, now)).toEqual({ limit: 2000, remaining: 1900, resetAt: new Date(now + 600_000), resource: 'baseline' })
+    expect(rateLimitOf(several, now)).toEqual({ limit: 1000, remaining: 5, resetAt: new Date(now + 3_600_000), resource: 'day' })
+    expect(rateLimitOf(unnamed, now)).toEqual({ remaining: 7, resource: 'other' })
+    expect(rateLimitOf(new Response(null, { headers: { 'ratelimit-policy': '3000;w=300' } }), now)).toBeUndefined()
+  })
+
+  it('reads an exhausted IETF `ratelimit` field as a rate limit', async () => {
+    const fetcher = createFetcher({ baseUrl: 'https://api.example', fetch: async () => new Response('', { status: 403, headers: { 'ratelimit-policy': '"baseline";q=2000;w=600', 'ratelimit': '"baseline";r=0;t=30' } }) })
+    const error = await fetcher.json('/a').catch((error: unknown) => error) as RateLimitedError
+
+    expect(error).toBeInstanceOf(RateLimitedError)
+    expect(Math.round((error.resetAt!.getTime() - Date.now()) / 1000)).toBe(30)
+  })
+
   it('reads a Unix time in `ratelimit-reset`', async () => {
     const fetcher = createFetcher({ baseUrl: 'https://api.example', fetch: async () => new Response('', { status: 429, headers: { 'ratelimit-reset': '2000000000' } }) })
     const error = await fetcher.json('/a').catch((error: unknown) => error) as RateLimitedError

@@ -17,6 +17,7 @@ describe('reading the wait a rate limit asks for', () => {
   it('reads the reset of an exhausted budget', async () => {
     expect(await rateLimitWait(response(403, { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(now / 1000 + 600) }), now)).toBe(600_000)
     expect(await rateLimitWait(response(429, { 'ratelimit-remaining': '0', 'ratelimit-reset': '45' }), now)).toBe(45_000)
+    expect(await rateLimitWait(response(429, { ratelimit: '"baseline";r=0;t=120' }), now)).toBe(120_000)
     expect(await rateLimitWait(response(429, { 'x-ratelimit-limit': '60, 60;w=3600', 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': '3476' }), now)).toBe(3_476_000)
   })
 
