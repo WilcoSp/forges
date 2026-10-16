@@ -11,10 +11,11 @@ import {
   RateLimitedError,
   SubscriptionClosedError,
   TokenRevokedError,
+  UnresolvedThreadError,
   UnsupportedOperationError,
   WebhookVerificationError,
 } from '../../src/errors.ts'
-import { isResolvedThread, notificationThread, repoKey, threadKey } from '../../src/model.ts'
+import { affectedKeys, isResolvedThread, notificationThread, parseCommentKey, parseRepoKey, parseThreadKey, repoKey, threadKey } from '../../src/model.ts'
 import { fixtureFetch, hangingFetch, stubFetch } from '../utils/fixtures.ts'
 import { FakeWebSocket } from '../utils/websocket.ts'
 import { contracts, WEBHOOK_SECRET } from './providers.ts'
@@ -173,6 +174,22 @@ describe.each(contracts)('contract: $name', (contract) => {
     expect(results[1]!.ok === false && results[1]!.warning.code).toBe('thread_unresolved')
   })
 
+  it('rejects a comment ref whose thread has no number before it sends a request', async () => {
+    const { instance, calls } = provider()
+    const ref = { forge: contract.name, instance: contract.instance, thread: { ...threadRef(), number: undefined }, id: '1' }
+    const reads = {
+      'threads.getComment': () => instance.threads.getComment(ref),
+      ...contract.editsCommentWithoutThreadNumber ? {} : { 'threads.editComment': () => instance.threads.editComment(ref, 'Edited') },
+    }
+    const supported = Object.entries(reads).filter(([verb]) => instance.can(verb as ForgeVerb, 'pull_request'))
+
+    expect(supported.length).toBeGreaterThan(0)
+    for (const [verb, read] of supported) {
+      await expect(read(), verb).rejects.toThrow(UnresolvedThreadError)
+    }
+    expect(calls).toEqual([])
+  })
+
   it('gives threads assignees, reviewers, draft status and pull branches', async () => {
     const { instance } = provider()
     const thread = await instance.threads.get(threadRef())
@@ -233,9 +250,10 @@ describe.each(contracts)('contract: $name', (contract) => {
     const { instance, calls } = provider()
     const reopen = contract.writes.reopen
     expect(Boolean(capabilities.writes.reopen.pull_request)).toBe(Boolean(reopen))
-    await instance.threads.close!(threadRef())
+    const closed = await instance.threads.close!(threadRef())
+    expect(closed).toMatchObject({ ref: { number: contract.thread.number }, state: 'closed' })
     if (reopen) {
-      await instance.threads.reopen!(threadRef())
+      expect((await instance.threads.reopen!(threadRef())).ref.number).toBe(contract.thread.number)
     }
 
     const writes = calls.filter(call => call.method !== 'GET' && !contract.writes.ignore?.test(call.url))
@@ -264,8 +282,9 @@ describe.each(contracts)('contract: $name', (contract) => {
 
     it('approves then merges with the only allowed method', async () => {
       const { instance, calls } = provider()
-      await instance.threads.approveAndMerge!(threadRef())
+      const result = await instance.threads.approveAndMerge!(threadRef())
 
+      expect({ ...result, raw: undefined }).toEqual(merge!.result)
       expect(calls.map(({ method, url }) => ({ method, url }))).toEqual([
         ...merge!.reads,
         { method: merge!.review.method, url: merge!.review.url },
@@ -275,10 +294,20 @@ describe.each(contracts)('contract: $name', (contract) => {
       expect(calls[merge!.reads.length + 1]!.body ?? '').toContain(merge!.merge.body)
     })
 
+    it('resolves an approval with the review from its one request', async () => {
+      const { instance, calls } = provider()
+      const review = await instance.threads.approve(threadRef())
+
+      expect(review.state).toBe('approved')
+      expect(review.ref.thread.number).toBe(contract.thread.number)
+      expect(calls.map(({ method, url }) => ({ method, url }))).toEqual([{ method: merge!.review.method, url: merge!.review.url }])
+    })
+
     it('merges with an explicit method without reading the repository', async () => {
       const { instance, calls } = provider()
-      await instance.threads.merge!(threadRef(), { method: merge!.explicit.method })
+      const result = await instance.threads.merge!(threadRef(), { method: merge!.explicit.method })
 
+      expect({ ...result, raw: undefined }).toEqual(merge!.result)
       expect(calls).toHaveLength(1 + (merge!.settle?.length ?? 0))
       expect(calls[0]!.url).toBe(merge!.merge.url)
       expect(calls[0]!.body).toContain(merge!.explicit.bodyContains)
@@ -317,6 +346,19 @@ describe.each(contracts)('contract: $name', (contract) => {
     expect(events[0]!.thread?.displayNumber).toBe(contract.webhook.expect.displayNumber)
     expect(events[0]!.thread?.repo.name).toBe('widgets')
     expect(events[0]!.occurredAt).toBeInstanceOf(Date)
+    expect(events[0]!.detail?.type === 'comment' ? events[0]!.detail.comment?.id : undefined).toBe(contract.webhook.expect.comment)
+  })
+
+  it('keys every webhook event so that each key reads back', async () => {
+    const { instance } = provider()
+    const signature = await contract.webhook.sign(contract.webhook.body, WEBHOOK_SECRET)
+    const events = await instance.webhooks.ingest({ headers: contract.webhook.headers(signature), body: contract.webhook.body })
+    const keys = events.map(event => affectedKeys(event))
+
+    expect(keys.flatMap(({ repos }) => repos).filter(key => !parseRepoKey(key))).toEqual([])
+    expect(keys.flatMap(({ threads }) => threads).filter(key => !parseThreadKey(key))).toEqual([])
+    expect(keys.flatMap(({ comments }) => comments).filter(key => !parseCommentKey(key))).toEqual([])
+    expect(keys.some(({ repos }) => repos.length)).toBe(true)
   })
 
   it('rejects a webhook with a bad signature', async () => {

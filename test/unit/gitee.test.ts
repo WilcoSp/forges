@@ -50,6 +50,15 @@ describe('gitee', () => {
     expect(pagedPage.total).toBe(15)
   })
 
+  it('leaves `aheadBy` unset when Gitee truncates the commits of a comparison', async () => {
+    const commits = (length: number) => Array.from({ length }, (_, index) => ({ sha: `c${index}`, parents: [] }))
+    const compare = (body: object) => gitee({ fetch: async () => Response.json(body) }).create().contents.compare(repo, 'main', 'dev')
+
+    expect((await compare({ commits: commits(100), files: [], truncated: true })).aheadBy).toBeUndefined()
+    expect((await compare({ commits: commits(78), files: [], truncated: true })).aheadBy).toBe(78)
+    expect((await compare({ commits: commits(100), files: [], truncated: false })).aheadBy).toBe(100)
+  })
+
   it('keeps the cursor page size when reporting a fallback total', async () => {
     const forge = gitee({ fetch: async url => new URL(url).searchParams.get('page') === '1'
       ? Response.json(Array.from({ length: 10 }, (_, index) => ({ name: `b${index}`, commit: { sha: 'a' } })), { headers: { total_page: '2' } })
@@ -155,7 +164,11 @@ describe('gitee', () => {
 
   it('merges without approving, sending `message` as the description', async () => {
     const { fetch, calls } = fixtureFetch('gitee')
-    await gitee({ auth: { type: 'token', token: 't' }, fetch }).create().threads.merge!(pull, { method: 'merge', message: 'Ship it' })
+    await expect(gitee({ auth: { type: 'token', token: 't' }, fetch }).create().threads.merge!(pull, { method: 'merge', message: 'Ship it' })).resolves.toEqual({
+      status: 'merged',
+      sha: 'feedfacefeedfacefeedfacefeedfacefeedface',
+      raw: { sha: 'feedfacefeedfacefeedfacefeedfacefeedface', merged: true, message: 'Pull Request 已成功合并' },
+    })
 
     expect(calls.map(call => `${call.method} ${new URL(call.url).pathname}`)).toEqual(['PUT /api/v5/repos/acme/widgets/pulls/7/merge'])
     expect(JSON.parse(calls[0]!.body!)).toEqual({ merge_method: 'merge', description: 'Ship it' })
@@ -232,5 +245,49 @@ describe('gitee thread updates', () => {
 
     await expect(instance.threads.update(thread, { state: 'closed', assignees: [...assignees] })).rejects.toThrow(message)
     expect(calls).toEqual([])
+  })
+})
+
+describe('gitee labels', () => {
+  it.each([['setLabels', 'PUT'], ['addLabels', 'POST']] as const)('resolves %s with the labels in the response', async (verb, method) => {
+    const { fetch, calls } = fixtureFetch('gitee', { [`${method} https://gitee.com/api/v5/repos/acme/widgets/pulls/7/labels`]: { status: 200, body: [{ id: 1, name: 'bug', color: 'd73a4a' }, { id: 2, name: 'triage' }] } })
+
+    await expect(gitee({ auth: { type: 'token', token: 't' }, fetch }).create().threads[verb](pull, ['bug'])).resolves.toEqual([{ name: 'bug', colour: 'd73a4a' }, { name: 'triage' }])
+    expect(calls).toHaveLength(1)
+  })
+
+  it('reads the labels after removing some, as the delete response has no body', async () => {
+    const { fetch, calls } = fixtureFetch('gitee', {
+      'DELETE https://gitee.com/api/v5/repos/acme/widgets/pulls/7/labels/bug': { status: 204 },
+      'GET https://gitee.com/api/v5/repos/acme/widgets/pulls/7/labels': { status: 200, body: [{ id: 2, name: 'triage', color: 'ededed' }] },
+    })
+
+    await expect(gitee({ auth: { type: 'token', token: 't' }, fetch }).create().threads.removeLabels(pull, ['bug'])).resolves.toEqual([{ name: 'triage', colour: 'ededed' }])
+    expect(calls.map(call => call.method)).toEqual(['DELETE', 'GET'])
+  })
+})
+
+describe('gitee state changes', () => {
+  it('resolves with the issue or pull request in the response', async () => {
+    const issue = { ...pull, kind: 'issue', number: 'I7' } as const
+    const { fetch, calls } = fixtureFetch('gitee', {
+      'PATCH https://gitee.com/api/v5/repos/acme/issues/I7': { status: 200, body: { number: 'I7', title: 'Crash', state: 'closed' } },
+      [`PATCH https://gitee.com/api/v5/repos/acme/widgets/pulls/${pull.number}`]: { status: 200, body: { number: Number(pull.number), title: 'Add widgets', state: 'closed', head: { ref: 'feat' }, base: { ref: 'main' } } },
+    })
+    const provider = gitee({ auth: { type: 'token', token: 't' }, fetch }).create()
+
+    await expect(provider.threads.close(issue)).resolves.toMatchObject({ kind: 'issue', title: 'Crash', state: 'closed' })
+    await expect(provider.threads.close(pull)).resolves.toMatchObject({ kind: 'pull_request', title: 'Add widgets', state: 'closed', branches: { head: { ref: 'feat' }, base: { ref: 'main' } } })
+    expect(calls.map(call => call.method)).toEqual(['PATCH', 'PATCH'])
+  })
+})
+
+describe('gitee assignees', () => {
+  it('resolves setAssignees with the assignee of the issue in the response', async () => {
+    const issue = { ...pull, kind: 'issue', number: 'I7' } as const
+    const { fetch, calls } = fixtureFetch('gitee', { 'PATCH https://gitee.com/api/v5/repos/acme/issues/I7': { status: 200, body: { number: 'I7', assignee: { id: 3, login: 'ada' } } } })
+
+    await expect(gitee({ auth: { type: 'token', token: 't' }, fetch }).create().threads.setAssignees(issue, ['ada'])).resolves.toMatchObject([{ login: 'ada', id: '3' }])
+    expect(calls).toHaveLength(1)
   })
 })

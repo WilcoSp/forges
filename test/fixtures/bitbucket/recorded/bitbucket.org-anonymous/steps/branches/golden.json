@@ -20,8 +20,10 @@
     "nextUrl": "https://api.bitbucket.org/2.0/repositories/neelabo/neeview/refs/branches?pagelen=3&page=2",
     "etag": "W/\"9ddd0149fcc6c781d8da6bbbe84d041f\""
   },
+  "etag": "W/\"9ddd0149fcc6c781d8da6bbbe84d041f\"",
   "rateLimit": {
+    "limit": 60,
     "remaining": 49,
-    "resetAt": "1970-01-01T00:57:55.000Z"
+    "resetAt": "<now>"
   }
 }

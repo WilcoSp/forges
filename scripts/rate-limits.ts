@@ -1,11 +1,8 @@
 import type { FetchLike } from '../src/fetch.ts'
+import { rateLimitOf } from '../src/fetch.ts'
 
 const LIMIT_MESSAGE = /\brate.?limit|\btoo many requests\b|\bsubmitted too quickly\b|\babuse detection\b/i
-
-function header(response: Response, name: string): number | undefined {
-  const value = response.headers.get(name)
-  return value !== null && value !== '' && Number.isFinite(Number(value)) ? Number(value) : undefined
-}
+const WINDOW_MESSAGE = /\bin under (\d+) minutes?\b/i
 
 /**
  * How long a forge asks to wait before a rate-limited request is sent again,
@@ -17,8 +14,10 @@ export async function rateLimitWait(response: Response, now = Date.now()): Promi
     return undefined
   }
   const retryAfter = response.headers.get('retry-after')
-  const exhausted = response.headers.get('x-ratelimit-remaining') === '0' || response.headers.get('ratelimit-remaining') === '0'
-  const limited = response.status === 429 || (response.status === 403 && (exhausted || retryAfter !== null)) || LIMIT_MESSAGE.test((await response.clone().text()).slice(0, 2000))
+  const rateLimit = rateLimitOf(response, now)
+  const exhausted = rateLimit?.remaining === 0
+  const body = (await response.clone().text()).slice(0, 2000)
+  const limited = response.status === 429 || (response.status === 403 && (exhausted || retryAfter !== null)) || LIMIT_MESSAGE.test(body)
   if (!limited) {
     return undefined
   }
@@ -27,15 +26,11 @@ export async function rateLimitWait(response: Response, now = Date.now()): Promi
     const date = Date.parse(retryAfter)
     return Number.isFinite(seconds) ? seconds * 1000 : Number.isNaN(date) ? Number.NaN : Math.max(0, date - now)
   }
-  const epoch = header(response, 'x-ratelimit-reset')
-  const reset = header(response, 'ratelimit-reset')
-  if (exhausted && epoch !== undefined) {
-    return Math.max(0, epoch * 1000 - now)
+  if (exhausted && rateLimit.resetAt) {
+    return Math.max(0, rateLimit.resetAt.getTime() - now)
   }
-  if (exhausted && reset !== undefined) {
-    return reset > 1_000_000_000 ? Math.max(0, reset * 1000 - now) : reset * 1000
-  }
-  return Number.NaN
+  const window = WINDOW_MESSAGE.exec(body)
+  return window ? Number(window[1]) * 60_000 : Number.NaN
 }
 
 export interface PatientFetchOptions {

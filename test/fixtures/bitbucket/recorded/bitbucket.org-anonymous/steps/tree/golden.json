@@ -20,8 +20,10 @@
     "nextUrl": "https://api.bitbucket.org/2.0/repositories/neelabo/neeview/src/master/?pagelen=3&page=ByUK",
     "etag": "W/\"f2b870d7bb844a34494dace84771789e\""
   },
+  "etag": "W/\"f2b870d7bb844a34494dace84771789e\"",
   "rateLimit": {
+    "limit": 60,
     "remaining": 50,
-    "resetAt": "1970-01-01T00:57:56.000Z"
+    "resetAt": "<now>"
   }
 }

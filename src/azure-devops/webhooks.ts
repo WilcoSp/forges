@@ -4,6 +4,7 @@ import type { WebhookDelivery } from '../provider.ts'
 import type { AzureDevOpsOptions } from './index.ts'
 import type { AzureComment, AzureIdentity, AzurePullRequest, AzureRepository, AzureServiceHookEvent } from './types.ts'
 import { bodyText, headerValue, timingSafeEqual } from '../crypto.ts'
+import { eventTime } from '../events.ts'
 import { toDate } from '../utils.ts'
 import { refEvent } from '../webhooks.ts'
 import { FORGE, projectRef, toActor, toRepoRef } from './normalise.ts'
@@ -40,7 +41,7 @@ export function translateAzureWebhook(instance: string, organization: string, de
     instance,
     id: event.id,
     kindRaw: event.eventType,
-    occurredAt: toDate(event.createdDate) ?? new Date(),
+    ...eventTime(toDate(event.createdDate)),
     repo,
     source: 'webhook' as const,
     payload: event,
@@ -49,7 +50,10 @@ export function translateAzureWebhook(instance: string, organization: string, de
     const thread: ThreadRef = { forge: FORGE, instance, repo, kind: 'pull_request', number: String(pull.pullRequestId) }
     const comment = resource.comment as AzureComment | undefined
     const actor = toActor(instance, comment?.author ?? pull.createdBy)
-    return [{ ...base, kind: PULL_KINDS[event.eventType] ?? 'other', actor, thread, summary: event.message?.text ?? `${actor?.login ?? 'someone'} ${event.eventType}` }]
+    const kind = PULL_KINDS[event.eventType] ?? 'other'
+    const threadId = /\/threads\/(\d+)\/comments\/\d+$/.exec(comment?._links?.self?.href ?? '')?.[1]
+    const commentRef = comment && threadId ? { forge: FORGE, instance, thread, id: `${threadId}/${comment.id}` } : undefined
+    return [{ ...base, kind, actor, thread, ...kind === 'comment' && { detail: { type: 'comment', comment: commentRef, body: comment?.content } }, summary: event.message?.text ?? `${actor?.login ?? 'someone'} ${event.eventType}` }]
   }
   if (event.eventType.startsWith('workitem.')) {
     const fields = (resource.fields ?? (resource.revision as { fields?: Record<string, unknown> } | undefined)?.fields ?? {}) as Record<string, unknown>

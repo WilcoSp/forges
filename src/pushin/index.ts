@@ -6,6 +6,7 @@ import type { WebLinks } from '../web.ts'
 import type { PushinCollaborator, PushinComment, PushinLabel, PushinNotification, PushinRelease, PushinRepository, PushinThread, PushinUser } from './types.ts'
 import { defineForgeProvider, perKind, verb } from '../define.ts'
 import { NotFoundError } from '../errors.ts'
+import { eventTime } from '../events.ts'
 import { createListing, getManyConcurrently, requireIssueOrPull, resolveToken, toPage } from '../utils.ts'
 import { githubShapedWeb } from '../web.ts'
 import { FORGE, toActor, toCollaborator, toComment, toLabel, toNotification, toRelease, toRepo, toThread } from './normalise.ts'
@@ -80,7 +81,7 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
         kind: 'comment' as const,
         kindRaw: 'comment',
         summary: `${comment.author?.login ?? 'someone'} commented`,
-        occurredAt: comment.createdAt ?? new Date(0),
+        ...eventTime(comment.createdAt, new Date(0)),
         actor: comment.author,
         repo: ref.repo,
         thread: ref,
@@ -137,6 +138,7 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
       pull: 'pulls',
       commit: 'commits',
       raw: false,
+      sections: { forks: null, watchers: null },
       commentFragment: 'comment-',
       file: at => `/blob/${encodeURIComponent(at)}`,
       lineFragment: line => `L${line}`,

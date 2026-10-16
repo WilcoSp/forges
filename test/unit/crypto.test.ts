@@ -41,6 +41,11 @@ describe('signatures', () => {
     expect(timingSafeEqual('abc', 'abc')).toBe(true)
     expect(timingSafeEqual('abc', 'abd')).toBe(false)
     expect(timingSafeEqual('abc', 'abcd')).toBe(false)
+    expect(timingSafeEqual('abcd', 'abc')).toBe(false)
+    expect(timingSafeEqual('abcabc', 'abc')).toBe(false)
+    expect(timingSafeEqual('', '')).toBe(true)
+    expect(timingSafeEqual('a', '')).toBe(false)
+    expect(timingSafeEqual('', 'a')).toBe(false)
   })
 
   it('verifies a Uint8Array body byte for byte', async () => {

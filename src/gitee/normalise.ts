@@ -1,5 +1,6 @@
-import type { Actor, Branch, ChangedFile, Check, Comment, Commit, ForgeEventInput, Notification, Release, Repo, RepoRef, ResolvedThreadRef, Tag, Thread, ThreadRef, TreeEntry, Webhook } from '../model.ts'
-import type { GiteeBranch, GiteeCheckRun, GiteeComment, GiteeCommit, GiteeCommitFile, GiteeHook, GiteeIssue, GiteeNotification, GiteeOperateLog, GiteePullRequest, GiteeRelease, GiteeRepository, GiteeTag, GiteeTreeEntry, GiteeUser } from './types.ts'
+import type { Actor, Branch, ChangedFile, Check, Comment, Commit, ForgeEventInput, Label, Notification, Release, Repo, RepoRef, ResolvedThreadRef, Tag, Thread, ThreadRef, TreeEntry, Webhook } from '../model.ts'
+import type { GiteeBranch, GiteeCheckRun, GiteeComment, GiteeCommit, GiteeCommitFile, GiteeHook, GiteeIssue, GiteeLabel, GiteeNotification, GiteeOperateLog, GiteePullRequest, GiteeRelease, GiteeRepository, GiteeTag, GiteeTreeEntry, GiteeUser } from './types.ts'
+import { eventTime } from '../events.ts'
 import { checkRunState, toDate, toFileStatus } from '../utils.ts'
 import { eventKindsOf } from '../webhooks.ts'
 import { GITEE_NATIVE_EVENTS } from './webhook-events.ts'
@@ -56,6 +57,10 @@ export function toRepo(instance: string, raw: GiteeRepository): Repo {
 }
 
 /** Gitee issues are `open`, `progressing`, `closed` or `rejected`; progressing work is still open. */
+export function toLabel(raw: GiteeLabel): Label {
+  return { name: raw.name, colour: raw.color ?? undefined }
+}
+
 function issueState(state: string): Thread['state'] {
   return state === 'open' || state === 'progressing' ? 'open' : state === 'closed' || state === 'rejected' ? 'closed' : 'unknown'
 }
@@ -74,7 +79,7 @@ export function toIssueThread(ref: ResolvedThreadRef, raw: GiteeIssue): Thread {
     author: toActor(instance, raw.user),
     assignees: raw.assignee ? [toActor(instance, raw.assignee)!] : [],
     reviewers: [],
-    labels: (raw.labels ?? []).map(label => ({ name: label.name, colour: label.color })),
+    labels: (raw.labels ?? []).map(toLabel),
     url: raw.html_url,
     createdAt: toDate(raw.created_at),
     updatedAt: toDate(raw.updated_at),
@@ -99,11 +104,12 @@ export function toPullThread(ref: ResolvedThreadRef, raw: GiteePullRequest): Thr
     author: toActor(instance, raw.user),
     assignees: [],
     reviewers: (raw.assignees ?? []).map(reviewer => ({ actor: toActor(instance, reviewer)!, state: reviewer.accept ? 'approved' : 'pending', stateRaw: reviewer.accept ? 'accepted' : 'requested' })),
-    labels: (raw.labels ?? []).map(label => ({ name: label.name, colour: label.color })),
+    labels: (raw.labels ?? []).map(toLabel),
     url: raw.html_url,
     createdAt: toDate(raw.created_at),
     updatedAt: toDate(raw.updated_at),
     closedAt: toDate(raw.closed_at),
+    mergedAt: toDate(raw.merged_at),
     lastActivityAt: toDate(raw.updated_at),
     locked: raw.locked,
     branches: raw.head && raw.base
@@ -118,7 +124,7 @@ export function isConversationComment(raw: GiteeComment): boolean {
   return raw.comment_type !== 'diff_comment' && !raw.path
 }
 
-export function toComment(thread: ThreadRef, raw: GiteeComment): Comment {
+export function toComment(thread: ResolvedThreadRef, raw: GiteeComment): Comment {
   return {
     ref: { forge: FORGE, instance: thread.instance, thread, id: String(raw.id) },
     body: raw.body,
@@ -133,6 +139,7 @@ export function toComment(thread: ThreadRef, raw: GiteeComment): Comment {
 export function toCommentEvent(thread: ThreadRef, raw: GiteeComment): ForgeEventInput {
   const actor = toActor(thread.instance, raw.user)
   const inline = !isConversationComment(raw)
+  const comment = { forge: FORGE, instance: thread.instance, thread, id: String(raw.id) }
   return {
     forge: FORGE,
     instance: thread.instance,
@@ -140,10 +147,11 @@ export function toCommentEvent(thread: ThreadRef, raw: GiteeComment): ForgeEvent
     kind: inline ? 'review_comment' : 'comment',
     kindRaw: raw.comment_type ?? 'comment',
     summary: `${actor?.login ?? 'someone'} ${inline ? 'commented on the diff' : 'commented'}`,
-    occurredAt: toDate(raw.created_at) ?? new Date(0),
+    ...eventTime(toDate(raw.created_at), new Date(0)),
     actor,
     repo: thread.repo,
     thread,
+    detail: inline ? { type: 'review_comment', comment, body: raw.body, path: raw.path ?? undefined } : { type: 'comment', comment, body: raw.body },
     source: 'poll',
     payload: raw,
   }
@@ -172,7 +180,7 @@ export function toLogEvent(thread: ThreadRef, raw: GiteeOperateLog): ForgeEventI
     kind: LOG_KINDS[raw.action_type ?? ''] ?? 'other',
     kindRaw: raw.action_type,
     summary: `${actor?.login ?? 'someone'} ${raw.content ?? raw.action_type ?? 'changed the thread'}`.trim(),
-    occurredAt: toDate(raw.created_at) ?? new Date(0),
+    ...eventTime(toDate(raw.created_at), new Date(0)),
     actor,
     repo: thread.repo,
     thread,

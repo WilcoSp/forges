@@ -32,7 +32,6 @@ import type {
   Team,
   Thread,
   ThreadKind,
-  ThreadRef,
   ThreadState,
   TreeEntry,
   Webhook,
@@ -40,6 +39,7 @@ import type {
   WebhookRef,
 } from '../model.ts'
 import type { GitLabBranch, GitLabCommit, GitLabCommitComment, GitLabCommitDetail, GitLabCommitStatus, GitLabDiff, GitLabDiscussion, GitLabGroup, GitLabHook, GitLabHookEvent, GitLabIssue, GitLabJob, GitLabLabel, GitLabMilestone, GitLabNote, GitLabNoteDetail, GitLabPipeline, GitLabProjectDetail, GitLabRelease, GitLabTag, GitLabTodo, GitLabTreeEntry, GitLabUser, GitLabVulnerability } from './types.ts'
+import { eventTime } from '../events.ts'
 import { toDate } from '../utils.ts'
 import { eventKindsOf } from '../webhooks.ts'
 import { GITLAB_NATIVE_EVENTS } from './webhook-events.ts'
@@ -332,6 +332,8 @@ export function toThread(ref: ResolvedThreadRef, raw: GitLabIssue): Thread {
     createdAt: toDate(raw.created_at),
     updatedAt: toDate(raw.updated_at),
     closedAt: toDate(raw.closed_at),
+    mergedAt: isMerge ? toDate(raw.merged_at) : undefined,
+    mergedBy: isMerge ? toActor(ref.instance, raw.merge_user ?? raw.merged_by) : undefined,
     labels: (raw.labels ?? []).map(label => typeof label === 'string'
       ? { name: label }
       : { name: label.name, colour: label.color, description: label.description ?? undefined }),
@@ -405,6 +407,25 @@ function crossReference(ref: ResolvedThreadRef, body: string): EventDetail {
     : { type: 'referenced', text }
 }
 
+/** The review id that `threads.reviews()` gives an approval by `user`. */
+export function approvalId(user: { id?: number, username?: string } | undefined): string {
+  return `approval:${user?.username ?? user?.id ?? ''}`
+}
+
+function noteDetail(ref: ResolvedThreadRef, note: GitLabNote, kind: EventKind): EventDetail | undefined {
+  switch (kind) {
+    case 'comment':
+    case 'review_comment':
+      return { type: kind, comment: { forge: FORGE, instance: ref.instance, thread: ref, id: String(note.id) }, body: note.body }
+    case 'review':
+      return { type: 'review', state: 'approved', stateRaw: 'approved', review: { forge: FORGE, instance: ref.instance, thread: ref, id: approvalId(note.author) } }
+    case 'referenced':
+      return crossReference(ref, note.body)
+    default:
+      return undefined
+  }
+}
+
 export function toNoteEvent(ref: ResolvedThreadRef, note: GitLabNote): ForgeEventInput {
   const actor = toActor(ref.instance, note.author)
   const kind = toNoteKind(note)
@@ -418,11 +439,11 @@ export function toNoteEvent(ref: ResolvedThreadRef, note: GitLabNote): ForgeEven
     summary: note.system
       ? `${who} ${note.body.split('\n')[0]}`
       : `${who} ${kind === 'review_comment' ? 'commented on a line' : 'commented'}`,
-    occurredAt: toDate(note.created_at) ?? new Date(0),
+    ...eventTime(toDate(note.created_at), new Date(0)),
     actor,
     repo: ref.repo,
     thread: ref,
-    ...kind === 'referenced' ? { detail: crossReference(ref, note.body) } : {},
+    detail: noteDetail(ref, note, kind),
     source: 'poll',
     payload: note,
   }
@@ -437,16 +458,22 @@ export function toCommitCommentEvent(ref: ResolvedThreadRef, comment: GitLabComm
     kind: comment.line_type ? 'review_comment' : 'comment',
     kindRaw: 'CommitComment',
     summary: `${actor?.login ?? 'someone'} commented`,
-    occurredAt: toDate(comment.created_at) ?? new Date(0),
+    ...eventTime(toDate(comment.created_at), new Date(0)),
     actor,
     repo: ref.repo,
     thread: ref,
+    detail: { type: comment.line_type ? 'review_comment' : 'comment', comment: { forge: FORGE, instance: ref.instance, thread: ref, id: commitCommentId(comment) }, body: comment.note },
     source: 'poll',
     payload: comment,
   }
 }
 
-export function toNoteComment(thread: ThreadRef, note: GitLabNoteDetail, discussion?: GitLabDiscussion): Comment {
+/** GitLab commit comments carry no id, so they are keyed by creation time and author. */
+function commitCommentId(comment: GitLabCommitComment): string {
+  return `${comment.created_at ?? ''}:${comment.author?.id ?? ''}`
+}
+
+export function toNoteComment(thread: ResolvedThreadRef, note: GitLabNoteDetail, discussion?: GitLabDiscussion): Comment {
   return {
     ref: { forge: FORGE, instance: thread.instance, thread, id: String(note.id) },
     body: note.body,
@@ -458,10 +485,9 @@ export function toNoteComment(thread: ThreadRef, note: GitLabNoteDetail, discuss
   }
 }
 
-/** GitLab commit comments carry no id, so they are keyed by creation time and author. */
-export function toCommitComment(thread: ThreadRef, comment: GitLabCommitComment): Comment {
+export function toCommitComment(thread: ResolvedThreadRef, comment: GitLabCommitComment): Comment {
   return {
-    ref: { forge: FORGE, instance: thread.instance, thread, id: `${comment.created_at ?? ''}:${comment.author?.id ?? ''}` },
+    ref: { forge: FORGE, instance: thread.instance, thread, id: commitCommentId(comment) },
     body: comment.note,
     author: toActor(thread.instance, comment.author),
     createdAt: toDate(comment.created_at),

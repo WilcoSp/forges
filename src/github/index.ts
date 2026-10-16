@@ -17,6 +17,8 @@ import type {
   CommitFilesInput,
   CommitQuery,
   CommitSearchQuery,
+  CompareOptions,
+  Comparison,
   ContributorStats,
   Cursor,
   EventFeedOptions,
@@ -29,6 +31,7 @@ import type {
   ListOptions,
   MergeMethod,
   MergeOptions,
+  MergeResult,
   Notification,
   NotificationListOptions,
   NotificationRef,
@@ -125,10 +128,10 @@ import type {
 import { WRITE_VERBS } from '../capabilities.ts'
 import { changeBase64, existingFiles, fromBase64, inDirectories, isSha, splitMessage, toFileContent } from '../contents.ts'
 import { defineForgeProvider, perKind, supportOnly, verb } from '../define.ts'
-import { BranchMovedError, ForbiddenError, ForgeApiError, ForgeError, ForgeTimeoutError, InsufficientScopeError, MergeBlockedError, NotFoundError, ReadOnlyError, soleMergeMethod, toMergeError, UnsupportedOperationError } from '../errors.ts'
+import { BranchMovedError, ForbiddenError, ForgeApiError, ForgeError, ForgeTimeoutError, InsufficientScopeError, MergeBlockedError, NotFoundError, RateLimitedError, ReadOnlyError, soleMergeMethod, toMergeError, UnsupportedOperationError } from '../errors.ts'
 import { anySignal, sleep } from '../fetch.ts'
 import { isNamespaceRef, isResolvedThread, reactionContent } from '../model.ts'
-import { actorLogin, createListing, forgeIterable, getManyConcurrently, hostOf, iteratePages, memo, milestoneId, phased, requireIssueOrPull, requireThread, resolveToken, summariseChecks, teamOrg, toDate, toPage, toWarning, versionAtLeast, withEtag } from '../utils.ts'
+import { actorLogin, createListing, degradesToWarning, forgeIterable, getManyConcurrently, hostOf, isFirstPage, iteratePages, memo, milestoneId, phased, rateLimitPart, requireIssueOrPull, requireThread, resolveToken, summariseChecks, teamOrg, toDate, toPage, toWarning, versionAtLeast } from '../utils.ts'
 import { githubShapedWeb } from '../web.ts'
 import { nativeEventsFor } from '../webhooks.ts'
 import { createAppCredentials, createAuthHeaders, tokenKindOf } from './auth.ts'
@@ -150,6 +153,7 @@ import {
   toEvent,
   toGitCommit,
   toLabel,
+  toLabels,
   toMilestone,
   toNotification,
   toRelease,
@@ -213,7 +217,8 @@ export interface GitHubProvider extends ForgeProvider<true> {
    * runs queries and rejects mutations with `ReadOnlyError`. Variables are required when the document is typed
    * and declares a required variable.
    * @throws {InsufficientScopeError} When the token lacks a scope that a field needs.
-   * @throws {ForgeApiError} When the response carries errors or no data.
+   * @throws {RateLimitedError} When the response reports a rate limit, which GitHub sends with a `200`.
+   * @throws {ForgeApiError} When the response carries other errors or no data.
    * @example
    * ```ts
    * const { viewer } = await provider.graphql<{ viewer: { login: string } }>('query { viewer { login } }')
@@ -245,12 +250,12 @@ function branchPath(branch: string): string {
   return branch.split('/').map(encodeURIComponent).join('/')
 }
 
-/**
- * GitHub's refusal to move a branch that is no longer at the commit a write built on, as `BranchMovedError`,
- * and to delete a file that does not exist, as `NotFoundError`.
- */
 const ZERO_OID = '0'.repeat(40)
 
+/**
+ * GitHub's refusal to move a branch that is no longer at the commit a write built on, as a 409 `BranchMovedError`,
+ * and to delete a file that does not exist, as a 404 `NotFoundError`, whatever the status of the response.
+ */
 function commitError(error: unknown): unknown {
   if (!(error instanceof ForgeApiError) || error.constructor !== ForgeApiError) {
     return error
@@ -258,10 +263,10 @@ function commitError(error: unknown): unknown {
   const text = `${error.message} ${error.body}`
   const context = { forge: error.forge, instance: error.instance, url: error.url, method: error.method }
   if (/Expected branch to point to|not a fast[- ]forward/i.test(text)) {
-    return new BranchMovedError('The branch no longer points at the commit the change was made on', error.status, error.body, context, { cause: error })
+    return new BranchMovedError('The branch no longer points at the commit the change was made on', 409, error.body, context, { cause: error })
   }
   if (/requested for deletion which does not exist/i.test(text)) {
-    return new NotFoundError('A file to delete does not exist', error.status, error.body, context, { cause: error })
+    return new NotFoundError('A file to delete does not exist', 404, error.body, context, { cause: error })
   }
   return error
 }
@@ -376,6 +381,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       ...etag ? { etag } : {},
       notModified: result.notModified,
       warnings: warnings.length ? warnings : undefined,
+      ...rateLimitPart(result.response),
     }
   }
 
@@ -429,7 +435,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         }
       }
       catch (error) {
-        if (!(error instanceof ForgeError)) {
+        if (!degradesToWarning(error)) {
           throw error
         }
         result.warnings = [...result.warnings ?? [], toWarning('checks_unreadable', error, ref.number)]
@@ -461,6 +467,11 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
     }
     if (runs.status === 'rejected' && status.status === 'rejected') {
       throw runs.reason
+    }
+    for (const result of [runs, status]) {
+      if (result.status === 'rejected' && !degradesToWarning(result.reason)) {
+        throw result.reason
+      }
     }
     const statuses = status.status === 'fulfilled' ? status.value : []
     // Only a complete read reports a total: check-runs report their own count,
@@ -511,12 +522,15 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       const chunk = batchable.slice(start, start + GRAPHQL_BATCH)
       const { query, variables } = g.threadsBatchQuery(chunk.map(item => item.ref))
       const url = graphqlUrl(baseUrl)
-      const { data } = await fetcher.json<{ data?: ThreadsBatchResult, errors?: Array<{ message: string, type?: string, path?: Array<string | number> }> }>(url, {
+      const { data, response } = await fetcher.json<{ data?: ThreadsBatchResult, errors?: Array<{ message: string, type?: string, path?: Array<string | number> }> }>(url, {
         method: 'POST',
         json: { query, variables, operationName: 'ThreadsBatch' },
         signal: options?.signal,
       })
-      const failure = data.data ? undefined : graphqlError('ThreadsBatch', data.errors, url, { instance })
+      const failure = data.data ? undefined : graphqlError('ThreadsBatch', data.errors, url, { instance }, response)
+      if (failure instanceof RateLimitedError) {
+        throw failure
+      }
       chunk.forEach(({ index, ref }, offset) => {
         const node = data.data?.[`t${offset}`]
         const discussion = ref.kind === 'discussion' ? node?.discussion : undefined
@@ -548,7 +562,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       if (query.assignee) {
         return { items: [], warnings: [{ code: 'filter_unsupported', message: 'Discussions have no assignees' }] }
       }
-      const warnings: ForgeWarning[] = !query.cursor && query.sort === 'comments'
+      const warnings: ForgeWarning[] = isFirstPage(query.cursor) && query.sort === 'comments'
         ? [{ code: 'sort_unsupported', message: 'Discussions cannot be sorted by comments; sorted by update time' }]
         : []
       const data: { repository: { discussions: { pageInfo: { hasNextPage: boolean, endCursor: string | null }, nodes: GraphQLDiscussion[] } } | null } = await graphql('DISCUSSIONS_LIST', {
@@ -634,11 +648,12 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         if (result.ok) {
           pulls[index]!.checks = result.thread.checks ?? pulls[index]!.checks
           pulls[index]!.commentCount ??= result.thread.commentCount
+          pulls[index]!.mergedBy ??= result.thread.mergedBy
         }
       }
     }
     catch (error) {
-      if (!(error instanceof ForgeError)) {
+      if (!degradesToWarning(error)) {
         throw error
       }
       page.warnings = [...page.warnings ?? [], toWarning('checks_unreadable', error)]
@@ -651,10 +666,10 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       const [page, { toDiscussionComment }] = await Promise.all([discussionCommentPage(ref, listOptions), import('./graphql.ts')])
       return { ...page, items: page.items.map(({ comment }) => toDiscussionComment(ref, comment)) }
     }
-    const path = ref.kind === 'commit'
-      ? `${repoPath(ref.repo)}/commits/${encodeURIComponent(ref.number)}/comments`
-      : `${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/comments`
-    return list(path, listOptions, (raw: GitHubComment) => toComment(ref, raw))
+    if (ref.kind === 'commit') {
+      return list(`${repoPath(ref.repo)}/commits/${encodeURIComponent(ref.number)}/comments`, listOptions, (raw: GitHubComment) => toComment(ref, raw))
+    }
+    return list(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/comments`, listOptions, (raw: GitHubComment) => toComment(ref, raw), { query: { since: listOptions.since?.toISOString() } })
   }
 
   function commentPath(ref: CommentRef): string {
@@ -663,7 +678,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       : `${repoPath(ref.thread.repo)}/issues/comments/${encodeURIComponent(ref.id)}`
   }
 
-  async function setState(thread: ThreadRef, state: 'open' | 'closed', options_: CloseOptions = {}): Promise<void> {
+  async function setState(thread: ThreadRef, state: 'open' | 'closed', options_: CloseOptions = {}): Promise<Thread> {
     const ref = requireThread(thread, context)
     if (ref.kind === 'commit') {
       throw new UnsupportedOperationError('Commits have no open or closed state', context)
@@ -674,20 +689,21 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         throw new UnsupportedOperationError(`GitHub discussions have no ${options_.reason} close reason; pass reasonRaw: 'outdated'`, context)
       }
       const id = await discussionId(ref, options_)
-      await (state === 'closed'
-        ? graphql('CLOSE_DISCUSSION', { id, reason: reason?.toUpperCase() ?? null }, options_)
-        : graphql('REOPEN_DISCUSSION', { id }, options_))
-      return
+      const data = state === 'closed'
+        ? (await graphql<{ closeDiscussion: { discussion: GraphQLDiscussion } }>('CLOSE_DISCUSSION', { id, reason: reason?.toUpperCase() ?? null }, options_)).closeDiscussion
+        : (await graphql<{ reopenDiscussion: { discussion: GraphQLDiscussion } }>('REOPEN_DISCUSSION', { id }, options_)).reopenDiscussion
+      return (await import('./graphql.ts')).toDiscussionThread(ref, data.discussion)
     }
     const reason = options_.reasonRaw ?? options_.reason
-    await fetcher.raw(threadPath(ref), {
+    const { data } = await fetcher.json<GitHubIssue>(threadPath(ref), {
       method: 'PATCH',
       json: ref.kind === 'issue' && state === 'closed' && reason ? { state, state_reason: reason } : { state },
       signal: options_.signal,
     })
+    return toThread(ref, data)
   }
 
-  async function merge(thread: ThreadRef, options_: MergeOptions = {}, hooks: MergeHooks = {}): Promise<void> {
+  async function merge(thread: ThreadRef, options_: MergeOptions = {}, hooks: MergeHooks = {}): Promise<MergeResult> {
     const ref = requireThread(thread, context)
     if (ref.kind !== 'pull_request') {
       throw new UnsupportedOperationError('Only pull requests can be merged', context)
@@ -708,10 +724,10 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       method = soleMergeMethod({ merge: repo.allow_merge_commit, squash: repo.allow_squash_merge, rebase: repo.allow_rebase_merge }, context)
     }
     await hooks.beforeMerge?.()
-    await directMerge(ref, method, options_)
+    return directMerge(ref, method, options_)
   }
 
-  async function directMerge(ref: ResolvedThreadRef, method: MergeMethod, mergeOptions: MergeOptions): Promise<void> {
+  async function directMerge(ref: ResolvedThreadRef, method: MergeMethod, mergeOptions: MergeOptions): Promise<MergeResult> {
     const path = `${threadPath(ref)}/merge`
     const { sha, title, message } = mergeOptions
     const body = { merge_method: method, sha, commit_title: title, commit_message: message }
@@ -744,8 +760,8 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         }
         if (enterprise && error instanceof NotFoundError) {
           url = fetcher.resolve(path)
-          await fetcher.raw(path, { method: 'PUT', json: body, mapError: toMergeError, signal })
-          return
+          const { data } = await fetcher.json<{ sha?: string } | undefined>(path, { method: 'PUT', json: body, mapError: toMergeError, signal })
+          return { status: 'merged', sha: data?.sha, raw: data }
         }
         state = pendingMergeFrom(error, method, sha, title, message)
         status = 409
@@ -767,7 +783,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       const excerpt = JSON.stringify(state).slice(0, 512)
       switch (state.status as string) {
         case 'merged':
-          return
+          return { status: 'merged', sha: state.details?.sha, raw: state }
         case 'enqueued':
           throw new MergeBlockedError('Pull request was added to a merge queue and has not merged', status, excerpt, errorContext)
         case 'failed':
@@ -868,6 +884,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       query: { per_page: listOptions.perPage },
       cursor: listOptions.cursor,
       signal: listOptions.signal,
+      conditional: false,
     })
     const now = Date.now()
     for (const [path, entry] of reviewContext) {
@@ -876,7 +893,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       }
     }
     const key = threadPath(ref)
-    const kept = (listOptions.cursor && reviewContext.get(key)) || {
+    const kept = (!isFirstPage(listOptions.cursor) && reviewContext.get(key)) || {
       at: now,
       read: Promise.all([
         Array.fromAsync(fetcher.items<GitHubReviewComment>(`${key}/comments`, { query: { per_page: 100 }, signal: listOptions.signal })),
@@ -911,15 +928,16 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
   }
 
   async function getComment(ref: CommentRef, options?: BaseOptions): Promise<Comment> {
-    if (ref.thread.kind === 'discussion') {
+    const thread = requireThread(ref.thread, context)
+    if (thread.kind === 'discussion') {
       const data = await graphql<{ node: GraphQLComment | null }>('GET_DISCUSSION_COMMENT', { id: ref.id }, options)
       if (!data.node?.id) {
         throw new NotFoundError(`Comment ${ref.id} not found`, 404, '', context)
       }
-      return (await import('./graphql.ts')).toDiscussionComment(ref.thread, data.node)
+      return (await import('./graphql.ts')).toDiscussionComment(thread, data.node)
     }
     const { data } = await fetcher.json<GitHubComment>(commentPath(ref), { signal: options?.signal })
-    return toComment(ref.thread, data)
+    return toComment(thread, data)
   }
 
   async function getReview(ref: ReviewRef, options?: BaseOptions): Promise<Review> {
@@ -1002,7 +1020,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       return await read(`/orgs/${encodeURIComponent(owner.owner)}/repos`, { type: visibility === 'internal' ? undefined : visibility })
     }
     catch (error) {
-      if (!(error instanceof NotFoundError) || query.cursor) {
+      if (!(error instanceof NotFoundError) || !isFirstPage(query.cursor)) {
         throw error
       }
     }
@@ -1240,7 +1258,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
   const nextPoll = new Map<string, number>()
 
   async function feedPage(path: string, listOptions: EventFeedOptions = {}): Promise<Page<ForgeEventInput>> {
-    const first = !listOptions.cursor?.nextUrl
+    const first = isFirstPage(listOptions.cursor)
     const wait = (nextPoll.get(path) ?? 0) - Date.now()
     if (first && !listOptions.force && wait > 0) {
       const warning = { code: 'feed_throttled', message: `GitHub asked to wait ${Math.ceil(wait / 1000)}s more before reading this feed again; no request was sent. Read it later, or pass force: true` }
@@ -1249,7 +1267,6 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
     const result = await fetcher.page<GitHubFeedEvent>(path, {
       query: { per_page: listOptions.perPage },
       cursor: listOptions.cursor,
-      etag: listOptions.cursor?.etag,
       signal: listOptions.signal,
     })
     const interval = Number(result.response.headers.get('x-poll-interval'))
@@ -1257,7 +1274,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       nextPoll.set(path, Date.now() + interval * 1000)
     }
     const { toFeedEvent } = await import('./events.ts')
-    return withEtag(toPage(result, raw => toFeedEvent(instance, raw)), result, listOptions.cursor)
+    return toPage(result, raw => toFeedEvent(instance, raw))
   }
 
   function createInstallationsApi(app: AppCredentials): Omit<InstallationsApi, 'list' | 'repos'> {
@@ -1333,6 +1350,32 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       ? [{ code: 'tree_truncated' as const, message: 'GitHub truncated the tree; read it directory by directory instead', subject: target }]
       : []
     return toPage({ data: data.tree, response, notModified: false }, toTreeEntry, warnings)
+  }
+
+  async function compare(repo: RepoRef, base: string, head: string, options: CompareOptions = {}): Promise<Comparison> {
+    const path = `${repoPath(repo)}/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}`
+    const limit = options.commitLimit
+    const perPage = limit === undefined ? undefined : Math.min(100, Math.max(1, limit))
+    const { data } = await fetcher.json<GitHubComparison>(path, { query: { per_page: perPage }, signal: options.signal })
+    let commits = data.commits ?? []
+    const total = data.total_commits ?? data.ahead_by
+    if (limit !== undefined && perPage !== undefined && total !== undefined && total > commits.length) {
+      const first = Math.floor(Math.max(0, total - limit) / perPage) + 1
+      const pages = Array.from({ length: Math.ceil(total / perPage) - first + 1 }, (_, index) => first + index)
+      commits = (await Promise.all(pages.map(async page => page === 1
+        ? commits
+        : (await fetcher.json<GitHubComparison>(path, { query: { per_page: perPage, page }, signal: options.signal })).data.commits ?? []))).flat()
+    }
+    return {
+      base,
+      head,
+      aheadBy: data.ahead_by,
+      behindBy: data.behind_by,
+      mergeBaseSha: data.merge_base_commit?.sha,
+      commits: commits.map(raw => toCommit(repo, raw)).toReversed(),
+      files: (data.files ?? []).map(toChangedFile),
+      raw: data,
+    }
   }
 
   async function commitsPage(repo: RepoRef, query: CommitQuery = {}): Promise<Page<Commit>> {
@@ -1429,7 +1472,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       // GitHub reports a stale `beforeOid` only as an internal error, so the branch is read again to tell.
       const { data } = await fetcher.json<GitHubGitRef>(`${repoPath(repo)}/git/ref/heads/${branchPath(input.branch)}`, { signal })
       if (data.object.sha !== parent && error instanceof ForgeApiError) {
-        throw new BranchMovedError(`${input.branch} is at ${data.object.sha}, not ${parent}`, error.status, error.body, context, { cause: error })
+        throw new BranchMovedError(`${input.branch} is at ${data.object.sha}, not ${parent}`, 409, error.body, context, { cause: error })
       }
       throw error
     }
@@ -1552,9 +1595,9 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
     }
   }
 
-  async function issuePatch(thread: ThreadRef, json: Record<string, unknown>, action: string, signal?: AbortSignal): Promise<void> {
+  async function issuePatch(thread: ThreadRef, json: Record<string, unknown>, action: string, signal?: AbortSignal): Promise<GitHubIssue> {
     const ref = requireIssueOrPull(thread, context, action)
-    await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}`, { method: 'PATCH', json, signal })
+    return (await fetcher.json<GitHubIssue>(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}`, { method: 'PATCH', json, signal })).data
   }
 
   /** Check runs need an installation credential; a token writes a commit status instead. */
@@ -1661,19 +1704,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       commitsPage: verb(true, commitsPage),
       commit: verb(true, async (repo, sha, options) => toCommit(repo, (await fetcher.json<GitHubCommit>(`${repoPath(repo)}/commits/${sha}`, { signal: options?.signal })).data)),
       commitFiles: verb(true, (repo, input, options) => input.author ? commitTree(repo, input, options) : commitOnBranch(repo, input, options)),
-      compare: verb(true, async (repo, base, head, options) => {
-        const { data } = await fetcher.json<GitHubComparison>(`${repoPath(repo)}/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}`, { signal: options?.signal })
-        return {
-          base,
-          head,
-          aheadBy: data.ahead_by,
-          behindBy: data.behind_by,
-          mergeBaseSha: data.merge_base_commit?.sha,
-          commits: (data.commits ?? []).map(raw => toCommit(repo, raw)),
-          files: (data.files ?? []).map(toChangedFile),
-          raw: data,
-        }
-      }),
+      compare: verb(true, compare),
     },
     search: {
       threadsPage: verb(true, searchThreadsPage),
@@ -1807,7 +1838,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
           cursor: listOptions.cursor,
           signal: listOptions.signal,
         })
-        const author = (await get(ref, listOptions)).author?.login
+        const author = page.notModified ? undefined : (await get(ref, listOptions)).author?.login
         return toPage(page, raw => raw.login === author ? undefined : toActor(instance, raw)!)
       }),
       eventsPage: verb(true, (repo, listOptions) => feedPage(`${repoPath(repo)}/events`, listOptions)),
@@ -1913,12 +1944,13 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         return toComment(ref, data)
       }),
       editComment: perKind({ issue: true, pull_request: true, discussion: true, commit: true }, async (ref, body, options) => {
-        if (ref.thread.kind === 'discussion') {
+        const thread = requireThread(ref.thread, context)
+        if (thread.kind === 'discussion') {
           const data = await graphql<{ updateDiscussionComment: { comment: GraphQLComment } }>('UPDATE_DISCUSSION_COMMENT', { id: ref.id, body }, options)
-          return (await import('./graphql.ts')).toDiscussionComment(ref.thread, data.updateDiscussionComment.comment)
+          return (await import('./graphql.ts')).toDiscussionComment(thread, data.updateDiscussionComment.comment)
         }
         const { data } = await fetcher.json<GitHubComment>(commentPath(ref), { method: 'PATCH', json: { body }, signal: options?.signal })
-        return toComment(ref.thread, data)
+        return toComment(thread, data)
       }),
       deleteComment: perKind({ issue: true, pull_request: true, discussion: true, commit: true }, async (ref, options) => {
         if (ref.thread.kind === 'discussion') {
@@ -1967,11 +1999,9 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
             throw new UnsupportedOperationError('Setting labels or assignees on a GitHub discussion is not supported', context)
           }
           const id = await discussionId(ref, options)
-          if (input.state) {
-            await setState({ ...ref, externalId: id }, input.state, options)
-          }
+          const changed = input.state && await setState({ ...ref, externalId: id }, input.state, options)
           if (input.title === undefined && input.body === undefined) {
-            return getDiscussion(ref, options)
+            return changed || getDiscussion(ref, options)
           }
           const data = await graphql<{ updateDiscussion: { discussion: GraphQLDiscussion } }>('UPDATE_DISCUSSION', { id, title: input.title, body: input.body }, options)
           return (await import('./graphql.ts')).toDiscussionThread(ref, data.updateDiscussion.discussion)
@@ -1987,20 +2017,30 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       }),
       addLabels: perKind({ issue: true, pull_request: true }, async (thread, labels, options) => {
         const ref = requireIssueOrPull(thread, context, 'label')
-        await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/labels`, { method: 'POST', json: { labels }, signal: options?.signal })
+        return toLabels((await fetcher.json<GitHubIssue['labels']>(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/labels`, { method: 'POST', json: { labels }, signal: options?.signal })).data)
       }),
       removeLabels: perKind({ issue: true, pull_request: true }, async (thread, labels, options) => {
         const ref = requireIssueOrPull(thread, context, 'label')
+        const path = `${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/labels`
+        let remaining: GitHubIssue['labels'] | undefined
         for (const label of labels) {
-          await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/labels/${encodeURIComponent(label)}`, { method: 'DELETE', signal: options?.signal })
+          try {
+            remaining = (await fetcher.json<GitHubIssue['labels']>(`${path}/${encodeURIComponent(label)}`, { method: 'DELETE', signal: options?.signal })).data
+          }
+          catch (error) {
+            if (!(error instanceof NotFoundError && error.body.includes('Label does not exist'))) {
+              throw error
+            }
+          }
         }
+        return toLabels(remaining ?? (await fetcher.json<GitHubIssue['labels']>(path, { query: { per_page: 100 }, signal: options?.signal })).data)
       }),
-      setMilestone: perKind({ issue: true, pull_request: true }, async (thread, milestone, options) => issuePatch(
+      setMilestone: perKind({ issue: true, pull_request: true }, async (thread, milestone, options) => toMilestone((await issuePatch(
         thread,
         { milestone: milestone === undefined ? null : await milestoneId(milestone, page => milestonesPage(requireThread(thread, context).repo, page), context, options) },
         'set the milestone of',
         options?.signal,
-      )),
+      )).milestone)),
       reactions: perKind({ issue: true, pull_request: true, discussion: true }, { react, unreact }),
       reactionsPage: perKind({ issue: true, pull_request: true, discussion: !anonymous }, reactionsPage),
       transfer: verb(true, async (thread, repo, options) => {
@@ -2020,11 +2060,11 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       }),
       setLabels: perKind({ issue: true, pull_request: true }, async (thread, labels, options) => {
         const ref = requireIssueOrPull(thread, context, 'label')
-        await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/labels`, { method: 'PUT', json: { labels }, signal: options?.signal })
+        return toLabels((await fetcher.json<GitHubIssue['labels']>(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/labels`, { method: 'PUT', json: { labels }, signal: options?.signal })).data)
       }),
       setAssignees: perKind({ issue: true, pull_request: true }, async (thread, assignees, options) => {
-        const ref = requireIssueOrPull(thread, context, 'assign')
-        await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}`, { method: 'PATCH', json: { assignees: assignees.map(actorLogin) }, signal: options?.signal })
+        const data = await issuePatch(thread, { assignees: assignees.map(actorLogin) }, 'assign', options?.signal)
+        return (data.assignees ?? []).flatMap(user => toActor(instance, user) ?? [])
       }),
       requestReview: perKind({ pull_request: true }, async (thread, reviewers, options) => {
         const ref = requireThread(thread, context)
@@ -2063,7 +2103,7 @@ const GITHUB: ProviderDefinition<GitHubOptions, AppCredentials | undefined, true
   instance: webHost,
   headers: { 'accept': 'application/vnd.github+json', 'x-github-api-version': '2022-11-28' },
   prepare: ({ options, baseUrl, headers, state }) => options.auth?.type === 'app'
-    ? state ?? createAppCredentials(options.auth, { baseUrl, fetch: options.fetch, timeout: options.timeout, headers })
+    ? state ?? createAppCredentials(options.auth, { baseUrl, fetch: options.fetch, timeout: options.timeout, onRetry: options.onRetry, onRateLimit: options.onRateLimit, headers })
     : undefined,
   authHeaders: ({ options, state }) => createAuthHeaders(options.auth, state),
   setup: setupGitHub,

@@ -1,4 +1,4 @@
-import type { Actor, Collaborator, Comment, ForgeOrigin, Label, Notification, NotificationReason, Release, ReleaseRef, Repo, RepoPermissions, RepoRef, RepoRole, ResolvedThreadRef, Thread, ThreadRef } from '../model.ts'
+import type { Actor, Collaborator, Comment, ForgeOrigin, Label, Notification, NotificationReason, Release, ReleaseRef, Repo, RepoPermissions, RepoRef, RepoRole, ResolvedThreadRef, Thread } from '../model.ts'
 import type { PushinCollaborator, PushinComment, PushinLabel, PushinNotification, PushinRelease, PushinRepository, PushinThread, PushinUser } from './types.ts'
 import { toDate } from '../utils.ts'
 
@@ -102,7 +102,7 @@ export function toCollaborator(origin: ForgeOrigin, raw: PushinCollaborator): Co
   }
 }
 
-export function toComment(thread: ThreadRef, raw: PushinComment): Comment {
+export function toComment(thread: ResolvedThreadRef, raw: PushinComment): Comment {
   return {
     ref: { forge: FORGE, instance: thread.instance, thread, id: String(raw.id) },
     body: raw.body,
@@ -166,7 +166,8 @@ export function toThread(ref: ResolvedThreadRef, raw: PushinThread): Thread {
     url: raw.html_url,
     createdAt: toDate(raw.created_at),
     updatedAt: toDate(raw.updated_at),
-    closedAt: toDate(raw.closed_at),
+    closedAt: toDate(raw.closed_at ?? raw.merged_at ?? raw.pull_request?.merged_at),
+    mergedAt: kind === 'pull_request' ? toDate(raw.merged_at ?? raw.pull_request?.merged_at) : undefined,
     lastActivityAt: toDate(raw.updated_at),
     locked: raw.locked,
     commentCount: raw.comments,

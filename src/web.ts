@@ -1,8 +1,8 @@
-import type { CommentRef, ForgeOrigin, ReleaseRef, RepoRef, ResolvedThreadRef, ThreadKind, ThreadRef } from './model.ts'
+import type { CommentRef, ForgeOrigin, ReleaseRef, RepoRef, ResolvedCommentRef, ResolvedThreadRef, ThreadKind, ThreadRef } from './model.ts'
 import { isResolvedThread, normaliseRepoName } from './model.ts'
 
 /** A repository's section, for linking to the section itself rather than one entry in it. */
-export type RepoSection = 'issues' | 'pullRequests' | 'compare' | 'releases'
+export type RepoSection = 'issues' | 'pullRequests' | 'compare' | 'releases' | 'stargazers' | 'forks' | 'watchers'
 
 /**
  * Something with a web page. A revision (`at`, `base` or `head`) is a branch,
@@ -51,12 +51,12 @@ export interface WebLinks {
   baseUrl: string
   /** The page of a repository. */
   repo: (repo: RepoRef) => string
-  /** The page of one of a repository's sections, such as its issues or pull requests. */
+  /** The page of one of a repository's sections, such as its issues, pull requests, stargazers or forks. */
   section?: (repo: RepoRef, section: RepoSection) => string | undefined
   /** The page of an issue or pull request. */
   thread: (ref: ResolvedThreadRef) => string | undefined
   /** The page of a comment, anchored on its thread. */
-  comment?: (ref: CommentRef & { thread: ResolvedThreadRef }) => string | undefined
+  comment?: (ref: ResolvedCommentRef) => string | undefined
   /** The page of a release. */
   release?: (ref: ReleaseRef) => string | undefined
   /** The page of a file at a revision, optionally at a line. */
@@ -102,7 +102,7 @@ export function webUrlFor(web: WebLinks, target: UrlTarget): string | undefined 
   }
   else if ('comment' in target) {
     const { comment } = target
-    path = isResolvedThread(comment.thread) ? web.comment?.(comment as CommentRef & { thread: ResolvedThreadRef }) : undefined
+    path = isResolvedThread(comment.thread) ? web.comment?.(comment as ResolvedCommentRef) : undefined
   }
   else if ('release' in target) {
     path = web.release?.(target.release)
@@ -190,6 +190,12 @@ export interface GitHubShape {
   lineFragment: (line: number) => string
   /** Reference prefix for pulls when it differs from issues. */
   pullPrefix?: string
+  /**
+   * Path segments for sections whose path is not the section's own name, such as a
+   * forge that lists stargazers at `stars`; `null` marks a section the forge has no
+   * page for, so `section()` returns `undefined` for it.
+   */
+  sections?: Partial<Record<RepoSection, string | null>>
   /** Reserved owner segments. */
   reserved?: readonly string[]
 }
@@ -209,7 +215,16 @@ export function githubShapedWeb(baseUrl: string, shape: GitHubShape): WebLinks {
   return {
     baseUrl,
     repo: repoPath,
-    section: (repo, section) => repo.kind === 'namespace' ? undefined : `${repoPath(repo)}/${section === 'pullRequests' ? 'pulls' : section}`,
+    section: (repo, section) => {
+      if (repo.kind === 'namespace') {
+        return undefined
+      }
+      const path = shape.sections?.[section]
+      if (path === null) {
+        return undefined
+      }
+      return `${repoPath(repo)}/${path ?? (section === 'pullRequests' ? 'pulls' : section)}`
+    },
     thread: ref => kindPath[ref.kind] && `${repoPath(ref.repo)}/${kindPath[ref.kind]}/${encodeURIComponent(ref.number)}`,
     comment: ref => ref.thread.kind === 'commit' || !kindPath[ref.thread.kind]
       ? undefined

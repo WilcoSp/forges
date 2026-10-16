@@ -22,6 +22,7 @@ import type {
   Repo,
   RepoRef,
   RepoRole,
+  ResolvedThreadRef,
   Review,
   ReviewComment,
   SourceKind,
@@ -64,7 +65,7 @@ import type {
   GiteaActionJob,
   GiteaActionRun,
 } from './types.ts'
-import { reviewState } from '../events.ts'
+import { eventTime, reviewState } from '../events.ts'
 import { toDate, toFileStatus, toPullStats } from '../utils.ts'
 import { eventKindsOf } from '../webhooks.ts'
 import { FORGEJO_NATIVE_EVENTS } from './webhook-events.ts'
@@ -265,7 +266,7 @@ export function toNotification(origin: ForgeOrigin, raw: ForgejoNotification): N
   }
 }
 
-export function toThread(ref: ThreadRef, raw: ForgejoIssue): Thread {
+export function toThread(ref: ResolvedThreadRef, raw: ForgejoIssue): Thread {
   const origin = { forge: ref.forge, instance: ref.instance }
   const isPull = Boolean(raw.pull_request) || Boolean(raw.head)
   const kind = isPull && ref.kind === 'issue' ? 'pull_request' : ref.kind
@@ -295,6 +296,8 @@ export function toThread(ref: ThreadRef, raw: ForgejoIssue): Thread {
     createdAt: toDate(raw.created_at),
     updatedAt: toDate(raw.updated_at),
     closedAt: toDate(raw.closed_at),
+    mergedAt: toDate(raw.merged_at ?? raw.pull_request?.merged_at),
+    mergedBy: toActor(origin, raw.merged_by),
     lastActivityAt: toDate(raw.updated_at),
     locked: raw.is_locked,
     commentCount: raw.comments,
@@ -311,7 +314,7 @@ export function toThread(ref: ThreadRef, raw: ForgejoIssue): Thread {
   }
 }
 
-export function toComment(thread: ThreadRef, raw: ForgejoComment): Comment {
+export function toComment(thread: ResolvedThreadRef, raw: ForgejoComment): Comment {
   return {
     ref: { forge: thread.forge, instance: thread.instance, thread, id: String(raw.id) },
     body: raw.body ?? '',
@@ -385,6 +388,21 @@ function crossReference(thread: ThreadRef, entry: ForgejoTimelineEntry): EventDe
   }
 }
 
+function timelineDetail(thread: ThreadRef, entry: ForgejoTimelineEntry, kind: EventKind): EventDetail | undefined {
+  const origin = { forge: thread.forge, instance: thread.instance }
+  switch (kind) {
+    case 'comment':
+    case 'review_comment':
+      return { type: kind, comment: entry.id === undefined ? undefined : { ...origin, thread, id: String(entry.id) }, body: entry.body ?? undefined }
+    case 'review':
+      return { type: 'review', state: 'unknown', body: entry.body || undefined, review: entry.review_id ? { ...origin, thread, id: String(entry.review_id) } : undefined }
+    case 'referenced':
+      return crossReference(thread, entry)
+    default:
+      return undefined
+  }
+}
+
 export function toEvent(
   thread: ThreadRef,
   entry: ForgejoTimelineEntry,
@@ -399,11 +417,11 @@ export function toEvent(
     kind,
     kindRaw: entry.type,
     summary: summarise(entry, kind, actor),
-    occurredAt: toDate(entry.created_at) ?? new Date(0),
+    ...eventTime(toDate(entry.created_at), new Date(0)),
     actor,
     repo: thread.repo,
     thread,
-    ...kind === 'referenced' ? { detail: crossReference(thread, entry) } : {},
+    detail: timelineDetail(thread, entry, kind),
     source,
     payload: entry,
   }
@@ -567,7 +585,7 @@ export function toRelease(repo: RepoRef, raw: ForgejoRelease): Release {
   }
 }
 
-export function toReviewComment(thread: ThreadRef, raw: ForgejoReviewComment): ReviewComment {
+export function toReviewComment(thread: ResolvedThreadRef, raw: ForgejoReviewComment): ReviewComment {
   return {
     ref: { forge: thread.forge, instance: thread.instance, thread, id: String(raw.id) },
     body: raw.body ?? '',
@@ -581,7 +599,7 @@ export function toReviewComment(thread: ThreadRef, raw: ForgejoReviewComment): R
   }
 }
 
-export function toReview(thread: ThreadRef, raw: ForgejoReview, comments: ReviewComment[] | false): Review {
+export function toReview(thread: ResolvedThreadRef, raw: ForgejoReview, comments: ReviewComment[] | false): Review {
   return {
     ref: { forge: thread.forge, instance: thread.instance, thread, id: String(raw.id) },
     author: toActor(thread, raw.user),

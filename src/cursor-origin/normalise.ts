@@ -1,5 +1,6 @@
-import type { Actor, Branch, ChangedFile, Check, Comment, Commit, ForgeEventInput, Repo, RepoRef, ResolvedThreadRef, Review, ReviewState, Tag, Thread, ThreadRef, TreeEntry } from '../model.ts'
-import type { OriginActor, OriginBranch, OriginCheckRun, OriginComment, OriginCommit, OriginCommitFile, OriginGitRef, OriginPullRequest, OriginRepo, OriginRepositoryReference, OriginReview, OriginTreeEntry } from './types.ts'
+import type { Actor, Branch, ChangedFile, Check, Comment, Commit, EventDetail, ForgeEventInput, Label, Repo, RepoRef, ResolvedThreadRef, Review, ReviewState, Tag, Thread, ThreadRef, TreeEntry } from '../model.ts'
+import type { OriginActor, OriginBranch, OriginCheckRun, OriginComment, OriginCommit, OriginCommitFile, OriginGitRef, OriginLabel, OriginPullRequest, OriginRepo, OriginRepositoryReference, OriginReview, OriginTreeEntry } from './types.ts'
+import { eventTime } from '../events.ts'
 import { checkRunState, toDate, toFileStatus, toPullStats } from '../utils.ts'
 
 export const FORGE = 'cursor-origin' as const
@@ -64,10 +65,11 @@ export function toThread(ref: ResolvedThreadRef, raw: OriginPullRequest): Thread
     author: toActor(ref.instance, raw.author),
     assignees: [],
     reviewers: [],
-    labels: (raw.labels ?? []).map(label => ({ name: label.name, colour: label.color, description: label.description || undefined })),
+    labels: (raw.labels ?? []).map(toLabel),
     createdAt: toDate(raw.createdAt),
     updatedAt: toDate(raw.updatedAt),
     closedAt: toDate(raw.closedAt),
+    mergedAt: toDate(raw.mergedAt),
     lastActivityAt: toDate(raw.updatedAt),
     branches: raw.head && raw.base
       ? { head: { ref: raw.head.ref, sha: raw.head.sha }, base: { ref: raw.base.ref, sha: raw.base.sha }, mergeCommitSha: raw.mergeCommitSha }
@@ -87,12 +89,16 @@ export function toThread(ref: ResolvedThreadRef, raw: OriginPullRequest): Thread
   }
 }
 
+export function toLabel(raw: OriginLabel): Label {
+  return { name: raw.name, colour: raw.color, description: raw.description || undefined }
+}
+
 /** General-discussion comments have no diff anchor; anchored ones are review comments. */
 export function isConversationComment(raw: OriginComment): boolean {
   return !raw.thread?.path
 }
 
-export function toComment(thread: ThreadRef, raw: OriginComment): Comment {
+export function toComment(thread: ResolvedThreadRef, raw: OriginComment): Comment {
   return {
     ref: { forge: FORGE, instance: thread.instance, thread, id: raw.id },
     body: raw.body,
@@ -101,6 +107,13 @@ export function toComment(thread: ThreadRef, raw: OriginComment): Comment {
     updatedAt: toDate(raw.updatedAt),
     raw,
   }
+}
+
+export function commentDetail(thread: ThreadRef, raw: OriginComment): EventDetail {
+  const comment = { forge: FORGE, instance: thread.instance, thread, id: raw.id }
+  return isConversationComment(raw)
+    ? { type: 'comment', comment, body: raw.body }
+    : { type: 'review_comment', comment, body: raw.body, path: raw.thread?.path, line: raw.thread?.endLine ?? raw.thread?.startLine }
 }
 
 export function toCommentEvent(thread: ThreadRef, raw: OriginComment): ForgeEventInput {
@@ -113,10 +126,11 @@ export function toCommentEvent(thread: ThreadRef, raw: OriginComment): ForgeEven
     kind: anchored ? 'review_comment' : 'comment',
     kindRaw: anchored ? 'pull_request.review_comment' : 'pull_request.comment',
     summary: `${actor?.login ?? 'someone'} ${anchored ? `commented on ${raw.thread!.path}` : 'commented'}`,
-    occurredAt: toDate(raw.createdAt) ?? new Date(0),
+    ...eventTime(toDate(raw.createdAt), new Date(0)),
     actor,
     repo: thread.repo,
     thread,
+    detail: commentDetail(thread, raw),
     source: 'poll',
     payload: raw,
   }
@@ -137,7 +151,8 @@ export function toReviewEvent(thread: ThreadRef, raw: OriginReview, source: Forg
     kind: 'review',
     kindRaw: raw.dismissal ? 'pull_request.review.dismissed' : `pull_request.review.${raw.verdict}`,
     summary: `${actor?.login ?? 'someone'} ${raw.dismissal ? 'dismissed a review' : `reviewed (${VERDICTS[raw.verdict] ?? raw.verdict})`}`,
-    occurredAt: toDate(raw.submittedAt) ?? new Date(0),
+    detail: { type: 'review', state: raw.dismissal ? 'dismissed' : VERDICTS[raw.verdict] ?? 'unknown', stateRaw: raw.verdict, body: raw.body || undefined, review: { forge: FORGE, instance: thread.instance, thread, id: raw.id } },
+    ...eventTime(toDate(raw.submittedAt), new Date(0)),
     actor,
     repo: thread.repo,
     thread,
@@ -160,7 +175,7 @@ export function toCheck(repo: RepoRef, raw: OriginCheckRun): Check {
   }
 }
 
-export function toReview(thread: ThreadRef, raw: OriginReview): Review {
+export function toReview(thread: ResolvedThreadRef, raw: OriginReview): Review {
   return {
     ref: { forge: FORGE, instance: thread.instance, thread, id: raw.id },
     author: toActor(thread.instance, raw.author),

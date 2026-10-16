@@ -11,7 +11,25 @@
       "detail": {
         "type": "review",
         "state": "commented",
-        "stateRaw": "commented"
+        "stateRaw": "commented",
+        "review": {
+          "forge": "github",
+          "instance": "github.com",
+          "thread": {
+            "forge": "github",
+            "instance": "github.com",
+            "repo": {
+              "forge": "github",
+              "instance": "github.com",
+              "owner": "nuxt",
+              "name": "modules",
+              "externalId": "290526597"
+            },
+            "kind": "pull_request",
+            "number": "1607"
+          },
+          "id": "5500621596"
+        }
       },
       "summary": "danielroe submitted a review (commented)",
       "occurredAt": "<now>",
@@ -607,10 +625,10 @@
     "nextUrl": "https://api.github.com/user/28706372/events?per_page=10&page=2",
     "etag": "W/\"5c36cfaf0cfd79c5a1ff52cb1423fb163a192d21b401c4c405e8c4b59498195c\""
   },
+  "etag": "W/\"5c36cfaf0cfd79c5a1ff52cb1423fb163a192d21b401c4c405e8c4b59498195c\"",
   "rateLimit": {
     "limit": 60,
     "remaining": 26,
     "resetAt": "<now>"
-  },
-  "etag": "W/\"5c36cfaf0cfd79c5a1ff52cb1423fb163a192d21b401c4c405e8c4b59498195c\""
+  }
 }

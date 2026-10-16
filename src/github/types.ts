@@ -167,6 +167,7 @@ export interface GitHubIssue {
   draft?: boolean
   merged?: boolean
   merged_at?: string | null
+  merged_by?: GitHubUser | null
   locked?: boolean
   comments?: number
   html_url?: string
@@ -466,6 +467,7 @@ export interface GitHubCodeSearchItem {
 }
 
 export interface GitHubComparison {
+  total_commits?: number
   ahead_by?: number
   behind_by?: number
   merge_base_commit?: { sha: string }

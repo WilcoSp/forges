@@ -1,4 +1,5 @@
-import type { Actor, ChecksSummary, Comment, Commit, CommitSignature, ForgeEventInput, Milestone, ReactionContent, RepoRef, ResolvedThreadRef, Reviewer, SubscriptionState, Thread, ThreadRef } from '../model.ts'
+import type { Actor, ChecksSummary, Comment, Commit, CommitSignature, ForgeEventInput, Milestone, ReactionContent, RepoRef, ResolvedThreadRef, Reviewer, SubscriptionState, Thread } from '../model.ts'
+import { eventTime } from '../events.ts'
 import { toDate, toPullStats } from '../utils.ts'
 
 // Not imported from normalise.ts: when two lazy chunks of a provider import from its main chunk, rolldown keeps the provider in bundles that never use it.
@@ -123,6 +124,7 @@ const ISSUE_FIELDS = `id number title body state stateReason createdAt updatedAt
 
 const PULL_FIELDS = `id number title body state isDraft createdAt updatedAt closedAt mergedAt url locked
       author { ${ACTOR_FIELDS} }
+      mergedBy { ${ACTOR_FIELDS} }
       assignees(first: 20) { nodes { ${USER_FIELDS} } }
       labels(first: 50) { nodes { name color description } }
       comments { totalCount }
@@ -192,6 +194,7 @@ export interface GraphQLIssueOrPull {
   url?: string
   locked?: boolean
   author?: GraphQLActor | null
+  mergedBy?: GraphQLActor | null
   assignees?: { nodes: GraphQLActor[] }
   labels?: { nodes: GraphQLLabel[] }
   comments?: { totalCount: number }
@@ -270,6 +273,8 @@ export function toGraphQLThread(ref: ResolvedThreadRef, raw: GraphQLIssueOrPull)
     createdAt: toDate(raw.createdAt),
     updatedAt: toDate(raw.updatedAt),
     closedAt: toDate(raw.closedAt),
+    mergedAt: toDate(raw.mergedAt),
+    mergedBy: toGraphQLActor(instance, raw.mergedBy),
     lastActivityAt: toDate(raw.updatedAt),
     locked: raw.locked,
     commentCount: raw.comments?.totalCount,
@@ -327,11 +332,11 @@ export const ADD_DISCUSSION_COMMENT = `mutation AddDiscussionComment($id: ID!, $
 }`
 
 export const CLOSE_DISCUSSION = `mutation CloseDiscussion($id: ID!, $reason: DiscussionCloseReason) {
-  closeDiscussion(input: { discussionId: $id, reason: $reason }) { discussion { id } }
+  closeDiscussion(input: { discussionId: $id, reason: $reason }) { discussion { ${DISCUSSION_FIELDS} } }
 }`
 
 export const REOPEN_DISCUSSION = `mutation ReopenDiscussion($id: ID!) {
-  reopenDiscussion(input: { discussionId: $id }) { discussion { id } }
+  reopenDiscussion(input: { discussionId: $id }) { discussion { ${DISCUSSION_FIELDS} } }
 }`
 
 export interface GraphQLActor {
@@ -438,16 +443,17 @@ export function toDiscussionCommentEvent(ref: ResolvedThreadRef, comment: GraphQ
     kind: 'comment',
     kindRaw: isReply ? 'DiscussionCommentReply' : 'DiscussionComment',
     summary: `${actor?.login ?? 'someone'} ${isReply ? 'replied' : 'commented'}`,
-    occurredAt: toDate(comment.createdAt) ?? new Date(0),
+    ...eventTime(toDate(comment.createdAt), new Date(0)),
     actor,
     repo: ref.repo,
     thread: ref,
+    detail: { type: 'comment', comment: { forge: FORGE, instance: ref.instance, thread: ref, id: comment.id }, body: comment.body ?? undefined },
     source: 'poll',
     payload: comment,
   }
 }
 
-export function toDiscussionComment(thread: ThreadRef, raw: GraphQLComment): Comment {
+export function toDiscussionComment(thread: ResolvedThreadRef, raw: GraphQLComment): Comment {
   return {
     ref: { forge: FORGE, instance: thread.instance, thread, id: raw.id },
     body: raw.body ?? '',

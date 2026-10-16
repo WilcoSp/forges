@@ -23,6 +23,7 @@ import type {
   CommitFilesInput,
   CommitQuery,
   CommitSearchQuery,
+  CompareOptions,
   Comparison,
   Contributor,
   ContributorStats,
@@ -43,6 +44,7 @@ import type {
   LabelInput,
   ListOptions,
   MergeOptions,
+  MergeResult,
   Milestone,
   Notification,
   NotificationListOptions,
@@ -50,6 +52,7 @@ import type {
   OwnerRepoQuery,
   Page,
   PageOptions,
+  RateLimit,
   Reaction,
   ReactionContent,
   Release,
@@ -62,6 +65,7 @@ import type {
   RepoRef,
   RepoRole,
   RepoSearchQuery,
+  ResolvedThreadRef,
   Review,
   ReviewComment,
   ReviewEvent,
@@ -165,8 +169,13 @@ export interface ForgeOptionsBase {
   instanceVersion?: string
   /** Every write, including a mutating `request()`, rejects with `ReadOnlyError` and reports `false`. */
   readOnly?: boolean
-  /** Called before a request is retried after a secondary rate limit, with the wait in milliseconds. */
+  /** Called before a request is retried after a rate limit that names a wait of at most a minute, with the wait in milliseconds. */
   onRetry?: FetcherOptions['onRetry']
+  /**
+   * Called with the rate limit of every API response that reports one, so that you can follow the budget without
+   * reading `page.rateLimit`. `rateLimit.resource` names the budget where the forge has several.
+   */
+  onRateLimit?: FetcherOptions['onRateLimit']
 }
 
 /** Per-thread-kind support. `'other'` subjects have no verbs, so they have no entry. */
@@ -528,6 +537,15 @@ export interface CloseOptions extends BaseOptions {
   reasonRaw?: string
 }
 
+/** Options for `threads.comment()`. */
+export interface CommentOptions extends BaseOptions {
+  /**
+   * Writes the hidden marker of `upsertComment()` for this key into the body, so that `upsertComment()` with the same
+   * key edits this comment instead of posting another.
+   */
+  key?: string
+}
+
 /**
  * Issues, pull requests and the other kinds of discussion: reading, creating, commenting, labelling,
  * reviewing and merging them.
@@ -557,15 +575,21 @@ export interface ThreadsApi {
    * no endpoint for it, walks `comments()` until the id matches.
    */
   getComment: (ref: CommentRef, options?: BaseOptions) => Promise<Comment>
-  /** Adds a comment to a thread. */
-  comment: (ref: ThreadRef, body: string, options?: BaseOptions) => Promise<Comment>
+  /**
+   * Adds a comment to a thread. A repeat posts a second comment, so pass a `key` and retry with `upsertComment()`.
+   * @example
+   * ```ts
+   * await provider.threads.comment(ref, 'Deployed to staging', { key: mutationId })
+   * ```
+   */
+  comment: (ref: ThreadRef, body: string, options?: CommentOptions) => Promise<Comment>
   /**
    * Creates the comment, or edits the one an earlier call with the same `key`
-   * left behind. The key is carried in the body as a hidden marker; see
+   * left behind, unless that one already has the same body. The key is carried in the body as a hidden marker; see
    * {@link commentMarker}. Composed from `comments`, `comment` and
-   * `editComment`, so it costs a listing on every call.
+   * `editComment`, so it costs a listing on every call, which `since` bounds.
    * @param ref The thread to comment on.
-   * @param input The `key` that identifies the comment across runs, and its `body`.
+   * @param input The `key` that identifies the comment across runs, its `body`, and `since` to look at recent comments only.
    * @example
    * ```ts
    * await provider.threads.upsertComment(ref, { key: 'preview', body: 'Preview: https://pr-42.example.com' })
@@ -574,9 +598,12 @@ export interface ThreadsApi {
   upsertComment: (ref: ThreadRef, input: UpsertCommentInput, options?: BaseOptions) => Promise<UpsertCommentResult>
   /** Replaces the body of a comment. */
   editComment: (ref: CommentRef, body: string, options?: BaseOptions) => Promise<Comment>
-  /** Deletes a comment. */
+  /** Deletes a comment. A repeat can reject with `NotFoundError` once the comment is gone. */
   deleteComment: (ref: CommentRef, options?: BaseOptions) => Promise<void>
-  /** Creates an issue, pull request or discussion. A pull request needs `head` and `base`. */
+  /**
+   * Creates an issue, pull request or discussion. A pull request needs `head` and `base`. A repeat creates a second
+   * thread, though most forges reject a second open pull request from the same `head` to the same `base`.
+   */
   create: (repo: RepoRef, input: ThreadCreateInput, options?: BaseOptions) => Promise<Thread>
   /**
    * Changes the title, body, state, labels or assignees of a thread. Fields left out stay as they are.
@@ -589,14 +616,26 @@ export interface ThreadsApi {
    * ```
    */
   update: (ref: ThreadRef, input: ThreadUpdateInput, options?: BaseOptions) => Promise<Thread>
-  /** Replaces the thread's labels. */
-  setLabels: (ref: ThreadRef, labels: string[], options?: BaseOptions) => Promise<void>
-  /** Adds labels, leaving the rest in place. */
-  addLabels: (ref: ThreadRef, labels: string[], options?: BaseOptions) => Promise<void>
-  /** Removes labels, leaving the rest in place. Labels the thread does not carry are ignored. */
-  removeLabels: (ref: ThreadRef, labels: string[], options?: BaseOptions) => Promise<void>
-  /** Sets the thread's milestone, by milestone, id or title, or clears it with `undefined`. */
-  setMilestone: (ref: ThreadRef, milestone: Milestone | string | undefined, options?: BaseOptions) => Promise<void>
+  /**
+   * Replaces the thread's labels.
+   * @returns The labels the thread carries afterwards. GitLab and Azure DevOps report only their names.
+   */
+  setLabels: (ref: ThreadRef, labels: string[], options?: BaseOptions) => Promise<Label[]>
+  /**
+   * Adds labels, leaving the rest in place.
+   * @returns The labels the thread carries afterwards. GitLab reports only their names.
+   */
+  addLabels: (ref: ThreadRef, labels: string[], options?: BaseOptions) => Promise<Label[]>
+  /**
+   * Removes labels, leaving the rest in place. Labels the thread does not carry are ignored.
+   * @returns The labels the thread carries afterwards. GitLab reports only their names. Forgejo, Gitea and Gitee read the labels after removing them, and GitHub reads them when it removes none.
+   */
+  removeLabels: (ref: ThreadRef, labels: string[], options?: BaseOptions) => Promise<Label[]>
+  /**
+   * Sets the thread's milestone, by milestone, id or title, or clears it with `undefined`.
+   * @returns The milestone the thread is in afterwards, or `undefined` once it is cleared.
+   */
+  setMilestone: (ref: ThreadRef, milestone: Milestone | string | undefined, options?: BaseOptions) => Promise<Milestone | undefined>
   /** Reactions left on the thread or on one of its comments. */
   reactions: (target: ThreadRef | CommentRef, options?: ListOptions) => ForgeIterable<Reaction>
   /** One page of `reactions()`. */
@@ -609,30 +648,45 @@ export interface ThreadsApi {
   react: (target: ThreadRef | CommentRef, reaction: ReactionContent, options?: BaseOptions) => Promise<void>
   /** Removes the account's reaction from the thread or comment. */
   unreact: (target: ThreadRef | CommentRef, reaction: ReactionContent, options?: BaseOptions) => Promise<void>
-  /** Moves the thread to another repository, and returns its ref there. */
-  transfer: (ref: ThreadRef, repo: RepoRef, options?: BaseOptions) => Promise<ThreadRef>
+  /** Moves the thread to another repository, and returns its ref there. A repeat can reject once the thread has moved. */
+  transfer: (ref: ThreadRef, repo: RepoRef, options?: BaseOptions) => Promise<ResolvedThreadRef>
   /** Marks the thread a duplicate of `canonical`, which must be in the same repository on most forges. */
   markDuplicate: (ref: ThreadRef, canonical: ThreadRef, options?: BaseOptions) => Promise<void>
-  /** Replaces the thread's assignees. */
-  setAssignees: (ref: ThreadRef, assignees: Array<string | Actor>, options?: BaseOptions) => Promise<void>
+  /**
+   * Replaces the thread's assignees.
+   * @returns The accounts assigned afterwards.
+   */
+  setAssignees: (ref: ThreadRef, assignees: Array<string | Actor>, options?: BaseOptions) => Promise<Actor[]>
   /** Adds reviewers to a pull request. */
   requestReview: (ref: ThreadRef, reviewers: Array<string | Actor>, options?: BaseOptions) => Promise<void>
-  /** Closes a thread, optionally with a reason. */
-  close: (ref: ThreadRef, options?: CloseOptions) => Promise<void>
-  /** Reopens a closed thread. */
-  reopen: (ref: ThreadRef, options?: BaseOptions) => Promise<void>
   /**
-   * Merges a pull request. Without a merge method, the repository must allow exactly one.
+   * Closes a thread, optionally with a reason.
+   * @returns The thread, closed. Tangled reads the thread after writing the state record.
+   */
+  close: (ref: ThreadRef, options?: CloseOptions) => Promise<Thread>
+  /**
+   * Reopens a closed thread.
+   * @returns The thread, open. Tangled reads the thread after writing the state record.
+   */
+  reopen: (ref: ThreadRef, options?: BaseOptions) => Promise<Thread>
+  /**
+   * Merges a pull request. Without a merge method, the repository must allow exactly one. A repeat rejects once the
+   * pull request has merged, so after a failure read the pull request to see whether it did.
    * @param ref The pull request to merge.
    * @param options The merge method, the head `sha` to expect and the commit message.
+   * @returns Whether the pull request merged or the forge queued the merge, and the merge commit where the response
+   * reports it. Forgejo, Gitea and Tangled report no merge commit.
    * @example
    * ```ts
-   * await provider.threads.merge(ref, { method: 'squash' })
+   * const { status, sha } = await provider.threads.merge(ref, { method: 'squash' })
    * ```
    */
-  merge: (ref: ThreadRef, options?: MergeOptions) => Promise<void>
-  /** Approves, then merges. The merge method is checked before the approval is sent. */
-  approveAndMerge: (ref: ThreadRef, options?: ApproveAndMergeOptions) => Promise<void>
+  merge: (ref: ThreadRef, options?: MergeOptions) => Promise<MergeResult>
+  /**
+   * Approves, then merges, and resolves as `merge()` does. The merge method is checked before the approval is sent.
+   * A repeat approves again, as `approve()` does, so once the approval is in, retry with `merge()`.
+   */
+  approveAndMerge: (ref: ThreadRef, options?: ApproveAndMergeOptions) => Promise<MergeResult>
   /** The authenticated account's subscription to the thread. */
   subscription: (ref: ThreadRef, options?: BaseOptions) => Promise<SubscriptionState>
   /** Subscribes the account to the notifications of a thread. */
@@ -651,12 +705,17 @@ export interface ThreadsApi {
   reviewsPage: (ref: ThreadRef, options?: PageOptions) => Promise<Page<Review>>
   /** Reads one review by its ref. Where the forge has no endpoint for it, walks `reviews()` until the id matches. */
   getReview: (ref: ReviewRef, options?: BaseOptions) => Promise<Review>
-  /** Creates a review. Without `event` the review is pending where the forge has pending reviews. */
+  /** Creates a review. Without `event` the review is pending where the forge has pending reviews. A repeat adds a second review. */
   createReview: (ref: ThreadRef, input: ReviewInput, options?: BaseOptions) => Promise<Review>
-  /** Submits a pending review. */
+  /** Submits a pending review. A repeat can reject once the review is submitted. */
   submitReview: (ref: ReviewRef, event: ReviewEvent, body?: string, options?: BaseOptions) => Promise<Review>
-  /** Approves without merging; `createReview({ event: 'approve' })` with nothing else to say. */
-  approve: (ref: ThreadRef, body?: string, options?: BaseOptions) => Promise<void>
+  /**
+   * Approves without merging; `createReview({ event: 'approve' })` with nothing else to say. A repeat adds a second
+   * approving review where the forge keeps reviews, and sets the same vote or rejects where it keeps votes.
+   * @returns The approval, as `createReview()` returns it. GitLab reads the signed-in account once per provider to
+   * pick the approval out of a response with more than one approver.
+   */
+  approve: (ref: ThreadRef, body?: string, options?: BaseOptions) => Promise<Review>
   /** Files a pull request changes, with a per-file `patch` where the forge returns one. */
   files: (ref: ThreadRef, options?: PageOptions) => ForgeIterable<ChangedFile>
   /** One page of `files()`. */
@@ -667,7 +726,8 @@ export interface ThreadsApi {
   commitsPage: (ref: ThreadRef, options?: PageOptions) => Promise<Page<Commit>>
   /**
    * Replies to a review comment in its conversation. Pass the comment as `reviews()` or `comments()` returns it:
-   * GitHub uses its `inReplyTo` or `ref`, Gitea its `ref`, and GitLab the discussion in its `thread`.
+   * GitHub uses its `inReplyTo` or `ref`, Gitea its `ref`, and GitLab the discussion in its `thread`. A repeat posts a
+   * second reply.
    */
   replyToReviewComment: (ref: ThreadRef, comment: Pick<ReviewComment, 'ref' | 'thread' | 'inReplyTo'>, body: string, options?: BaseOptions) => Promise<ReviewComment>
   /** Resolves a review conversation, by the id on {@link ReviewComment.thread} or {@link Comment.thread}. */
@@ -682,9 +742,13 @@ export interface ChecksApi {
   list: (repo: RepoRef, sha: string, options?: BaseOptions) => Promise<Page<Check>>
   /** Reads one check. Rejects for a `CheckRef.type` the forge cannot read on its own. */
   get: (ref: CheckRef, options?: BaseOptions) => Promise<Check>
-  /** Writes a commit status, or a check run where the credential can (GitHub app auth). */
+  /**
+   * Writes a commit status, or a check run where the credential can (GitHub app auth). A repeat writes a second check
+   * run; a second commit status with the same name takes the place of the first, except on GitLab, which rejects a
+   * repeat of a status that is still pending.
+   */
   report: (repo: RepoRef, sha: string, input: CheckReportInput, options?: BaseOptions) => Promise<Check>
-  /** Re-runs a check. Rejects for a `CheckRef.type` the forge cannot re-run. */
+  /** Re-runs a check. Rejects for a `CheckRef.type` the forge cannot re-run. A repeat can start another run. */
   rerun: (ref: CheckRef, options?: BaseOptions) => Promise<void>
 }
 
@@ -744,9 +808,10 @@ export interface ContentsApi {
   /** One commit, with its files and stats. */
   commit: (repo: RepoRef, sha: string, options?: BaseOptions) => Promise<Commit>
   /** Commits and files between two refs. */
-  compare: (repo: RepoRef, base: string, head: string, options?: BaseOptions) => Promise<Comparison>
+  compare: (repo: RepoRef, base: string, head: string, options?: CompareOptions) => Promise<Comparison>
   /**
-   * Writes and deletes files in one commit on a branch, and moves the branch to it.
+   * Writes and deletes files in one commit on a branch, and moves the branch to it. A repeat with `expectedHead` or
+   * `createFrom` rejects once the first attempt has moved or created the branch; without them, it adds a second commit.
    * @param repo The repository to commit to.
    * @param input The branch, the message and the files, with the head the branch must have and the ref to create it from.
    * @throws `BranchMovedError` when the branch no longer points at `expectedHead`.
@@ -797,7 +862,8 @@ export interface ReleasesApi {
   /** The most recent published release that is not a draft or prerelease, if any. */
   latest: (repo: RepoRef, options?: BaseOptions) => Promise<Release | undefined>
   /**
-   * Creates a release, and its tag from `target` when the tag does not exist yet.
+   * Creates a release, and its tag from `target` when the tag does not exist yet. A repeat for the same tag rejects on
+   * forges that hold one release per tag; read it back with `getByTag()`.
    * @param repo The repository to release.
    * @param input The tag, the name, the notes and whether the release is a draft or a prerelease.
    * @throws `UnsupportedOperationError` for `draft: true` or `prerelease: true` on a forge without drafts or prereleases.
@@ -880,7 +946,7 @@ export interface ReposApi {
   labels: (repo: RepoRef, options?: PageOptions) => ForgeIterable<Label>
   /** One page of `labels()`. */
   labelsPage: (repo: RepoRef, options?: PageOptions) => Promise<Page<Label>>
-  /** Creates a label in a repository. */
+  /** Creates a label in a repository. A repeat rejects on most forges, because the name is taken. */
   createLabel: (repo: RepoRef, label: LabelInput, options?: BaseOptions) => Promise<Label>
   /** Lists the milestones of a repository. */
   milestones: (repo: RepoRef, options?: MilestoneListOptions) => ForgeIterable<Milestone>
@@ -901,7 +967,10 @@ export interface ReposApi {
   contributorStats: (repo: RepoRef, options?: BaseOptions) => Promise<ContributorStats[]>
   /** One account's role on the repository; `'none'` when it has no access. */
   permissionFor: (repo: RepoRef, actor: string | Actor, options?: BaseOptions) => Promise<RepoRole>
-  /** Gives an account a role on a repository, or invites it where the forge asks the account to accept first. */
+  /**
+   * Gives an account a role on a repository, or invites it where the forge asks the account to accept first. A repeat
+   * can reject where the forge refuses to add an existing member (GitLab).
+   */
   addCollaborator: (repo: RepoRef, actor: string | Actor, role: RepoRole, options?: BaseOptions) => Promise<AddCollaboratorResult>
   /** Accounts that can be assigned to a thread in the repository. */
   assignableUsers: (repo: RepoRef, options?: PageOptions) => ForgeIterable<Actor>
@@ -1007,11 +1076,11 @@ export interface WebhooksApi {
   list: (target: RepoRef, options?: PageOptions) => ForgeIterable<Webhook>
   /** One page of `list()`. */
   listPage: (target: RepoRef, options?: PageOptions) => Promise<Page<Webhook>>
-  /** Registers a webhook. */
+  /** Registers a webhook. A repeat registers a second one, or rejects where the forge refuses a second hook for the same URL. */
   create: (target: RepoRef, input: WebhookInput, options?: BaseOptions) => Promise<Webhook>
   /** Changes a webhook. */
   update: (ref: WebhookRef, update: WebhookUpdate, options?: BaseOptions) => Promise<Webhook>
-  /** Deletes a webhook. */
+  /** Deletes a webhook. A repeat can reject with `NotFoundError` once the webhook is gone. */
   delete: (ref: WebhookRef, options?: BaseOptions) => Promise<void>
   /** Replaces the signing secret in place. `false` where the forge can only do it by recreating the hook. */
   rotateSecret: (ref: WebhookRef, secret: string, options?: BaseOptions) => Promise<Webhook>
@@ -1019,7 +1088,7 @@ export interface WebhooksApi {
   deliveries: (ref: WebhookRef, options?: PageOptions) => ForgeIterable<WebhookDeliveryRecord>
   /** One page of `deliveries()`. */
   deliveriesPage: (ref: WebhookRef, options?: PageOptions) => Promise<Page<WebhookDeliveryRecord>>
-  /** Sends a past delivery again. */
+  /** Sends a past delivery again. A repeat sends it once more. */
   redeliver: (ref: WebhookDeliveryRef, options?: BaseOptions) => Promise<void>
 }
 
@@ -1119,6 +1188,19 @@ export interface ForgeProvider<HasWeb extends boolean = boolean> {
    * Updates `capabilities` and returns it.
    */
   refreshCapabilities: () => Promise<ForgeCapabilities>
+  /**
+   * The request budgets of the latest responses, one per `resource`, read without sending a request. GitHub keeps
+   * a budget per resource, such as `core`, `search` and `graphql`; other forges report one budget with no
+   * `resource`. Empty until a response reports a budget. A budget whose `resetAt` has passed is left out.
+   * @example
+   * ```ts
+   * const core = forge.rateLimits().find(budget => !budget.resource || budget.resource === 'core')
+   * if (core?.remaining !== undefined && core.limit && core.remaining / core.limit < 0.1) {
+   *   await slowDown(core.resetAt)
+   * }
+   * ```
+   */
+  rateLimits: () => RateLimit[]
   /** Rewrites Markdown into the dialect the forge renders; returns it unchanged where the forge renders CommonMark. */
   normaliseMarkdown: (body: string) => string
   readonly repos: ReposApi
@@ -1161,7 +1243,7 @@ export interface ForgeProvider<HasWeb extends boolean = boolean> {
   support: (verb: ForgeVerb, kind?: ThreadKind | SecurityAlertKind) => Support
   /**
    * The web page for `target`, built without a request; `undefined` when the forge has no such page.
-   * @param target What to link to: a repository or one of its sections, thread, comment, release, file, raw file, commit or comparison.
+   * @param target What to link to: a repository or one of its sections (`issues`, `pullRequests`, `compare`, `releases`, `stargazers`, `forks` or `watchers`), thread, comment, release, file, raw file, commit or comparison.
    */
   urlFor: {
     (target: { repo: RepoRef, section?: undefined }): HasWeb extends true ? string : string | undefined

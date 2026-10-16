@@ -8,7 +8,7 @@ import { ContentNotTextError, ForbiddenError, InsufficientScopeError, NotFoundEr
 import { graphqlOperations, graphqlUrl } from '../../src/github/graphql-client.ts'
 import { github } from '../../src/github/index.ts'
 import { toEvent, toNotification, toReason, toRepo } from '../../src/github/normalise.ts'
-import { notificationThread } from '../../src/model.ts'
+import { commentMarker, notificationThread } from '../../src/model.ts'
 import { fixtureFetch, loadFixtures } from '../utils/fixtures.ts'
 
 const { privateKey } = generateKeyPairSync('rsa', {
@@ -255,6 +255,17 @@ describe('github discussions', () => {
     expect(JSON.parse(calls[1]!.body!).variables).toEqual({ id: 'D_kwDOAAB5ac4AAQ1f', reason: 'RESOLVED' })
   })
 
+  it('resolves a discussion state change with the discussion from the mutation', async () => {
+    const { provider, calls } = tokenProvider()
+    const ref = { ...discussion, externalId: 'D_kwDOAAB5ac4AAQ1f' }
+
+    await expect(provider.threads.close(ref)).resolves.toMatchObject({ kind: 'discussion', title: 'Weekly digest discussion', state: 'closed', closedAt: new Date('2025-09-18T09:00:00Z') })
+    await expect(provider.threads.reopen!(ref)).resolves.toMatchObject({ kind: 'discussion', state: 'open', closedAt: undefined })
+
+    expect(calls.map(call => call.operationName)).toEqual(['CloseDiscussion', 'ReopenDiscussion'])
+    expect(JSON.parse(calls[0]!.body!).query).toContain('closeDiscussion(input: { discussionId: $id, reason: $reason }) { discussion { id number title body closed')
+  })
+
   it('maps close reasons a discussion has, and passes `reasonRaw` through', async () => {
     const { provider, calls } = tokenProvider()
     const ref = { ...discussion, externalId: 'D_kwDOAAB5ac4AAQ1f' }
@@ -279,11 +290,13 @@ describe('github discussions', () => {
       auth: { type: 'token', token: 't' },
       fetch: async (url, init) => {
         requests.push({ method: init?.method, url, body: init?.body && JSON.parse(String(init.body)) })
-        return new Response(null, { status: 204 })
+        return Response.json({ number: 7, title: 'Flaky test', state: 'closed', state_reason: 'not_planned', closed_at: '2025-09-18T09:00:00Z' })
       },
     }).create()
 
-    await provider.threads.close({ forge: 'github', instance: 'github.com', repo, kind: 'issue', number: '7' }, { reason: 'not_planned' })
+    const closed = await provider.threads.close({ forge: 'github', instance: 'github.com', repo, kind: 'issue', number: '7' }, { reason: 'not_planned' })
+
+    expect(closed).toMatchObject({ title: 'Flaky test', state: 'closed', stateReason: 'not_planned', closedAt: new Date('2025-09-18T09:00:00Z') })
 
     expect(requests).toEqual([{ method: 'PATCH', url: 'https://api.github.com/repos/acme/widgets/issues/7', body: { state: 'closed', state_reason: 'not_planned' } }])
   })
@@ -297,9 +310,10 @@ describe('github discussions', () => {
         auth: { type: 'token', token: 't' },
         fetch: async (url, init) => {
           requests.push({ method: init?.method, url, body: init?.body && JSON.parse(String(init.body)) })
+          const milestones = [{ number: 3, title: 'v1.0', state: 'closed' }, { number: 4, title: 'v2.0', state: 'open' }]
           return url.includes('/milestones')
-            ? Response.json([{ number: 3, title: 'v1.0', state: 'closed' }, { number: 4, title: 'v2.0', state: 'open' }])
-            : new Response(null, { status: 204 })
+            ? Response.json(milestones)
+            : Response.json({ number: 7, milestone: milestones.find(milestone => milestone.number === (requests.at(-1)!.body as { milestone: number | null }).milestone) ?? null })
         },
       }).create()
       return { provider, requests }
@@ -308,7 +322,7 @@ describe('github discussions', () => {
     it('sends a numeric id as it is', async () => {
       const { provider, requests } = milestoneProvider()
 
-      await provider.threads.setMilestone(issue, '3')
+      await expect(provider.threads.setMilestone(issue, '3')).resolves.toMatchObject({ id: '3', title: 'v1.0', state: 'closed' })
 
       expect(requests).toEqual([{ method: 'PATCH', url: 'https://api.github.com/repos/acme/widgets/issues/7', body: { milestone: 3 } }])
     })
@@ -316,7 +330,7 @@ describe('github discussions', () => {
     it('looks a title up among open and closed milestones', async () => {
       const { provider, requests } = milestoneProvider()
 
-      await provider.threads.setMilestone(issue, 'v2.0')
+      await expect(provider.threads.setMilestone(issue, 'v2.0')).resolves.toMatchObject({ id: '4', title: 'v2.0', state: 'open' })
 
       expect(requests.map(request => request.url)).toEqual([
         'https://api.github.com/repos/acme/widgets/milestones?state=all',
@@ -360,6 +374,32 @@ describe('github thread updates', () => {
     expect(thread.ref.kind).toBe('pull_request')
   })
 
+  it('writes the marker of a key into one comment request', async () => {
+    const { provider, calls } = tokenProvider({ 'POST https://api.github.com/repos/acme/widgets/issues/42/comments': { status: 201, body: { id: 7, body: 'Deployed' } } })
+
+    await provider.threads.comment(pull, 'Deployed', { key: 'mutation-1' })
+
+    expect(calls).toHaveLength(1)
+    expect(JSON.parse(calls[0]!.body!)).toEqual({ body: `Deployed\n\n${commentMarker('mutation-1')}` })
+  })
+
+  it('lists comments since a time when upserting a comment with since', async () => {
+    const marked = { id: 7, body: `Deployed\n\n${commentMarker('mutation-1')}`, created_at: '2026-03-01T12:00:03Z', updated_at: '2026-03-01T12:00:03Z' }
+    const { provider, calls } = tokenProvider({
+      'GET https://api.github.com/repos/acme/widgets/issues/42/comments?since=2026-03-01T12:00:00.000Z': { status: 200, body: [marked] },
+      'PATCH https://api.github.com/repos/acme/widgets/issues/comments/7': { status: 200, body: marked },
+    })
+
+    const result = await provider.threads.upsertComment(pull, { key: 'mutation-1', body: 'Deployed to staging', since: new Date('2026-03-01T12:00:00Z') })
+
+    expect(result.created).toBe(false)
+    expect(calls.map(call => `${call.method} ${new URL(call.url).pathname}`)).toEqual([
+      'GET /repos/acme/widgets/issues/42/comments',
+      'PATCH /repos/acme/widgets/issues/comments/7',
+    ])
+    expect(new URL(calls[0]!.url).searchParams.get('since')).toBe('2026-03-01T12:00:00.000Z')
+  })
+
   it('edits a pull request without labels or assignees through the pulls endpoint', async () => {
     const { provider, calls } = tokenProvider({ 'PATCH https://api.github.com/repos/acme/widgets/pulls/42': { status: 200, body: { number: 42, state: 'closed', title: 'Retry uploads' } } })
     await provider.threads.update(pull, { title: 'Retry uploads', state: 'closed' })
@@ -368,11 +408,11 @@ describe('github thread updates', () => {
     expect(JSON.parse(calls[0]!.body!)).toEqual({ title: 'Retry uploads', state: 'closed' })
   })
 
-  it('closes a discussion before it reads it back', async () => {
+  it('resolves a discussion state update with the discussion from the mutation', async () => {
     const { provider, calls } = tokenProvider()
-    await provider.threads.update(discussion, { state: 'closed' })
 
-    expect(calls.map(call => call.operationName)).toEqual(['DiscussionThread', 'CloseDiscussion', 'DiscussionThread'])
+    await expect(provider.threads.update(discussion, { state: 'closed' })).resolves.toMatchObject({ state: 'closed' })
+    expect(calls.map(call => call.operationName)).toEqual(['DiscussionThread', 'CloseDiscussion'])
   })
 
   it('refuses labels on a discussion before it writes anything', async () => {
@@ -432,6 +472,34 @@ describe('github app installations', () => {
     const tokenCalls = calls.filter(call => call.url.endsWith('/access_tokens'))
     expect(tokenCalls).toHaveLength(1)
     expect(calls.at(-1)!.authorization).toBe('Bearer ghs_fixtureinstallationtoken')
+  })
+
+  it('reports the retries and rate limits of the installation token exchange', async () => {
+    const { fetch: replay } = fixtureFetch('github')
+    const onRetry = vi.fn()
+    const onRateLimit = vi.fn()
+    let limited = false
+    const provider = github({
+      auth: { type: 'app', appId: 12345, privateKey, installationId: 55123 },
+      fetch: async (input, init) => {
+        if (String(input).endsWith('/access_tokens') && !limited) {
+          limited = true
+          return new Response('{"message":"You have exceeded a secondary rate limit."}', { status: 403, headers: { 'retry-after': '0' } })
+        }
+        const response = await replay(input, init)
+        const headers = new Headers(response.headers)
+        headers.set('x-ratelimit-remaining', '10')
+        return new Response(response.body, { status: response.status, headers })
+      },
+      onRetry,
+      onRateLimit,
+    }).create()
+
+    await provider.repos.get(repo)
+
+    const exchange = 'https://api.github.com/app/installations/55123/access_tokens'
+    expect(onRetry).toHaveBeenCalledExactlyOnceWith({ url: exchange, method: 'POST', wait: 0 })
+    expect(onRateLimit.mock.calls.map(([{ url, method }]) => `${method} ${url}`)).toEqual([`POST ${exchange}`, 'GET https://api.github.com/repos/acme/widgets'])
   })
 
   it('lists installations and their repositories', async () => {
@@ -533,6 +601,46 @@ describe('github repository and thread metadata', () => {
 
     expect(await provider.repos.addCollaborator(repo, 'octocat', 'write')).toEqual({ status: 'invited' })
     expect(await provider.repos.addCollaborator(repo, 'hubot', 'write')).toEqual({ status: 'added' })
+  })
+
+  it('ignores a label the thread no longer carries when removing labels', async () => {
+    const { provider } = tokenProvider({
+      'DELETE https://api.github.com/repos/acme/widgets/issues/42/labels/bug': { status: 404, body: { message: 'Label does not exist', documentation_url: 'https://docs.github.com/rest/issues/labels#remove-a-label-from-an-issue' } },
+      'DELETE https://api.github.com/repos/acme/widgets/issues/43/labels/bug': { status: 404, body: { message: 'Not Found' } },
+      'GET https://api.github.com/repos/acme/widgets/issues/42/labels?per_page=100': { status: 200, body: [{ name: 'triage', color: 'ededed' }] },
+    })
+
+    await expect(provider.threads.removeLabels(pull, ['bug'])).resolves.toEqual([{ name: 'triage', colour: 'ededed' }])
+    await expect(provider.threads.removeLabels({ ...pull, number: '43' }, ['bug'])).rejects.toThrow(NotFoundError)
+  })
+
+  it('resolves removeLabels with the labels in the last delete response', async () => {
+    const { provider, calls } = tokenProvider({
+      'DELETE https://api.github.com/repos/acme/widgets/issues/42/labels/bug': { status: 200, body: [{ name: 'triage', color: 'ededed' }, { name: 'ui', color: '0e8a16' }] },
+      'DELETE https://api.github.com/repos/acme/widgets/issues/42/labels/ui': { status: 200, body: [{ name: 'triage', color: 'ededed' }] },
+    })
+
+    await expect(provider.threads.removeLabels(pull, ['bug', 'ui'])).resolves.toEqual([{ name: 'triage', colour: 'ededed' }])
+    expect(calls.map(call => call.method)).toEqual(['DELETE', 'DELETE'])
+  })
+
+  it.each(['setLabels', 'addLabels'] as const)('resolves %s with the labels in the response', async (verb) => {
+    const labels = [{ name: 'bug', color: 'd73a4a', description: 'Something is broken' }, { name: 'triage', color: 'ededed', description: null }]
+    const { provider, calls } = tokenProvider({
+      [`${verb === 'setLabels' ? 'PUT' : 'POST'} https://api.github.com/repos/acme/widgets/issues/42/labels`]: { status: 200, body: labels },
+    })
+
+    await expect(provider.threads[verb](pull, ['bug'])).resolves.toEqual([{ name: 'bug', colour: 'd73a4a', description: 'Something is broken' }, { name: 'triage', colour: 'ededed' }])
+    expect(calls).toHaveLength(1)
+  })
+
+  it('resolves setAssignees with the assignees in the response', async () => {
+    const { provider, calls } = tokenProvider({
+      'PATCH https://api.github.com/repos/acme/widgets/issues/42': { status: 200, body: { number: 42, assignees: [{ login: 'octocat', id: 583231, type: 'User' }] } },
+    })
+
+    await expect(provider.threads.setAssignees(pull, ['octocat'])).resolves.toMatchObject([{ login: 'octocat', id: '583231' }])
+    expect(calls.map(call => [call.method, JSON.parse(call.body!)])).toEqual([['PATCH', { assignees: ['octocat'] }]])
   })
 
   it('adds and removes labels without replacing the rest', async () => {
@@ -937,6 +1045,27 @@ describe('github contents', () => {
     expect(comparison).toMatchObject({ aheadBy: 2, behindBy: 0, mergeBaseSha: '0'.repeat(40) })
   })
 
+  it('reads the newest commits of a comparison from its last pages', async () => {
+    const all = Array.from({ length: 250 }, (_, index) => ({ sha: String(index + 1), commit: { message: `commit ${index + 1}` } }))
+    const pages: Array<string | null> = []
+    const provider = github({ auth: { type: 'token', token: 't' }, fetch: async (input) => {
+      const url = new URL(String(input))
+      const perPage = Number(url.searchParams.get('per_page') ?? 250)
+      const page = Number(url.searchParams.get('page') ?? 1)
+      pages.push(`${url.searchParams.get('per_page')}:${url.searchParams.get('page')}`)
+      const commits = url.searchParams.has('per_page') ? all.slice((page - 1) * perPage, page * perPage) : all.slice(-250)
+      return Response.json({ total_commits: all.length, ahead_by: all.length, behind_by: 0, commits, files: page === 1 ? [{ filename: 'a.ts', status: 'modified' }] : [] })
+    } }).create()
+    const shas = async (commitLimit?: number) => (await provider.contents.compare(repo, 'v1.0.0', 'main', { commitLimit })).commits.map(commit => commit.sha)
+
+    expect(await shas(3)).toEqual(['250', '249', '248'])
+    expect(pages.splice(0)).toEqual(['3:null', '3:83', '3:84'])
+    expect(await shas(150)).toEqual(all.slice(100).map(commit => commit.sha).toReversed())
+    expect(pages.splice(0)).toEqual(['100:null', '100:2', '100:3'])
+    expect(await shas()).toEqual(all.map(commit => commit.sha).toReversed())
+    expect(pages.splice(0)).toEqual(['null:null'])
+  })
+
   it('resolves a sha without a request and a branch with one', async () => {
     const { provider, calls } = tokenProvider()
 
@@ -996,6 +1125,28 @@ describe('github search', () => {
     expect(items[0]!.ref).toMatchObject({ kind: 'issue', number: '42' })
     expect(items[0]!.ref.repo).toMatchObject({ owner: 'acme', name: 'widgets' })
     expect(items[0]!.title).toBe('Widget crashes on load')
+  })
+
+  it('reports the search budget apart from the core budget', async () => {
+    const { fetch: replay } = fixtureFetch('github')
+    const resources: Array<string | undefined> = []
+    const provider = github({
+      auth: { type: 'token', token: 't' },
+      fetch: async (input, init) => {
+        const response = await replay(input, init)
+        const headers = new Headers(response.headers)
+        headers.set('x-ratelimit-remaining', '10')
+        headers.set('x-ratelimit-resource', new URL(String(input)).pathname.startsWith('/search/') ? 'search' : 'core')
+        return new Response(response.body, { status: response.status, headers })
+      },
+      onRateLimit: ({ rateLimit }) => resources.push(rateLimit.resource),
+    }).create()
+
+    const page = await provider.search.threadsPage({ text: 'crash', repo, kind: 'issue', state: 'open', sort: 'updated', direction: 'desc' })
+    await provider.repos.get(repo)
+
+    expect(page.rateLimit).toEqual({ remaining: 10, resource: 'search' })
+    expect(resources).toEqual(['search', 'core'])
   })
 
   it('warns rather than filtering when a repository sort is unsupported', async () => {

@@ -1,7 +1,7 @@
 import type { ForgeRawRequestOptions, RawResponse } from '../../src/fetch.ts'
 import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { AuthenticationRequiredError, ForbiddenError, ForgeApiError, ForgeNetworkError, InsufficientScopeError, RateLimitedError, ReadOnlyError } from '../../src/errors.ts'
-import { createFetcher, createRequest, parseLinkHeader } from '../../src/fetch.ts'
+import { createFetcher, createRequest, parseLinkHeader, rateLimitOf } from '../../src/fetch.ts'
 import { github } from '../../src/github/index.ts'
 
 describe('parseLinkHeader', () => {
@@ -236,6 +236,47 @@ describe('createFetcher', () => {
     await expect(fetcher.json('/thing')).resolves.toMatchObject({ data: { ok: true } })
     expect(attempts).toBe(2)
     expect(onRetry).toHaveBeenCalledWith({ url: 'https://api.example/thing', method: 'GET', wait: 0 })
+  })
+
+  it('reports the rate limit of every response from the API origin', async () => {
+    const onRateLimit = vi.fn()
+    const budget = (remaining: string) => ({ 'x-ratelimit-limit': '30', 'x-ratelimit-remaining': remaining, 'x-ratelimit-reset': '1700000000', 'x-ratelimit-resource': 'search' })
+    const fetcher = createFetcher({
+      baseUrl: 'https://api.example',
+      onRateLimit,
+      fetch: async (input) => {
+        const url = new URL(String(input))
+        if (url.origin !== 'https://api.example') {
+          return new Response('bytes', { status: 200, headers: budget('1') })
+        }
+        switch (url.pathname) {
+          case '/search':
+            return Response.json([], { headers: budget('29') })
+          case '/cached':
+            return new Response(null, { status: 304, headers: budget('28') })
+          case '/download':
+            return new Response(null, { status: 302, headers: { location: 'https://cdn.example/file' } })
+          case '/limited':
+            return new Response('{}', { status: 403, headers: budget('0') })
+          default:
+            return Response.json({})
+        }
+      },
+    })
+
+    const { response } = await fetcher.page<unknown>('/search')
+    await fetcher.json('/cached', { etag: '"e"' })
+    await fetcher.json('/plain')
+    await (await fetcher.stream('/download')).body.cancel()
+    await expect(fetcher.json('/limited', { method: 'POST' })).rejects.toBeInstanceOf(RateLimitedError)
+
+    const resetAt = new Date(1_700_000_000_000)
+    expect(rateLimitOf(response)).toEqual({ limit: 30, remaining: 29, resetAt, resource: 'search' })
+    expect(onRateLimit.mock.calls.map(([event]) => event)).toEqual([
+      { url: 'https://api.example/search', method: 'GET', rateLimit: { limit: 30, remaining: 29, resetAt, resource: 'search' } },
+      { url: 'https://api.example/cached', method: 'GET', rateLimit: { limit: 30, remaining: 28, resetAt, resource: 'search' } },
+      { url: 'https://api.example/limited', method: 'POST', rateLimit: { limit: 30, remaining: 0, resetAt, resource: 'search' } },
+    ])
   })
 
   it('gives up on a primary rate limit without retrying', async () => {
@@ -486,6 +527,32 @@ describe('cancellation and rate-limit resets', () => {
 
   it('reads `ratelimit-reset` as seconds from now', async () => {
     const fetcher = createFetcher({ baseUrl: 'https://api.example', fetch: async () => new Response('', { status: 429, headers: { 'ratelimit-reset': '30' } }) })
+    const error = await fetcher.json('/a').catch((error: unknown) => error) as RateLimitedError
+
+    expect(error).toBeInstanceOf(RateLimitedError)
+    expect(Math.round((error.resetAt!.getTime() - Date.now()) / 1000)).toBe(30)
+  })
+
+  it('reads the leading number of a limit list and an `x-ratelimit-reset` in seconds from now', () => {
+    const response = new Response(null, { headers: { 'x-ratelimit-limit': '60, 60;w=3600', 'x-ratelimit-remaining': '59', 'x-ratelimit-reset': '3476' } })
+
+    expect(rateLimitOf(response, 1_800_000_000_000)).toEqual({ limit: 60, remaining: 59, resetAt: new Date(1_800_003_476_000) })
+  })
+
+  it('reads the IETF `ratelimit` field for the policy with the fewest requests left', () => {
+    const now = 1_800_000_000_000
+    const codeberg = new Response(null, { headers: { 'ratelimit-policy': '"baseline";q=2000;w=600', 'ratelimit': '"baseline";r=1900;t=600' } })
+    const several = new Response(null, { headers: { 'ratelimit-policy': '"burst";q=100;w=60, "day";q=1000;w=86400', 'ratelimit': '"burst";r=90;t=30, "day";r=5;t=3600' } })
+    const unnamed = new Response(null, { headers: { ratelimit: '"other";r=7' } })
+
+    expect(rateLimitOf(codeberg, now)).toEqual({ limit: 2000, remaining: 1900, resetAt: new Date(now + 600_000), resource: 'baseline' })
+    expect(rateLimitOf(several, now)).toEqual({ limit: 1000, remaining: 5, resetAt: new Date(now + 3_600_000), resource: 'day' })
+    expect(rateLimitOf(unnamed, now)).toEqual({ remaining: 7, resource: 'other' })
+    expect(rateLimitOf(new Response(null, { headers: { 'ratelimit-policy': '3000;w=300' } }), now)).toBeUndefined()
+  })
+
+  it('reads an exhausted IETF `ratelimit` field as a rate limit', async () => {
+    const fetcher = createFetcher({ baseUrl: 'https://api.example', fetch: async () => new Response('', { status: 403, headers: { 'ratelimit-policy': '"baseline";q=2000;w=600', 'ratelimit': '"baseline";r=0;t=30' } }) })
     const error = await fetcher.json('/a').catch((error: unknown) => error) as RateLimitedError
 
     expect(error).toBeInstanceOf(RateLimitedError)

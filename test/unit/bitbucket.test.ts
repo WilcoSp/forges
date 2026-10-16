@@ -10,8 +10,8 @@ import { fixtureFetch } from '../utils/fixtures.ts'
 const repo = { forge: 'bitbucket', instance: 'bitbucket.org', owner: 'acme', name: 'widgets' } as const
 const pull: ResolvedThreadRef = { forge: 'bitbucket', instance: 'bitbucket.org', repo, kind: 'pull_request', number: '31' }
 
-function provider(auth: BitbucketOptions['auth'] = { type: 'token', token: 't' }) {
-  const { fetch, calls } = fixtureFetch('bitbucket')
+function provider(auth: BitbucketOptions['auth'] = { type: 'token', token: 't' }, overrides: Parameters<typeof fixtureFetch>[1] = {}) {
+  const { fetch, calls } = fixtureFetch('bitbucket', overrides)
   return { instance: bitbucket({ auth, fetch }).create(), calls }
 }
 
@@ -21,6 +21,16 @@ describe('bitbucket provider', () => {
 
     expect(instance.instance).toBe('bitbucket.org')
     expect(instance.can('notifications.list')).toBe(false)
+  })
+
+  it('keeps the budget of a response, which names its reset in seconds from now', async () => {
+    const { fetch } = fixtureFetch('bitbucket', {
+      'GET https://api.bitbucket.org/2.0/user': { status: 200, headers: { 'x-ratelimit-limit': '1000', 'x-ratelimit-remaining': '998', 'x-ratelimit-reset': '3476' }, body: {} },
+    })
+    const instance = bitbucket({ auth: { type: 'token', token: 't' }, fetch }).create()
+    await instance.request('GET', '/user')
+
+    expect(instance.rateLimits()).toMatchObject([{ limit: 1000, remaining: 998 }])
   })
 
   it('sends app passwords and API tokens as basic auth', async () => {
@@ -70,6 +80,29 @@ describe('bitbucket provider', () => {
     await instance.threads.merge!(pull, { sha: '6dcb09b5b57875f334f61aebed695e2e4193db5e', method: 'squash' })
 
     expect(calls.at(-1)!.url).toMatch(/\/merge$/)
+  })
+
+  it('resolves with the merge commit from the merged pull request in the response', async () => {
+    const merged = { id: 31, state: 'MERGED', merge_commit: { hash: 'a170f2a9c280582207a93574cddc40064afe328e' } }
+    const { instance, calls } = provider(undefined, { 'POST https://api.bitbucket.org/2.0/repositories/acme/widgets/pullrequests/31/merge': { status: 200, body: merged } })
+
+    await expect(instance.threads.merge!(pull, { method: 'squash' })).resolves.toEqual({ status: 'merged', sha: 'a170f2a9c280582207a93574cddc40064afe328e', raw: merged })
+    expect(calls).toHaveLength(1)
+  })
+
+  it('resolves a decline with the pull request in the response', async () => {
+    const declined = { id: 31, title: 'Add widgets', state: 'DECLINED', source: { branch: { name: 'feat' } }, destination: { branch: { name: 'main' } } }
+    const { instance, calls } = provider(undefined, { 'POST https://api.bitbucket.org/2.0/repositories/acme/widgets/pullrequests/31/decline': { status: 200, body: declined } })
+
+    await expect(instance.threads.close!(pull)).resolves.toMatchObject({ title: 'Add widgets', state: 'closed', stateRaw: 'DECLINED', branches: { head: { ref: 'feat' }, base: { ref: 'main' } } })
+    expect(calls).toHaveLength(1)
+  })
+
+  it('resolves queued when the merge outlasts the timeout of Bitbucket', async () => {
+    const accepted = { task_status: 'PENDING' }
+    const { instance } = provider(undefined, { 'POST https://api.bitbucket.org/2.0/repositories/acme/widgets/pullrequests/31/merge': { status: 202, body: accepted } })
+
+    await expect(instance.threads.merge!(pull, { method: 'squash' })).resolves.toEqual({ status: 'queued', raw: accepted })
   })
 
   it('puts the merge commit title before the message', async () => {

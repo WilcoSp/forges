@@ -109,7 +109,7 @@ GitHub computes the statistics behind `repos.contributorStats()` in the backgrou
 
 If you call `merge()` without a `method`, the provider asks GitHub which merge methods the repository allows. When exactly one method is allowed, it uses that one. When several are allowed, it can't choose for you and throws `MergeMethodRequiredError`.
 
-Both `merge()` and `approveAndMerge()` request a direct merge through GitHub's asynchronous merge API, which means that neither of them adds the pull request to a merge queue. They wait for GitHub to report the result, within the `timeout` of the provider (30 seconds by default), and resolve once the pull request is merged. That includes a pull request that was already merged. In every other case, they reject with one of these errors:
+Both `merge()` and `approveAndMerge()` request a direct merge through GitHub's asynchronous merge API, which means that neither of them adds the pull request to a merge queue. They wait for GitHub to report the result, within the `timeout` of the provider (30 seconds by default), and resolve with the merge commit once the pull request is merged. That includes a pull request that was already merged. In every other case, they reject with one of these errors:
 
 - `MergeBlockedError` when GitHub refuses or fails the merge, for example because of a draft, a failing required check or a pull request that is already in a merge queue. If GitHub reports a failed merge, the message of the error is GitHub's description of the failure.
 - `MergeConflictError` when GitHub responds with a conflict status that doesn't name a pending merge request.
@@ -133,6 +133,10 @@ What `checks.report()` writes depends on your credential. With the credential of
 
 Files over 1 MB are read through the Git blobs API, so the result of `contents.file()` has `encoding: 'none'` for them. When GitHub truncates a large tree, `contents.tree()` adds a `tree_truncated` warning to the result.
 
+## Comparisons
+
+Without `commitLimit`, `contents.compare()` returns the newest 250 commits of the comparison. GitHub pages a comparison from its oldest commit, so with `commitLimit`, the provider reads the first page, and then the last pages, which hold the newest commits. Each page holds `commitLimit` commits, up to 100. A comparison that fits on the first page takes one request. GitHub always sends the changed files with the first page, up to 300 of them, so `files: false` leaves them out of the result but not out of the response.
+
 ## Committing files
 
 Without `author`, `contents.commitFiles()` makes the commit with one GraphQL `createCommitOnBranch` mutation, so GitHub signs it and attributes it to the account of the credential. With `author`, the provider writes the commit through the Git database API instead, and moves the branch with the GraphQL `updateRefs` mutation, which checks that the branch is still where the change started. GitHub doesn't sign that commit, and it records `author` as the committer too.
@@ -143,7 +147,7 @@ A file keeps its mode when you write over it: an executable file stays executabl
 
 ## Search
 
-GitHub gives search a lower rate limit than the rest of its API, and commit search has a limit of its own, separate from issue and repository search. After a search, `page.rateLimit` reports the limit that the search used.
+GitHub gives search a lower rate limit than the rest of its API, and code search has a limit of its own, separate from the search for issues, commits and repositories. After a search, `page.rateLimit` reports the limit that the search used, and its `resource` names it, such as `search` or `code_search`. `rateLimits()` and `onRateLimit` keep it apart from the `core` budget of the rest of the API.
 
 Repository search can't sort by creation time. If you ask for that order, you get the results by relevance, together with a `sort_unsupported` warning.
 
@@ -159,7 +163,7 @@ const page = await gh.search.threadsPage({ kind: 'pull_request', queryRaw: 'revi
 
 ## GraphQL
 
-For what the data model doesn't cover, a GitHub provider has `graphql()`, which sends a query or mutation to the GraphQL API of its instance with the provider's credentials. It resolves with the `data` of the response. When the response carries errors, it rejects with a `ForgeApiError`, or with an `InsufficientScopeError` when the token lacks a scope that a field needs:
+For what the data model doesn't cover, a GitHub provider has `graphql()`, which sends a query or mutation to the GraphQL API of its instance with the provider's credentials. It resolves with the `data` of the response. When the response carries errors, it rejects with a `ForgeApiError`, with an `InsufficientScopeError` when the token lacks a scope that a field needs, or with a `RateLimitedError` for a rate limit, which GitHub reports with a `200`:
 
 ```ts
 const { viewer } = await forge.graphql<{ viewer: { login: string } }>(

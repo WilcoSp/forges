@@ -26,6 +26,7 @@ import type {
   Repo,
   RepoRef,
   RepoRole,
+  ResolvedThreadRef,
   Review,
   ReviewComment,
   Reviewer,
@@ -81,7 +82,7 @@ import type {
   GitHubWorkflowJob,
   GitHubWorkflowRun,
 } from './types.ts'
-import { reviewState } from '../events.ts'
+import { eventTime, reviewState } from '../events.ts'
 import { REACTION_CONTENTS } from '../model.ts'
 import { checkRunState, toDate, toFileStatus, toPullStats } from '../utils.ts'
 import { eventKindsOf } from '../webhooks.ts'
@@ -433,7 +434,7 @@ function toReviewers(instance: string, raw: GitHubIssue): Reviewer[] {
 }
 
 /** Builds a thread from an issue, a pull request, or a pull request as returned by the issues API. */
-export function toThread(ref: ThreadRef, raw: GitHubIssue): Thread {
+export function toThread(ref: ResolvedThreadRef, raw: GitHubIssue): Thread {
   const kind = raw.pull_request || raw.head ? 'pull_request' : ref.kind
   return {
     ref: { ...ref, kind, externalId: raw.node_id ?? ref.externalId },
@@ -452,6 +453,8 @@ export function toThread(ref: ThreadRef, raw: GitHubIssue): Thread {
     createdAt: toDate(raw.created_at),
     updatedAt: toDate(raw.updated_at),
     closedAt: toDate(raw.closed_at),
+    mergedAt: toDate(raw.merged_at ?? raw.pull_request?.merged_at),
+    mergedBy: toActor(ref.instance, raw.merged_by),
     lastActivityAt: toDate(raw.updated_at),
     locked: raw.locked,
     commentCount: raw.comments,
@@ -469,7 +472,7 @@ export function toThread(ref: ThreadRef, raw: GitHubIssue): Thread {
   }
 }
 
-export function toComment(thread: ThreadRef, raw: GitHubComment): Comment {
+export function toComment(thread: ResolvedThreadRef, raw: GitHubComment): Comment {
   return {
     ref: { forge: FORGE, instance: thread.instance, thread, id: String(raw.id) },
     body: raw.body ?? '',
@@ -556,7 +559,7 @@ function timelineDetail(instance: string, thread: ThreadRef, entry: GitHubTimeli
     case 'comment':
       return { type: 'comment', comment: entry.id !== undefined ? { forge: FORGE, instance, thread, id: String(entry.id) } : undefined, body: entry.body ?? undefined }
     case 'review':
-      return { type: 'review', state: reviewState(entry.state), stateRaw: entry.state, body: entry.body ?? undefined }
+      return { type: 'review', state: reviewState(entry.state), stateRaw: entry.state, body: entry.body ?? undefined, review: entry.id !== undefined ? { forge: FORGE, instance, thread, id: String(entry.id) } : undefined }
     case 'label':
       return entry.label ? { type: 'label', label: entry.label.name } : undefined
     case 'assignment':
@@ -588,8 +591,7 @@ export function toEvent(
     kindRaw: entry.event,
     detail: timelineDetail(instance, thread, entry, kind),
     summary: summarise(entry, kind, actor),
-    occurredAt: toDate(entry.created_at ?? entry.submitted_at ?? entry.author?.date ?? entry.committer?.date)
-      ?? new Date(0),
+    ...eventTime(toDate(entry.created_at ?? entry.submitted_at ?? entry.author?.date ?? entry.committer?.date), new Date(0)),
     actor,
     repo: thread.repo,
     thread,
@@ -747,7 +749,7 @@ export function toSecretScanningAlert(repo: RepoRef, raw: GitHubSecretScanningAl
   }
 }
 
-export function toReviewComment(thread: ThreadRef, raw: GitHubReviewComment, reviewThread?: { id: string, resolved: boolean }): ReviewComment {
+export function toReviewComment(thread: ResolvedThreadRef, raw: GitHubReviewComment, reviewThread?: { id: string, resolved: boolean }): ReviewComment {
   return {
     ref: { forge: FORGE, instance: thread.instance, thread, id: String(raw.id) },
     body: raw.body ?? '',
@@ -763,7 +765,7 @@ export function toReviewComment(thread: ThreadRef, raw: GitHubReviewComment, rev
   }
 }
 
-export function toReview(thread: ThreadRef, raw: GitHubReview, comments: ReviewComment[]): Review {
+export function toReview(thread: ResolvedThreadRef, raw: GitHubReview, comments: ReviewComment[]): Review {
   return {
     ref: { forge: FORGE, instance: thread.instance, thread, id: String(raw.id) },
     author: toActor(thread.instance, raw.user),

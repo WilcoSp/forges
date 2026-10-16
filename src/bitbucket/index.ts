@@ -14,6 +14,7 @@ import type {
   ListOptions,
   MergeMethod,
   MergeOptions,
+  MergeResult,
   OwnerRepoQuery,
   Page,
   PageOptions,
@@ -60,11 +61,12 @@ import { toBase64 } from '../crypto.ts'
 import { defineForgeProvider, perKind, verb } from '../define.ts'
 import { BranchMovedError, ForgeApiError, ForgeError, MergeConflictError, NotFoundError, soleMergeMethod, toMergeError, UnsupportedOperationError } from '../errors.ts'
 import { isNamespaceRef } from '../model.ts'
-import { createListing, getManyConcurrently, hostOf, mergeCommitMessage, phased, requireThread, resolveToken, summariseChecks, syntheticReview, toPage, toWarning } from '../utils.ts'
+import { createListing, getManyConcurrently, hostOf, isFirstPage, mergeCommitMessage, phased, rateLimitPart, requireThread, resolveToken, summariseChecks, syntheticReview, toPage, toWarning } from '../utils.ts'
 import { nativeEventsFor } from '../webhooks.ts'
 import {
   FORGE,
   normaliseMarkdown,
+  participantReviewId,
   toActivityEvent,
   toActor,
   toBranch,
@@ -172,6 +174,24 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
       })
     }
 
+    /** The commits in `head` and not in `base`, up to `limit`, and whether that is all of them. */
+    async function compareCommits(repo: RepoRef, base: string, head: string, limit: number | undefined, signal: AbortSignal | undefined): Promise<{ commits: Commit[], complete: boolean }> {
+      const commits: Commit[] = []
+      const wanted = limit ?? Infinity
+      let cursor: Cursor | undefined
+      do {
+        const result = await fetcher.page<BitbucketCommitDetail>(`${repoPathOf(repo)}/commits`, {
+          query: { include: head, exclude: base, pagelen: Math.min(50, Math.max(1, wanted)) },
+          select: page<BitbucketCommitDetail>,
+          cursor,
+          signal,
+        })
+        commits.push(...result.data.map(raw => toCommit(repo, raw)))
+        cursor = result.cursor
+      } while (cursor?.nextUrl && commits.length < wanted)
+      return { commits, complete: !cursor?.nextUrl }
+    }
+
     async function resolveMergeMethod(ref: ResolvedThreadRef, pull: BitbucketPullRequest | undefined, signal?: AbortSignal): Promise<MergeMethod> {
       const branch = pull?.destination?.branch?.name
         ?? (await fetcher.json<BitbucketPullRequest>(threadPath(ref), { signal })).data.destination?.branch?.name
@@ -182,7 +202,8 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
         .map(method => [method, true])), context)
     }
 
-    async function merge(thread: ThreadRef, mergeOptions: MergeOptions = {}, hooks: MergeHooks = {}): Promise<void> {
+    /** A merge that outlasts Bitbucket's own timeout responds with `202` and finishes in the background. */
+    async function merge(thread: ThreadRef, mergeOptions: MergeOptions = {}, hooks: MergeHooks = {}): Promise<MergeResult> {
       const ref = requireThread(thread, context)
       if (ref.kind !== 'pull_request') {
         throw new UnsupportedOperationError('Only pull requests can be merged', context)
@@ -200,12 +221,15 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
       }
       const method = mergeOptions.method ?? await resolveMergeMethod(ref, pull, mergeOptions.signal)
       await hooks.beforeMerge?.()
-      await fetcher.raw(`${threadPath(ref)}/merge`, {
+      const { data, response } = await fetcher.json<BitbucketPullRequest | undefined>(`${threadPath(ref)}/merge`, {
         method: 'POST',
         json: { merge_strategy: toStrategy(method), message: mergeCommitMessage(mergeOptions) },
         mapError: toMergeError,
         signal: mergeOptions.signal,
       })
+      return response.status === 202 || data?.state !== 'MERGED'
+        ? { status: 'queued', raw: data }
+        : { status: 'merged', sha: data.merge_commit?.hash, raw: data }
     }
 
     const STATUS_STATES: Record<CheckState, string> = { pending: 'INPROGRESS', success: 'SUCCESSFUL', failure: 'FAILED', neutral: 'STOPPED', unknown: 'INPROGRESS' }
@@ -323,7 +347,7 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
         return { items: [], warnings: [{ code: 'kind_unsupported', message: `Bitbucket Cloud has no ${query.kind === 'issue' ? 'issues' : 'discussions'}` }] }
       }
       const warnings: ForgeWarning[] = []
-      if (!query.cursor) {
+      if (isFirstPage(query.cursor)) {
         if (query.labels?.length) {
           warnings.push({ code: 'filter_unsupported', message: 'Bitbucket has no labels; the labels filter was ignored' })
         }
@@ -384,7 +408,7 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
         throw new UnsupportedOperationError('Bitbucket has no cross-repository issue or pull request search; pass `repo`', context)
       }
       const warnings: ForgeWarning[] = []
-      if (!query.cursor) {
+      if (isFirstPage(query.cursor)) {
         if (query.labels?.length) {
           warnings.push({ code: 'filter_unsupported', message: 'Bitbucket has no labels; the label filter was ignored' })
         }
@@ -440,7 +464,7 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
           q: query.visibility === 'public' || query.visibility === 'private' ? `is_private = ${query.visibility === 'private'}` : undefined,
           sort: field && `${(query.direction ?? (field === 'name' ? 'asc' : 'desc')) === 'desc' ? '-' : ''}${field}`,
         },
-        warnings: query.sort === 'pushed' && !query.cursor ? [{ code: 'sort_unsupported', message: 'Bitbucket does not report pushes; sorted by update time' }] : undefined,
+        warnings: query.sort === 'pushed' && isFirstPage(query.cursor) ? [{ code: 'sort_unsupported', message: 'Bitbucket does not report pushes; sorted by update time' }] : undefined,
         select: page<BitbucketRepositoryDetail>,
       })
     }
@@ -468,7 +492,7 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
         }
         const actor = toActor(instance, participant.user)
         const state = stateRaw === 'approved' ? 'approved' : stateRaw === 'changes_requested' ? 'changes_requested' : 'unknown'
-        return [syntheticReview(ref, `participant:${participant.user?.uuid ?? actor?.login ?? ''}`, state, { author: actor, stateRaw, raw: participant })]
+        return [syntheticReview(ref, participantReviewId(instance, participant.user), state, { author: actor, stateRaw, raw: participant })]
       })
     }
 
@@ -577,18 +601,11 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
           return toCommit(repo, commit.data, files)
         }),
         compare: verb(true, async (repo, base, head, options) => {
-          const [files, commits] = await Promise.all([
-            Array.fromAsync(all<BitbucketDiffStat>(`${repoPathOf(repo)}/diffstat/${encodeURIComponent(head)}..${encodeURIComponent(base)}`, { signal: options?.signal }), toChangedFile),
-            Array.fromAsync(
-              fetcher.items<BitbucketCommitDetail>(`${repoPathOf(repo)}/commits`, {
-                query: { include: head, exclude: base, pagelen: 50 },
-                select: page<BitbucketCommitDetail>,
-                signal: options?.signal,
-              }),
-              raw => toCommit(repo, raw),
-            ),
+          const [files, { commits, complete }] = await Promise.all([
+            options?.files === false ? [] : Array.fromAsync(all<BitbucketDiffStat>(`${repoPathOf(repo)}/diffstat/${encodeURIComponent(head)}..${encodeURIComponent(base)}`, { signal: options?.signal }), toChangedFile),
+            compareCommits(repo, base, head, options?.commitLimit, options?.signal),
           ])
-          return { base, head, aheadBy: commits.length, commits, files, raw: { files, commits } }
+          return { base, head, ...complete ? { aheadBy: commits.length } : {}, commits, files, raw: { files, commits } }
         }),
         commitFiles: verb(true, commitFiles),
       },
@@ -617,7 +634,8 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
           if (ref.kind !== 'pull_request') {
             throw new UnsupportedOperationError('Only pull requests have participants', context)
           }
-          return { items: toParticipantReviews(ref, (await fetcher.json<BitbucketPullRequest>(threadPath(ref), { signal: listOptions?.signal })).data) }
+          const { data, response } = await fetcher.json<BitbucketPullRequest>(threadPath(ref), { signal: listOptions?.signal })
+          return { items: toParticipantReviews(ref, data), ...rateLimitPart(response) }
         }),
         createReview: verb('emulated', createReview),
         get: perKind({ pull_request: true, commit: true }, get),
@@ -653,8 +671,9 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
           return toComment(ref, data)
         }),
         editComment: perKind({ pull_request: true, commit: true }, async (ref, body, options) => {
+          const thread = requireThread(ref.thread, context)
           const { data } = await fetcher.json<BitbucketComment>(commentPath(ref), { method: 'PUT', json: { content: { raw: body } }, signal: options?.signal })
-          return toComment(ref.thread, data)
+          return toComment(thread, data)
         }),
         deleteComment: perKind({ pull_request: true, commit: true }, async (ref, options) => {
           await fetcher.raw(commentPath(ref), { method: 'DELETE', signal: options?.signal })
@@ -723,7 +742,8 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
           })
         }),
         close: perKind({ pull_request: true }, async (thread, options) => {
-          await fetcher.raw(`${threadPath(requirePull(thread, 'declined'))}/decline`, { method: 'POST', signal: options?.signal })
+          const ref = requirePull(thread, 'declined')
+          return toPullThread(ref, (await fetcher.json<BitbucketPullRequest>(`${threadPath(ref)}/decline`, { method: 'POST', signal: options?.signal })).data)
         }),
         merge: verb(true, merge),
       },

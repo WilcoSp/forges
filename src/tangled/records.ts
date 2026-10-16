@@ -30,7 +30,7 @@ import type { TangledSession } from './session.ts'
 import type { FeedCommentRecord, IssueRecord, JetstreamCommitEvent, LabelDefinitionRecord, LabelOpRecord, PullRecord, ReactionRecord, RecordResponse, RepoRecord, StateRecord, SubscriptionRecord, TangledRecord } from './types.ts'
 import { ForgeApiError, ForgeError, NotFoundError, RateLimitedError, UnresolvedThreadError } from '../errors.ts'
 import { abortable } from '../fetch.ts'
-import { degradesToWarning, forgeIterable, mapConcurrent, phased, requireThread, toDate, toWarning } from '../utils.ts'
+import { degradesToWarning, forgeIterable, isFirstPage, mapConcurrent, phased, requireThread, toDate, toWarning } from '../utils.ts'
 import { atUri, parseAtUri } from './atproto.ts'
 import {
   COLLECTIONS,
@@ -61,6 +61,42 @@ const REACTIONS: Record<string, ReactionContent> = Object.fromEntries(Object.ent
 export interface TangledLabels {
   definitions: Array<{ uri: string, definition: LabelDefinitionRecord }>
   state: Map<string, Set<string>>
+}
+
+/** Applies one label operand to `state`: a value replaces the value of a definition that takes one, and joins the rest. */
+export function applyLabelOp(state: Map<string, Set<string>>, definition: LabelDefinitionRecord, { add, key, value }: { add: boolean, key: string, value: string }): void {
+  const values = state.get(key)
+  if (add) {
+    state.set(key, definition.multiple ? new Set([...values ?? [], value]) : new Set([value]))
+  }
+  else if (values?.has(value)) {
+    if (definition.multiple) {
+      values.delete(value)
+    }
+    else {
+      state.delete(key)
+    }
+  }
+}
+
+/** The labels and assignee DIDs that `state` holds. */
+export function labelsIn(state: Map<string, Set<string>>, definitions: Map<string, LabelDefinitionRecord | undefined>): { labels: Label[], assignees: string[] } {
+  const labels: Label[] = []
+  const assignees: string[] = []
+  for (const [key, values] of state) {
+    const definition = definitions.get(key)
+    if (!definition) {
+      continue
+    }
+    if (isAssigneeLabel(definition)) {
+      assignees.push(...values)
+      continue
+    }
+    for (const value of values) {
+      labels.push(toLabel(definition, value))
+    }
+  }
+  return { labels, assignees }
 }
 
 const OWNER_PERMISSIONS = { admin: true, maintain: true, push: true, triage: true, pull: true }
@@ -359,7 +395,7 @@ export function createTangledRecords({ options, instance, webUrl, context, atpro
    * in `performedAt` order, deletions before additions within a record. The
    * values of an `assignee` label with DID values are the assignees instead.
    */
-  async function labelsOf(target: string, repo: RepoRef, warn: (warning: ForgeWarning) => void, signal?: AbortSignal): Promise<{ labels: Label[], assignees: string[], state: Map<string, Set<string>> }> {
+  async function labelsOf(target: string, repo: RepoRef, warn: (warning: ForgeWarning) => void, signal?: AbortSignal): Promise<{ labels: Label[], assignees: string[], state: Map<string, Set<string>>, definitions: Map<string, LabelDefinitionRecord | undefined> }> {
     const allowed = await stateAuthors(repo.owner, repo, warn, signal)
     const ops: Array<{ at: number, did: string, rkey: string, add: boolean, key: string, value: string }> = []
     for await (const link of atproto.backlinks(target, COLLECTIONS.labelOp, '.subject', signal)) {
@@ -383,32 +419,9 @@ export function createTangledRecords({ options, instance, webUrl, context, atpro
       if (!def || (def.scope?.length && !def.scope.includes(collection))) {
         continue
       }
-      const values = state.get(op.key)
-      if (op.add) {
-        state.set(op.key, def.multiple ? new Set([...values ?? [], op.value]) : new Set([op.value]))
-      }
-      else if (values?.has(op.value)) {
-        if (def.multiple) {
-          values.delete(op.value)
-        }
-        else {
-          state.delete(op.key)
-        }
-      }
+      applyLabelOp(state, def, op)
     }
-    const labels: Label[] = []
-    const assignees: string[] = []
-    for (const [key, values] of state) {
-      const def = defs.get(key)!
-      if (isAssigneeLabel(def)) {
-        assignees.push(...values)
-        continue
-      }
-      for (const value of values) {
-        labels.push(toLabel(def, value))
-      }
-    }
-    return { labels, assignees, state }
+    return { ...labelsIn(state, defs), state, definitions: defs }
   }
 
   function reachableDefinition(uri: string, warn: (warning: ForgeWarning) => void, signal?: AbortSignal): Promise<LabelDefinitionRecord | undefined> {
@@ -566,7 +579,7 @@ export function createTangledRecords({ options, instance, webUrl, context, atpro
 
   async function listFromIndex(repo: RepoRef, query: ThreadQuery): Promise<Page<Thread>> {
     const warnings: ForgeWarning[] = []
-    if (!query.cursor) {
+    if (isFirstPage(query.cursor)) {
       warnings.push({ code: 'index_possibly_stale', message: 'Listed from the Bobbin index; states may lag behind the records' })
       if (query.sort && query.sort !== 'created') {
         warnings.push({ code: 'sort_unsupported', message: 'The index sorts by creation time only' })

@@ -32,14 +32,14 @@ export async function hmacSha256Hex(secret: string, body: string | Uint8Array): 
   return toHex(await hmacSha256(secret, body))
 }
 
-/** Constant-time comparison of two ASCII strings. */
+/**
+ * Constant-time comparison of two strings. The time taken depends only on the
+ * length of `a`, so pass the untrusted value as `a`.
+ */
 export function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false
-  }
-  let mismatch = 0
+  let mismatch = a.length ^ b.length
   for (let index = 0; index < a.length; index++) {
-    mismatch |= a.charCodeAt(index) ^ b.charCodeAt(index)
+    mismatch |= a.charCodeAt(index) ^ b.charCodeAt(index % b.length)
   }
   return mismatch === 0
 }

@@ -1,7 +1,9 @@
 {
   "items": [],
+  "etag": "\"948d3911a7b8e77678f49cbeb18e9b35\"",
   "rateLimit": {
+    "limit": 60,
     "remaining": 54,
-    "resetAt": "1970-01-01T00:58:01.000Z"
+    "resetAt": "<now>"
   }
 }

@@ -524,9 +524,14 @@ export interface ReviewRef extends ForgeOrigin {
   id: string
 }
 
+/** A review ref whose thread is resolved. Every review read from a forge carries one. */
+export interface ResolvedReviewRef extends ReviewRef {
+  thread: ResolvedThreadRef
+}
+
 /** A comment left on a line of the diff as part of a review. */
 export interface ReviewComment {
-  ref?: CommentRef
+  ref?: ResolvedCommentRef
   body: string
   author?: Actor
   path?: string
@@ -548,7 +553,7 @@ export interface ReviewComment {
 
 /** A review of a pull request. */
 export interface Review {
-  ref: ReviewRef
+  ref: ResolvedReviewRef
   author?: Actor
   state: ReviewState
   stateRaw?: string
@@ -629,7 +634,7 @@ export interface ThreadStack {
   /** Forge-native stack id, where the forge names stacks. */
   id?: string
   /** The pull request this one is stacked on. Absent for the root of the stack. */
-  parent?: ThreadRef
+  parent?: ResolvedThreadRef
 }
 
 /**
@@ -904,6 +909,20 @@ export interface CommitQuery extends PageOptions {
   author?: string
 }
 
+/** Options for `contents.compare()`. */
+export interface CompareOptions extends BaseOptions {
+  /**
+   * The most commits to return. The comparison keeps the newest ones. Where the forge can't send fewer, the provider
+   * drops the rest. `aheadBy` still counts every commit where the forge reports the count.
+   */
+  commitLimit?: number
+  /**
+   * Whether to read the changed files. With `false`, `files` is empty and the commits carry no files.
+   * @default true
+   */
+  files?: boolean
+}
+
 /** The difference between two revisions. */
 export interface Comparison {
   /** The revision that the comparison starts from. */
@@ -914,7 +933,7 @@ export interface Comparison {
   aheadBy?: number
   /** The number of commits that `base` has and `head` lacks. */
   behindBy?: number
-  /** The commits between the two revisions. */
+  /** The commits between the two revisions, newest first. Forges that cap the list leave out the oldest. */
   commits: Commit[]
   files: ChangedFile[]
   /** The merge base, where the forge reports it. */
@@ -1094,7 +1113,7 @@ export interface ForgeWarning {
 
 /** An issue, pull request, discussion or commit conversation. */
 export interface Thread {
-  ref: ThreadRef
+  ref: ResolvedThreadRef
   kind: ThreadKind
   title: string
   body?: string
@@ -1117,6 +1136,10 @@ export interface Thread {
   createdAt?: Date
   updatedAt?: Date
   closedAt?: Date
+  /** When the pull request was merged, where the forge reports it. */
+  mergedAt?: Date
+  /** The account that merged the pull request, where the forge reports it. */
+  mergedBy?: Actor
   /** Latest activity the forge reports for the thread. */
   lastActivityAt?: Date
   locked?: boolean
@@ -1152,7 +1175,7 @@ export interface CommentRef extends ForgeOrigin {
 
 /** A comment on a thread. */
 export interface Comment {
-  ref: CommentRef
+  ref: ResolvedCommentRef
   body: string
   author?: Actor
   createdAt?: Date
@@ -1232,7 +1255,8 @@ export type EventAction
 export type EventDetail
   = | { type: 'comment', comment?: CommentRef, body?: string }
     | { type: 'review_comment', comment?: CommentRef, body?: string, path?: string, line?: number }
-    | { type: 'review', state: ReviewState, stateRaw?: string, body?: string }
+    /** A review. `review` has the `id` that `threads.reviews()` lists for the review, where the forge reports it. */
+    | { type: 'review', state: ReviewState, stateRaw?: string, body?: string, review?: ReviewRef }
     | { type: 'state_change', state?: ThreadState, draft?: boolean }
     | { type: 'label', label: string }
     | { type: 'assignment', assignee?: Actor }
@@ -1260,7 +1284,10 @@ export interface ForgeEvent extends ForgeOrigin {
   actionRaw?: string
   /** Single line describing the event, suitable for a list row. */
   summary: string
+  /** When the event happened, from the forge's own timestamp unless `undated` is set. */
   occurredAt: Date
+  /** Whether the forge reported no time for the event. `occurredAt` is then the time the event reached `forges` (or Jetstream, for a Tangled subscription), or the Unix epoch for an entry of a thread's timeline. */
+  undated?: boolean
   actor?: Actor
   repo?: RepoRef
   thread?: ThreadRef
@@ -1346,7 +1373,7 @@ export interface Notification {
 export interface Cursor {
   /** Absolute URL of the next page, from a `Link` header or the body, on the requested origin. */
   nextUrl?: string
-  /** A validator for a conditional request. */
+  /** The `etag` of a first page, sent as `If-None-Match` when the cursor has neither `nextUrl` nor `token`. */
   etag?: string
   /** Opaque forge-native cursor, for example a GraphQL `endCursor`. */
   token?: string
@@ -1360,6 +1387,11 @@ export interface RateLimit {
   remaining?: number
   /** When `remaining` resets. */
   resetAt?: Date
+  /**
+   * The name of the budget, where the forge has several and names them, such as GitHub's `core`, `search` or
+   * `graphql`, or GitLab's `throttle_authenticated_api`.
+   */
+  resource?: string
 }
 
 /**
@@ -1381,9 +1413,10 @@ export interface Page<T> {
   /**
    * Validator of the first page, where the forge supports conditional
    * requests. Pass it back as `cursor: { etag }` to read the first page again.
+   * Absent on later pages, and on listings that read more than one endpoint.
    */
   etag?: string
-  /** True when the forge reported no change since `cursor.etag`. */
+  /** True when the forge reported no change since `cursor.etag`. The page then has no items and no `cursor`. */
   notModified?: boolean
   /**
    * True when the provider sent no request, because the forge asked to wait longer between reads of this feed. The
@@ -1600,13 +1633,19 @@ export interface UpsertCommentInput {
    */
   key: string
   body: string
+  /**
+   * Only comments updated at or after this time are searched for the key. When retrying a change, pass the time of its
+   * first attempt, less a margin for clock skew, so the retry lists only recent comments. A comment with the same key
+   * from before `since` is not found, and a new one is created.
+   */
+  since?: Date
 }
 
 /** What `threads.upsertComment()` did. */
 export interface UpsertCommentResult {
   /** The comment that was created or edited. */
   comment: Comment
-  /** `false` when an existing comment with the same key was edited. */
+  /** `false` when a comment with the same key already existed, and was edited or already had the body. */
   created: boolean
 }
 
@@ -1761,8 +1800,19 @@ export function repoRef(origin: ForgeOrigin, slug: string): RepoRef {
   return { forge: origin.forge, instance: origin.instance, owner: slug.slice(0, last), name: slug.slice(last + 1) }
 }
 
-/** A thread ref whose number is known, and which can therefore be keyed and fetched. */
-export type ResolvedThreadRef = ThreadRef & { number: string }
+/**
+ * A thread ref whose number is known, and which can therefore be keyed and
+ * fetched. Every thread, comment and review read from a forge carries one.
+ */
+export interface ResolvedThreadRef extends ThreadRef {
+  /** Per-repo thread number, the commit sha for `kind: 'commit'`, or the forge-native id for `kind: 'other'`. */
+  number: string
+}
+
+/** A comment ref whose thread is resolved, and which can therefore be keyed. Every comment read from a forge carries one. */
+export interface ResolvedCommentRef extends CommentRef {
+  thread: ResolvedThreadRef
+}
 
 /** Whether a thread ref has a number, so that it is a `ResolvedThreadRef`. */
 export function isResolvedThread(thread: ThreadRef): thread is ResolvedThreadRef {
@@ -1796,6 +1846,9 @@ export function parseThreadKey(key: string): ResolvedThreadRef | undefined {
   }
   const kindText = rest.slice(0, slash)
   const number = rest.slice(slash + 1)
+  if (number.includes('#')) {
+    return undefined
+  }
   const origin = { forge: repo.forge, instance: repo.instance }
   if (kindText.startsWith('other:')) {
     return { ...origin, repo, kind: 'other', typeRaw: kindText.slice('other:'.length), number }
@@ -1823,6 +1876,175 @@ export function threadSlug(ref: ThreadRef): string {
 /** The thread a notification concerns, or `undefined` for repo, actor and other subjects. */
 export function notificationThread(notification: Notification): ThreadRef | undefined {
   return notification.subject.type === 'thread' ? notification.subject.thread : undefined
+}
+
+/** Stable identity key for a comment: the {@link threadKey} of its thread and the comment's forge-native id. */
+export function commentKey(ref: ResolvedCommentRef): string {
+  return `${threadKey(ref.thread)}#comment/${ref.id}`
+}
+
+/** Reads a {@link commentKey} back. */
+export function parseCommentKey(key: string): ResolvedCommentRef | undefined {
+  const marker = key.indexOf('#', key.indexOf('#') + 1)
+  const thread = marker > 0 && key.startsWith('#comment/', marker) ? parseThreadKey(key.slice(0, marker)) : undefined
+  const id = key.slice(marker + '#comment/'.length)
+  return thread && id ? { forge: thread.forge, instance: thread.instance, thread, id } : undefined
+}
+
+/** Stable identity key for a release: the {@link repoKey} of its repository and the release's forge-native id. */
+export function releaseKey(ref: ReleaseRef): string {
+  return `${repoKey(ref.repo)}#release/${ref.id}`
+}
+
+/** Reads a {@link releaseKey} back. The key carries no `tag`. */
+export function parseReleaseKey(key: string): ReleaseRef | undefined {
+  const hash = key.indexOf('#')
+  const repo = hash > 0 && key.startsWith('#release/', hash) ? parseRepoKey(key.slice(0, hash)) : undefined
+  const id = key.slice(hash + '#release/'.length)
+  return repo && id ? { forge: repo.forge, instance: repo.instance, repo, id } : undefined
+}
+
+/**
+ * The identity keys of what an event or a notification concerns, grouped by the key function that built them. Each
+ * list holds a key once.
+ */
+export interface AffectedKeys {
+  /**
+   * {@link repoKey}s of every repository the item concerns, including the repository of each thread, so that a
+   * listing keyed by repository is covered. For a renamed or transferred repository it also holds the key of the
+   * new path and, where the event names it, the old path.
+   */
+  repos: string[]
+  /** {@link threadKey}s. */
+  threads: string[]
+  /** {@link commentKey}s of the comment that a `comment` or `review_comment` event names in `detail.comment`. */
+  comments: string[]
+  /** {@link releaseKey}s. */
+  releases: string[]
+  /** {@link notificationKey}s. */
+  notifications: string[]
+  /**
+   * Threads without a `number`, which have no key, and neither has a comment on one. Their repositories are in
+   * `repos`, and every thread and comment key starts with the key of its repository followed by `#`.
+   */
+  unresolved: ThreadRef[]
+}
+
+/**
+ * Lists the identity keys of the repositories, threads, comments, releases and notifications that an event or a
+ * notification concerns, so that a cache can drop or read again the rows that it holds for them. It sends no request.
+ *
+ * A push or a ref event concerns its repository only: a pull request whose head branch moved has no key here, as
+ * finding it takes a read.
+ * @example
+ * ```ts
+ * for (const event of await provider.webhooks.ingest(delivery)) {
+ *   const affected = affectedKeys(event)
+ *   for (const key of affected.threads) {
+ *     cache.delete(key)
+ *   }
+ * }
+ * ```
+ */
+export function affectedKeys(item: ForgeEvent | Notification): AffectedKeys {
+  const repos = new Set<string>()
+  const threads = new Set<string>()
+  const comments = new Set<string>()
+  const releases = new Set<string>()
+  const unresolved = new Map<string, ThreadRef>()
+  const repo = (ref: RepoRef | undefined) => ref && repos.add(repoKey(ref))
+  const path = (ref: RepoRef, owner: string | undefined, name: string) => owner && name && repos.add(repoKey({ forge: ref.forge, instance: ref.instance, owner, name }))
+  const thread = (ref: ThreadRef | undefined) => {
+    if (!ref) {
+      return
+    }
+    repo(ref.repo)
+    if (isResolvedThread(ref)) {
+      threads.add(threadKey(ref))
+    }
+    else {
+      unresolved.set(JSON.stringify([repoKey(ref.repo), ref.kind, ref.typeRaw, ref.displayNumber, ref.externalId]), ref)
+    }
+  }
+  const release = (ref: ReleaseRef) => {
+    repo(ref.repo)
+    releases.add(releaseKey(ref))
+  }
+
+  if ('subject' in item) {
+    const subject = item.subject
+    switch (subject.type) {
+      case 'thread':
+        thread(subject.thread)
+        break
+      case 'repo':
+        repo(subject.repo)
+        break
+      case 'release':
+        release(subject.release)
+        break
+      case 'security_alert':
+        repo(subject.alert.repo)
+        break
+      case 'other':
+        repo(subject.repo)
+        break
+    }
+  }
+  else {
+    repo(item.repo)
+    thread(item.thread)
+    const detail = item.detail
+    switch (detail?.type) {
+      case 'comment':
+      case 'review_comment':
+        if (detail.comment) {
+          thread(detail.comment.thread)
+          if (isResolvedThread(detail.comment.thread)) {
+            comments.add(commentKey({ ...detail.comment, thread: detail.comment.thread }))
+          }
+        }
+        break
+      case 'repo_renamed':
+      case 'repo_transferred':
+        if (item.repo) {
+          path(item.repo, item.repo.owner, item.repo.name)
+          if (detail.type === 'repo_transferred') {
+            path(item.repo, detail.fromOwner, item.repo.name)
+          }
+          else {
+            const slash = detail.from.lastIndexOf('/')
+            path(item.repo, slash > 0 ? detail.from.slice(0, slash) : item.repo.owner, detail.from.slice(slash + 1))
+          }
+        }
+        break
+      case 'installation':
+        detail.added.forEach(repo)
+        detail.removed.forEach(repo)
+        break
+      case 'release':
+        release(detail.release)
+        break
+      case 'referenced':
+        if (detail.from && 'sha' in detail.from) {
+          repo(detail.from.repo)
+        }
+        else {
+          thread(detail.from)
+        }
+        repo(detail.fromRepo)
+        break
+    }
+  }
+
+  return {
+    repos: [...repos],
+    threads: [...threads],
+    comments: [...comments],
+    releases: [...releases],
+    notifications: 'subject' in item ? [notificationKey(item.ref)] : [],
+    unresolved: [...unresolved.values()],
+  }
 }
 
 /** How a pull request is merged. */
@@ -1862,6 +2084,19 @@ export interface ApproveAndMergeOptions extends MergeOptions {
   body?: string
 }
 
+/** What `threads.merge()` and `threads.approveAndMerge()` resolve with. */
+export interface MergeResult {
+  /**
+   * `'merged'` once the pull request has merged. `'queued'` when the forge merges it later: with `whenChecksPass`,
+   * or where it completes the merge in the background (Azure DevOps, and Bitbucket when the merge outlasts its timeout).
+   */
+  status: 'merged' | 'queued'
+  /** The commit that the merge made on the base branch, where the response reports it. */
+  sha?: string
+  /** Unnormalised forge payload, retained for fidelity. Absent where the merge response has no body. */
+  raw?: unknown
+}
+
 /** An app installation on an account, with its own credential scope. */
 export interface Installation extends ForgeOrigin {
   id: string
@@ -1874,7 +2109,7 @@ export interface Installation extends ForgeOrigin {
 }
 
 /** Every `Date` field in the model, by name. */
-export const DATE_FIELDS: ReadonlySet<string> = new Set(['closedAt', 'completedAt', 'createdAt', 'date', 'deliveredAt', 'dismissedAt', 'dueOn', 'expiresAt', 'lastActivityAt', 'lastReadAt', 'occurredAt', 'publishedAt', 'pushedAt', 'resetAt', 'startedAt', 'submittedAt', 'updatedAt', 'week'])
+export const DATE_FIELDS: ReadonlySet<string> = new Set(['closedAt', 'completedAt', 'createdAt', 'date', 'deliveredAt', 'dismissedAt', 'dueOn', 'expiresAt', 'lastActivityAt', 'lastReadAt', 'mergedAt', 'occurredAt', 'publishedAt', 'pushedAt', 'resetAt', 'startedAt', 'submittedAt', 'updatedAt', 'week'])
 
 const UNNORMALISED_FIELDS: ReadonlySet<string> = new Set(['payload', 'raw'])
 

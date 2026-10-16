@@ -1,9 +1,11 @@
 import type { ResolvedThreadRef } from '../../src/model.ts'
+import type { Fixture } from '../../src/testing/index.ts'
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { cursorOrigin } from '../../src/cursor-origin/index.ts'
 import { UnsupportedOperationError } from '../../src/errors.ts'
 import { contracts, WEBHOOK_SECRET } from '../contract/providers.ts'
-import { fixtureFetch } from '../utils/fixtures.ts'
+import { fixtureDirectory, fixtureFetch } from '../utils/fixtures.ts'
 
 const repo = { forge: 'cursor-origin', instance: 'origin.cursor.com', owner: 'acme', name: 'widgets' } as const
 const pull: ResolvedThreadRef = { forge: 'cursor-origin', instance: 'origin.cursor.com', repo, kind: 'pull_request', number: '12' }
@@ -20,6 +22,19 @@ describe('cursor origin without credentials', () => {
     expect(forge.can('repos.get')).toBe(false)
     await expect(forge.repos.get(repo)).rejects.toThrow(UnsupportedOperationError)
   })
+
+  it.each([
+    ['without credentials', undefined, [{ remaining: 59 }]],
+    ['with a token, whose budget the keys request does not report', { type: 'token', token: 't' } as const, []],
+  ])('reports the budget of the signing keys request %s', async (_, auth, budgets) => {
+    const { webhook } = contracts.find(contract => contract.name === 'cursor-origin')!
+    const keys = JSON.parse(readFileSync(`${fixtureDirectory('cursor-origin')}keys.json`, 'utf8')) as Fixture
+    const { fetch } = fixtureFetch('cursor-origin', { 'GET https://api.cursor.com/v1/origin/keys': { ...keys.response, headers: { 'x-ratelimit-limit': '60', 'x-ratelimit-remaining': '59' } } })
+    const forge = cursorOrigin({ auth, fetch }).create()
+    await forge.webhooks.ingest({ headers: webhook.headers(await webhook.sign(webhook.body, WEBHOOK_SECRET)), body: webhook.body })
+
+    expect(forge.rateLimits()).toMatchObject(budgets)
+  })
 })
 
 describe('cursor origin app', () => {
@@ -33,6 +48,22 @@ describe('cursor origin app', () => {
     expect(forge.can('repos.list')).toBe(false)
     expect(installation.can('repos.get')).toBe(true)
     expect(installation.can('repos.list')).toBe(true)
+  })
+})
+
+describe('cursor origin comparison', () => {
+  it('reads no files when they are left out', async () => {
+    const urls: string[] = []
+    const instance = cursorOrigin({ auth: { type: 'token', token: 't' }, fetch: async (url) => {
+      urls.push(new URL(String(url)).pathname)
+      return Response.json(url.includes('/files') ? { files: [{ filename: 'a.ts', status: 'modified' }] } : { aheadBy: 3, behindBy: 0 })
+    } }).create()
+
+    expect((await instance.contents.compare(repo, 'main', 'feature')).files).toHaveLength(1)
+    expect(urls).toHaveLength(2)
+    urls.length = 0
+    expect(await instance.contents.compare(repo, 'main', 'feature', { files: false })).toMatchObject({ aheadBy: 3, files: [] })
+    expect(urls).toEqual(['/v1/origin/repos/acme/widgets/compare/main...feature'])
   })
 })
 
@@ -89,6 +120,13 @@ describe('cursor origin thread updates', () => {
     expect(calls.map(call => call.body)).toEqual([{ labels: ['bug'] }, { title: 'Retry uploads', state: 'closed' }])
   })
 
+  it('resolves a close with the pull request in the response', async () => {
+    const { instance, calls } = serve()
+
+    await expect(instance.threads.close!(pull)).resolves.toMatchObject({ title: 'Retry uploads', state: 'closed' })
+    expect(calls).toEqual([{ method: 'PATCH', path: expect.stringMatching(/\/pulls\/12$/), body: { state: 'closed' } }])
+  })
+
   it('reads the pull request back instead of patching it when only its labels change', async () => {
     const { instance, calls } = serve()
     await instance.threads.update(pull, { labels: ['bug'] })
@@ -101,5 +139,21 @@ describe('cursor origin thread updates', () => {
 
     await expect(instance.threads.update(pull, { labels: ['bug'], assignees: ['jane'] })).rejects.toThrow(UnsupportedOperationError)
     expect(calls).toEqual([])
+  })
+})
+
+describe('cursor origin labels', () => {
+  const labelled = [{ id: 'l1', name: 'bug', color: 'd73a4a', description: '' }]
+
+  it.each([
+    ['a list of labels', labelled, [{ name: 'bug', colour: 'd73a4a' }]],
+    ['an object with labels', { labels: labelled }, [{ name: 'bug', colour: 'd73a4a' }]],
+    ['no body', undefined, [{ name: 'bug' }]],
+  ])('resolves setLabels from a response with %s', async (_, body, expected) => {
+    const { fetch, calls } = fixtureFetch('cursor-origin', { 'PUT https://api.cursor.com/v1/origin/repos/acme/widgets/pulls/12/labels': body === undefined ? { status: 204 } : { status: 200, body } })
+    const instance = cursorOrigin({ auth: { type: 'token', token: 't' }, fetch }).create()
+
+    await expect(instance.threads.setLabels(pull, ['bug'])).resolves.toEqual(expected)
+    expect(calls).toHaveLength(1)
   })
 })

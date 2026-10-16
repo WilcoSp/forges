@@ -1,9 +1,10 @@
 import type { Fetcher, FetcherOptions } from './fetch.ts'
-import type { ApproveAndMergeOptions, BaseOptions, Check, CiJobRef, Comment, CommentRef, CommitFilesInput, Cursor, DownloadAssetOptions, EventFeedOptions, ForgeEventInput, ForgeInstance, ForgeKind, Installation, ListOptions, MergeOptions, Notification, NotificationListOptions, OwnerRepoQuery, Page, ReleaseAssetRef, Repo, RepoRef, ReviewRef, SecurityAlertKind, SecurityAlertListOptions, Support, TextLimits, ThreadKind, ThreadQuery, ThreadRef, UpsertCommentInput, UpsertCommentResult, WebhookEventType } from './model.ts'
+import type { ApproveAndMergeOptions, BaseOptions, Check, CiJobRef, Comment, CommentRef, CommitFilesInput, CompareOptions, Comparison, Cursor, DownloadAssetOptions, EventFeedOptions, ForgeEventInput, ForgeInstance, ForgeKind, Installation, ListOptions, MergeOptions, MergeResult, Notification, NotificationListOptions, OwnerRepoQuery, Page, RateLimit, ReleaseAssetRef, Repo, RepoRef, ReviewRef, SecurityAlertKind, SecurityAlertListOptions, Support, TextLimits, ThreadKind, ThreadQuery, ThreadRef, UpsertCommentInput, UpsertCommentResult, WebhookEventType } from './model.ts'
 import type {
   AuthKind,
   ChecksApi,
   CiApi,
+  CommentOptions,
   ContentsApi,
   ForgeCapabilities,
   ForgeIterable,
@@ -35,7 +36,7 @@ import { completeEvent } from './events.ts'
 import { createFetcher, createRequest } from './fetch.ts'
 import { commentMarker, hasCommentMarker } from './model.ts'
 import { supportOf, supports } from './supports.ts'
-import { forgeIterable, hostOf, iteratePages, memo } from './utils.ts'
+import { forgeIterable, hostOf, isFirstPage, iteratePages, memo } from './utils.ts'
 import { parseWebUrl, referenceFor, webUrlFor } from './web.ts'
 
 /** What support can depend on once the provider exists. */
@@ -168,7 +169,7 @@ export interface ProviderSpec<TExtensions extends object = Record<never, never>>
     setAssignees?: ThreadVerb<'setAssignees'>
     requestReview?: ThreadVerb<'requestReview'>
     /** `beforeMerge` runs once the merge is validated, just before it is sent. */
-    merge?: Verb<(ref: ThreadRef, options?: MergeOptions, hooks?: MergeHooks) => Promise<void>>
+    merge?: Verb<(ref: ThreadRef, options?: MergeOptions, hooks?: MergeHooks) => Promise<MergeResult>>
     /** Optional support override; approval and merging must also be supported. */
     approveAndMerge?: { support: SupportInput }
     /** One capability covers reading and changing the subscription. */
@@ -305,6 +306,8 @@ export interface ProviderSpec<TExtensions extends object = Record<never, never>>
   request?: Fetcher
   /** Reads the instance version for `refreshCapabilities()`. Omit when capabilities never depend on it. */
   probeVersion?: () => Promise<string | undefined>
+  /** The implementation of `provider.rateLimits()`, for a provider whose requests bypass its fetchers. */
+  rateLimits?: () => RateLimit[]
 }
 
 /** Hooks that a provider runs around a merge. */
@@ -335,7 +338,11 @@ export interface ProviderBase<TOptions, TState> {
 export interface ProviderContext<TOptions, TState> extends ProviderBase<TOptions, TState> {
   /** Authenticated with the definition's `authHeaders`. */
   fetcher: Fetcher
-  /** Another fetcher with the same timeout, `fetch` and error context. */
+  /**
+   * Another fetcher with the same timeout, `fetch` and error context. It sends no credentials unless it sets
+   * its own `authHeaders`. Its budgets count towards `provider.rateLimits()` only when neither it nor
+   * `fetcher` sends credentials.
+   */
   createFetcher: (overrides: Partial<FetcherOptions> & { baseUrl: string }) => Fetcher
   /** Another provider from the same definition, for example one per app installation. */
   derive: (options: TOptions, state?: TState) => ForgeProvider
@@ -401,6 +408,15 @@ async function* completeItems(items: AsyncIterable<{ event: ForgeEventInput, cur
   }
 }
 
+function sameBody(a: string, b: string): boolean {
+  const normalise = (body: string) => body.replaceAll('\r\n', '\n').trim()
+  return normalise(a) === normalise(b)
+}
+
+function withMarker(body: string, key: string): string {
+  return hasCommentMarker(body, key) ? body : `${body}\n\n${commentMarker(key)}`
+}
+
 type AnyFunction = (...args: any[]) => any
 
 function readPath(source: unknown, path: string): any {
@@ -437,6 +453,21 @@ async function nonEmptyPage<T>(read: (cursor: Cursor | undefined) => Promise<Pag
   return { ...page, warnings: [...warnings, ...later] }
 }
 
+/** Resets this close together belong to one window, as a reset in seconds from now drifts between responses. */
+const RESET_TOLERANCE_MS = 1000
+
+/** Whether `next` was counted before `kept` though it arrived after it: from an older window, or with more requests left in the same one. */
+function countedBefore(next: RateLimit, kept: RateLimit): boolean {
+  if (!next.resetAt || !kept.resetAt) {
+    return false
+  }
+  const gap = next.resetAt.getTime() - kept.resetAt.getTime()
+  if (Math.abs(gap) > RESET_TOLERANCE_MS) {
+    return gap < 0
+  }
+  return next.remaining !== undefined && kept.remaining !== undefined && next.remaining > kept.remaining
+}
+
 function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extends boolean = boolean, TExtensions extends object = Record<never, never>>(
   definition: ProviderDefinition<TOptions, TState, boolean, TExtensions>,
   givenOptions: TOptions,
@@ -457,16 +488,26 @@ function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extend
   const prepared = { options, forge: definition.forge, instance, baseUrl, headers, origin, state: givenState }
   const state = (definition.prepare ? definition.prepare(prepared) : givenState) as TState
   const base: ProviderBase<TOptions, TState> = { ...prepared, state }
+  const budgets = new Map<string | undefined, RateLimit>()
+  const tracked: FetcherOptions['onRateLimit'] = (event) => {
+    const kept = budgets.get(event.rateLimit.resource)
+    if (!kept || !countedBefore(event.rateLimit, kept)) {
+      budgets.set(event.rateLimit.resource, event.rateLimit)
+    }
+    options.onRateLimit?.(event)
+  }
+  const authHeaders = anonymous ? undefined : definition.authHeaders?.(base)
   const makeFetcher = (overrides: Partial<FetcherOptions> & { baseUrl: string }) => createFetcher({
     fetch: options.fetch,
     timeout: options.timeout,
     onRetry: options.onRetry,
+    onRateLimit: 'authHeaders' in overrides || authHeaders ? options.onRateLimit : tracked,
     headers,
     query: definition.query,
     context: origin,
     ...overrides,
   })
-  const fetcher = makeFetcher({ baseUrl, authHeaders: anonymous ? undefined : definition.authHeaders?.(base) })
+  const fetcher = makeFetcher({ baseUrl, authHeaders, onRateLimit: tracked })
   const ctx: ProviderContext<TOptions, TState> = {
     ...base,
     fetcher,
@@ -522,9 +563,7 @@ function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extend
   const createReview = spec.threads.createReview
   const approve = spec.threads.approve ?? (createReview && {
     support: createReview.support,
-    run: async (ref: ThreadRef, body?: string, options?: BaseOptions) => {
-      await createReview.run(ref, { event: 'approve', body }, options)
-    },
+    run: (ref: ThreadRef, body?: string, options?: BaseOptions) => createReview.run(ref, { event: 'approve', body }, options),
   })
   const declaredSubscribe = spec.sources?.subscribe
   const alerts = spec.securityAlerts
@@ -533,13 +572,15 @@ function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extend
 
   const listThreads = kindGate('threads.listPage', spec.threads.listPage.kinds, spec.threads.listPage.run)
   const listOwnerRepos = gate('repos.byOwnerPage', spec.repos.byOwnerPage?.support, spec.repos.byOwnerPage?.run)
+  const listComments = kindGate('threads.commentsPage', spec.threads.commentsPage.kinds, spec.threads.commentsPage.run)
+  const addComment = kindGate('threads.comment', spec.threads.comment?.kinds, spec.threads.comment?.run)
   const listEvents = kindGate('threads.eventsPage', Object.fromEntries(KINDS.map(kind => [kind, (kindEnv: CapabilityEnv) => threadEventKinds(spec, kindEnv)[kind]])), spec.threads.eventsPage.run)
   const native = spec.search?.queryRaw
   const search = (name: 'threadsPage' | 'reposPage' | 'commitsPage' | 'codePage') => {
     const run = gate(`search.${name}`, spec.search?.[name]?.support, spec.search?.[name]?.run)
-    return async ({ queryRaw, ...query }: { queryRaw?: string, cursor?: unknown } = {}) => {
+    return async ({ queryRaw, ...query }: { queryRaw?: string, cursor?: Cursor } = {}) => {
       const page = await run(native ? { queryRaw, ...query } : query) as Page<unknown>
-      return !queryRaw || native || query.cursor ? page : { ...page, warnings: [{ code: 'filter_unsupported', message: 'This search has no query syntax; queryRaw was ignored' }, ...page.warnings ?? []] }
+      return !queryRaw || native || !isFirstPage(query.cursor) ? page : { ...page, warnings: [{ code: 'filter_unsupported', message: 'This search has no query syntax; queryRaw was ignored' }, ...page.warnings ?? []] }
     }
   }
   const feed = (verb: 'repos.eventsPage' | 'users.eventsPage') => {
@@ -572,6 +613,17 @@ function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extend
       const page = await listEvents(ref, listOptions) as Page<ForgeEventInput>
       return { ...page, items: page.items.map(completeEvent) }
     },
+    'threads.commentsPage': (ref: ThreadRef, listOptions: ListOptions = {}) => {
+      const since = listOptions.since
+      if (!since) {
+        return listComments(ref, listOptions)
+      }
+      return nonEmptyPage(async (cursor) => {
+        const page: Page<Comment> = await listComments(ref, { ...listOptions, cursor })
+        return { ...page, items: page.items.filter(comment => (comment.updatedAt ?? comment.createdAt ?? since) >= since) }
+      }, listOptions.cursor)
+    },
+    'threads.comment': async (ref: ThreadRef, body: string, { key, ...commentOptions }: CommentOptions = {}) => addComment(ref, key === undefined ? body : withMarker(body, key), commentOptions),
     'threads.upsertComment': kindGate(
       'threads.upsertComment',
       Object.fromEntries(KINDS.map(kind => [kind, (kindEnv: CapabilityEnv) => upsertKinds(spec, kindEnv)[kind]])),
@@ -599,9 +651,11 @@ function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extend
     'threads.subscribe': kindGate('threads.subscribe', subscriptions?.kinds, subscriptions?.run.subscribe),
     'threads.unsubscribe': kindGate('threads.unsubscribe', subscriptions?.kinds, subscriptions?.run.unsubscribe),
     'threads.approve': gate('threads.approve', approve?.support, approve?.run),
-    'threads.approveAndMerge': gate('threads.approveAndMerge', (mergeEnv: CapabilityEnv) => approveAndMergeSupport(spec, mergeEnv), async (ref: ThreadRef, { body, ...mergeOptions }: ApproveAndMergeOptions = {}) => {
-      await spec.threads.merge!.run(ref, mergeOptions, { beforeMerge: () => call('threads.approve')(ref, body, { signal: mergeOptions.signal }) })
-    }),
+    'threads.approveAndMerge': gate('threads.approveAndMerge', (mergeEnv: CapabilityEnv) => approveAndMergeSupport(spec, mergeEnv), (ref: ThreadRef, { body, ...mergeOptions }: ApproveAndMergeOptions = {}) => spec.threads.merge!.run(ref, mergeOptions, {
+      beforeMerge: async () => {
+        await call('threads.approve')(ref, body, { signal: mergeOptions.signal })
+      },
+    })),
     'releases.downloadAsset': async (ref: ReleaseAssetRef, options?: DownloadAssetOptions) => {
       const stream: ReadableStream<Uint8Array> = await gate('releases.downloadAsset', spec.releases?.downloadAsset?.support, spec.releases?.downloadAsset?.run)(ref, options)
       if (!options?.as || options.as === 'stream') {
@@ -609,6 +663,19 @@ function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extend
       }
       const bytes = new Uint8Array(await new Response(stream).arrayBuffer())
       return options.as === 'text' ? decodeText(bytes, `Release asset ${ref.id}`, origin) : bytes
+    },
+    'contents.compare': async (repo: RepoRef, base: string, head: string, compareOptions: CompareOptions = {}) => {
+      const comparison: Comparison = await gate('contents.compare', spec.contents?.compare?.support, spec.contents?.compare?.run)(repo, base, head, compareOptions)
+      const { commitLimit, files } = compareOptions
+      if (commitLimit === undefined && files !== false) {
+        return comparison
+      }
+      const commits = commitLimit === undefined ? comparison.commits : comparison.commits.slice(0, Math.max(0, commitLimit))
+      return {
+        ...comparison,
+        commits: files === false ? commits.map(({ files: _files, ...commit }) => commit) : commits,
+        ...files === false ? { files: [] } : {},
+      }
     },
     'contents.resolveRef': (repo: RepoRef, ref: string, options?: BaseOptions) => isSha(ref)
       ? Promise.resolve(ref.toLowerCase())
@@ -702,16 +769,20 @@ function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extend
   }
 
   async function upsertComment(ref: ThreadRef, input: UpsertCommentInput, options?: BaseOptions): Promise<UpsertCommentResult> {
-    const body = hasCommentMarker(input.body, input.key) ? input.body : `${input.body}\n\n${commentMarker(input.key)}`
+    const body = withMarker(input.body, input.key)
     let existing: Comment | undefined
-    for await (const candidate of threads.comments(ref, options)) {
+    for await (const candidate of threads.comments(ref, { ...options, since: input.since })) {
       if (hasCommentMarker(candidate.body, input.key)) {
         existing = candidate
       }
     }
-    return existing
-      ? { comment: await threads.editComment(existing.ref, body, options), created: false }
-      : { comment: await threads.comment(ref, body, options), created: true }
+    if (!existing) {
+      return { comment: await threads.comment(ref, body, options), created: true }
+    }
+    return {
+      comment: sameBody(existing.body, body) ? existing : await threads.editComment(existing.ref, body, options),
+      created: false,
+    }
   }
 
   return {
@@ -727,6 +798,15 @@ function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extend
     get capabilities() {
       return capabilities
     },
+    rateLimits: spec.rateLimits ?? (() => {
+      const now = Date.now()
+      for (const [resource, budget] of budgets) {
+        if (budget.resetAt && budget.resetAt.getTime() <= now) {
+          budgets.delete(resource)
+        }
+      }
+      return [...budgets.values()].map(budget => ({ ...budget }))
+    }),
     async refreshCapabilities() {
       if (!options.instanceVersion && probeVersion) {
         env.version = await probeVersion()
