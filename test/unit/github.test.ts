@@ -8,7 +8,7 @@ import { ContentNotTextError, ForbiddenError, InsufficientScopeError, NotFoundEr
 import { graphqlOperations, graphqlUrl } from '../../src/github/graphql-client.ts'
 import { github } from '../../src/github/index.ts'
 import { toEvent, toNotification, toReason, toRepo } from '../../src/github/normalise.ts'
-import { notificationThread } from '../../src/model.ts'
+import { commentMarker, notificationThread } from '../../src/model.ts'
 import { fixtureFetch, loadFixtures } from '../utils/fixtures.ts'
 
 const { privateKey } = generateKeyPairSync('rsa', {
@@ -360,6 +360,32 @@ describe('github thread updates', () => {
     expect(thread.ref.kind).toBe('pull_request')
   })
 
+  it('writes the marker of a key into one comment request', async () => {
+    const { provider, calls } = tokenProvider({ 'POST https://api.github.com/repos/acme/widgets/issues/42/comments': { status: 201, body: { id: 7, body: 'Deployed' } } })
+
+    await provider.threads.comment(pull, 'Deployed', { key: 'mutation-1' })
+
+    expect(calls).toHaveLength(1)
+    expect(JSON.parse(calls[0]!.body!)).toEqual({ body: `Deployed\n\n${commentMarker('mutation-1')}` })
+  })
+
+  it('lists comments since a time when upserting a comment with since', async () => {
+    const marked = { id: 7, body: `Deployed\n\n${commentMarker('mutation-1')}`, created_at: '2026-03-01T12:00:03Z', updated_at: '2026-03-01T12:00:03Z' }
+    const { provider, calls } = tokenProvider({
+      'GET https://api.github.com/repos/acme/widgets/issues/42/comments?since=2026-03-01T12:00:00.000Z': { status: 200, body: [marked] },
+      'PATCH https://api.github.com/repos/acme/widgets/issues/comments/7': { status: 200, body: marked },
+    })
+
+    const result = await provider.threads.upsertComment(pull, { key: 'mutation-1', body: 'Deployed to staging', since: new Date('2026-03-01T12:00:00Z') })
+
+    expect(result.created).toBe(false)
+    expect(calls.map(call => `${call.method} ${new URL(call.url).pathname}`)).toEqual([
+      'GET /repos/acme/widgets/issues/42/comments',
+      'PATCH /repos/acme/widgets/issues/comments/7',
+    ])
+    expect(new URL(calls[0]!.url).searchParams.get('since')).toBe('2026-03-01T12:00:00.000Z')
+  })
+
   it('edits a pull request without labels or assignees through the pulls endpoint', async () => {
     const { provider, calls } = tokenProvider({ 'PATCH https://api.github.com/repos/acme/widgets/pulls/42': { status: 200, body: { number: 42, state: 'closed', title: 'Retry uploads' } } })
     await provider.threads.update(pull, { title: 'Retry uploads', state: 'closed' })
@@ -561,6 +587,16 @@ describe('github repository and thread metadata', () => {
 
     expect(await provider.repos.addCollaborator(repo, 'octocat', 'write')).toEqual({ status: 'invited' })
     expect(await provider.repos.addCollaborator(repo, 'hubot', 'write')).toEqual({ status: 'added' })
+  })
+
+  it('ignores a label the thread no longer carries when removing labels', async () => {
+    const { provider } = tokenProvider({
+      'DELETE https://api.github.com/repos/acme/widgets/issues/42/labels/bug': { status: 404, body: { message: 'Label does not exist', documentation_url: 'https://docs.github.com/rest/issues/labels#remove-a-label-from-an-issue' } },
+      'DELETE https://api.github.com/repos/acme/widgets/issues/43/labels/bug': { status: 404, body: { message: 'Not Found' } },
+    })
+
+    await expect(provider.threads.removeLabels(pull, ['bug'])).resolves.toBeUndefined()
+    await expect(provider.threads.removeLabels({ ...pull, number: '43' }, ['bug'])).rejects.toThrow(NotFoundError)
   })
 
   it('adds and removes labels without replacing the rest', async () => {
