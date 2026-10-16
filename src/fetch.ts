@@ -1,6 +1,6 @@
 import type { ForgeErrorContext } from './errors.ts'
 import type { BaseOptions, Cursor, RateLimit } from './model.ts'
-import { AuthenticationRequiredError, ForbiddenError, forbiddenReason, ForgeApiError, ForgeNetworkError, ForgeTimeoutError, InsufficientScopeError, NotFoundError, RateLimitedError, TokenRevokedError } from './errors.ts'
+import { AuthenticationRequiredError, ForbiddenError, forbiddenReason, ForgeApiError, ForgeNetworkError, ForgeTimeoutError, InsufficientScopeError, isSecondaryRateLimit, NotFoundError, RateLimitedError, TokenRevokedError } from './errors.ts'
 
 /** The subset of `fetch` that forges needs, so a test or a runtime without a global `fetch` can supply its own. */
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
@@ -26,8 +26,8 @@ export interface FetcherOptions {
   /** Attached to every error the fetcher throws. */
   context?: ForgeErrorContext
   /**
-   * Called before a request is retried. A secondary rate limit with a
-   * `retry-after` of at most a minute is retried once, after that wait.
+   * Called before a request is retried. A rate limit with a `retry-after`
+   * of at most a minute is retried once, after that wait.
    */
   onRetry?: (retry: { url: string, method: string, wait: number }) => void
   /**
@@ -61,6 +61,12 @@ export interface PaginateOptions extends RequestOptions {
    * body reports, such as a search's `total_count`.
    */
   select?: (body: unknown, linkNext?: string) => { items: unknown[], next?: string, total?: number }
+  /**
+   * Whether the first page sends `cursor.etag` as `If-None-Match` and reports its validator in `etag`. Turn it off
+   * for a page that is built from more than this one response.
+   * @default true
+   */
+  conditional?: boolean
 }
 
 /** A parsed response. */
@@ -73,6 +79,8 @@ export interface FetchResult<T> {
   cursor?: Cursor
   /** The total number of items the listing reports, where the response carries one. */
   total?: number
+  /** The validator of a listing's first page, from {@link Fetcher.page}. */
+  etag?: string
 }
 
 /** A response whose body is read as it arrives rather than parsed. */
@@ -97,7 +105,10 @@ export interface Fetcher {
   stream: (path: string, options?: RequestOptions) => Promise<RawResponse>
   /** Sends a request and parses the JSON body. */
   json: <T>(path: string, options?: RequestOptions) => Promise<FetchResult<T>>
-  /** One page: `path` with its query, or `cursor.nextUrl` when given. */
+  /**
+   * One page: `path` with its query, or `cursor.nextUrl` when given. A first page, whose cursor has neither
+   * `nextUrl` nor `token`, sends `cursor.etag` as `If-None-Match` and reports the response's validator in `etag`.
+   */
   page: <T>(path: string, options?: PaginateOptions & { cursor?: Cursor }) => Promise<FetchResult<T[]>>
   /** Every item across every page, in order. */
   items: <T>(path: string, options?: PaginateOptions) => AsyncGenerator<T>
@@ -226,13 +237,13 @@ function resetDate(response: Response, now: number): Date | undefined {
   return new Date(reset > 1_000_000_000 ? reset * 1000 : now + reset * 1000)
 }
 
-function rateLimitReset(response: Response): Date | undefined {
-  const reset = rateLimitOf(response)?.resetAt
-  if (reset) {
-    return reset
-  }
+/** A budget with requests left resets on its own schedule, which says nothing about when a secondary limit lifts. */
+export function rateLimitReset(response: Response, budget: RateLimit | undefined): Date | undefined {
   const after = retryAfterMs(response)
-  return after === undefined ? undefined : new Date(Date.now() + after)
+  if (after !== undefined) {
+    return new Date(Date.now() + after)
+  }
+  return budget?.remaining ? undefined : budget?.resetAt
 }
 
 /** The leading number of the first of `names` to hold one, such as `60` of `60, 60;w=3600`. */
@@ -291,17 +302,35 @@ export function rateLimitOf(response: Response, now: number = Date.now()): RateL
   }
 }
 
-function isRateLimited(response: Response): boolean {
+/** Whether the `message` or an `errors[].message` of a JSON error body names a secondary rate limit. */
+function namesSecondaryRateLimit(body: string): boolean {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(body)
+  }
+  catch {
+    return false
+  }
+  const { message, errors } = (parsed ?? {}) as { message?: unknown, errors?: unknown }
+  const messages = [message, ...Array.isArray(errors) ? errors.map(error => (error as { message?: unknown } | null)?.message) : []]
+  return messages.some(text => typeof text === 'string' && isSecondaryRateLimit(text))
+}
+
+/** GitHub sends a secondary limit as a 403 or a 429, and its content creation limit can arrive as a 422. */
+function isRateLimited(response: Response, budget: RateLimit | undefined, body: string): boolean {
   if (response.status === 429) {
     return true
   }
-  const rateLimit = rateLimitOf(response)
+  if ((response.status === 403 || response.status === 422) && namesSecondaryRateLimit(body)) {
+    return true
+  }
   // A zero budget never resets; the request needs other credentials.
-  if (response.status !== 403 || rateLimit?.limit === 0) {
+  if (response.status !== 403 || budget?.limit === 0) {
     return false
   }
-  return rateLimit?.remaining === 0
-    || response.headers.has('retry-after')
+  // Some forges, such as Gitee, report a rate limit as a short plain-text 403 with no rate limit headers.
+  // Only a body that starts with the phrase counts, so a message that quotes it stays a `ForbiddenError`.
+  return budget?.remaining === 0 || response.headers.has('retry-after') || (!budget && PLAIN_RATE_LIMIT_RE.test(body.trim()))
 }
 
 /**
@@ -495,13 +524,6 @@ export function createFetcher(options: FetcherOptions): Fetcher {
       clearTimeout(timer)
     }
 
-    if (options.onRateLimit && target.origin === baseOrigin) {
-      const rateLimit = rateLimitOf(response)
-      if (rateLimit) {
-        options.onRateLimit({ url, method: options_.method ?? 'GET', rateLimit })
-      }
-    }
-
     if (response.type === 'opaqueredirect' && options_.redirect !== 'manual') {
       const method = (options_.method ?? 'GET').toUpperCase()
       if (options_.redirect === 'error' || (method !== 'GET' && method !== 'HEAD')) {
@@ -515,6 +537,10 @@ export function createFetcher(options: FetcherOptions): Fetcher {
         await response.body?.cancel()
         throw new TypeError('Unsafe request redirect')
       }
+    }
+    const budget = rateLimitOf(response)
+    if (budget && options.onRateLimit && target.origin === baseOrigin) {
+      options.onRateLimit({ url, method: options_.method ?? 'GET', rateLimit: budget })
     }
     const location = REDIRECT_STATUSES.has(response.status) ? response.headers.get('location') : null
     if (location && options_.redirect !== 'manual') {
@@ -549,7 +575,8 @@ export function createFetcher(options: FetcherOptions): Fetcher {
       return response
     }
 
-    const body = (await response.text()).slice(0, BODY_EXCERPT_LENGTH)
+    const text = await response.text()
+    const body = text.slice(0, BODY_EXCERPT_LENGTH)
     const context = { ...options.context, url, method: options_.method ?? 'GET' }
 
     const credentialed = (trusted && options.authenticated) || headers.has('authorization')
@@ -558,7 +585,7 @@ export function createFetcher(options: FetcherOptions): Fetcher {
         ? new TokenRevokedError('Credentials were rejected by the forge', 401, body, context)
         : new AuthenticationRequiredError('Credentials are required for this request', 401, body, context)
     }
-    if (response.status === 403 && !credentialed && headerNumber(response, 'x-ratelimit-limit', 'ratelimit-limit') === 0) {
+    if (response.status === 403 && !credentialed && budget?.limit === 0) {
       throw new AuthenticationRequiredError('Credentials are required for this request', 403, body, context)
     }
 
@@ -566,19 +593,17 @@ export function createFetcher(options: FetcherOptions): Fetcher {
       throw new NotFoundError(`Nothing found at ${options_.method ?? 'GET'} ${url}, or the credential cannot see it`, 404, body, context)
     }
 
-    // Some forges, such as Gitee, report a rate limit as a short plain-text 403 with no rate limit headers.
-    // Only a body that starts with the phrase counts, so a message that quotes it stays a `ForbiddenError`.
-    if (isRateLimited(response) || (response.status === 403 && !rateLimitOf(response) && PLAIN_RATE_LIMIT_RE.test(body.trim()))) {
-      const secondary = response.status === 403 || response.headers.has('retry-after')
+    if (isRateLimited(response, budget, text)) {
+      const secondary = namesSecondaryRateLimit(text) || (budget?.remaining !== 0 && (response.status !== 429 || response.headers.has('retry-after')))
       const wait = retryAfterMs(response)
-      if (secondary && attempt === 0 && wait !== undefined && wait <= 60_000) {
+      if (attempt === 0 && wait !== undefined && wait <= 60_000) {
         options.onRetry?.({ url, method: options_.method ?? 'GET', wait })
         await sleep(wait, options_.signal)
         return send(url, options_, attempt + 1, authenticated, download, redirects, streaming, follow)
       }
       throw new RateLimitedError('Rate limited by the forge', response.status, body, {
         ...context,
-        resetAt: rateLimitReset(response),
+        resetAt: rateLimitReset(response, budget),
         secondary,
       })
     }
@@ -627,20 +652,27 @@ export function createFetcher(options: FetcherOptions): Fetcher {
   }
 
   async function page<T>(path: string, options_: PaginateOptions & { cursor?: Cursor } = {}): Promise<FetchResult<T[]>> {
-    const { select, cursor, ...requestOptions } = options_
+    const { select, cursor, conditional = true, ...requestOptions } = options_
     const initial = resolve(path, requestOptions.query)
     const url = cursor?.nextUrl ? resolve(cursor.nextUrl) : initial
     if (new URL(url).origin !== new URL(initial).origin) {
       throw new TypeError('Pagination URL must remain on the requested origin')
     }
-    const result: FetchResult<unknown> = await json<unknown>(url, { ...requestOptions, etag: cursor?.nextUrl ? undefined : requestOptions.etag, query: undefined })
-    const next = result.notModified ? undefined : select ? select(result.data, result.cursor?.nextUrl) : undefined
-    const items = (next ? next.items : result.data ?? []) as unknown[]
-    const total = result.notModified ? undefined : next?.total ?? headerTotal(result.response, items.length, url) ?? linkTotal(result.response.headers.get('link'), url, items.length)
-    if (!next) {
-      return { ...result, data: items as T[], cursor: result.cursor?.nextUrl ? result.cursor : undefined, ...total !== undefined ? { total } : {} }
+    const first = conditional && !cursor?.nextUrl && !cursor?.token
+    const sent = first ? requestOptions.etag ?? cursor?.etag : undefined
+    const result: FetchResult<unknown> = await json<unknown>(url, { ...requestOptions, etag: sent, query: undefined })
+    const validator = first ? result.response.headers.get('etag') ?? (result.notModified ? sent : undefined) : undefined
+    const etag = validator ? { etag: validator } : {}
+    if (result.notModified) {
+      return { ...result, data: [], cursor: undefined, ...etag }
     }
-    return { ...result, data: items as T[], cursor: next.next ? { ...result.cursor, nextUrl: next.next } : undefined, ...total !== undefined ? { total } : {} }
+    const next = select ? select(result.data, result.cursor?.nextUrl) : undefined
+    const items = (next ? next.items : result.data ?? []) as unknown[]
+    const total = next?.total ?? headerTotal(result.response, items.length, url) ?? linkTotal(result.response.headers.get('link'), url, items.length)
+    if (!next) {
+      return { ...result, data: items as T[], cursor: result.cursor?.nextUrl ? result.cursor : undefined, ...total !== undefined ? { total } : {}, ...etag }
+    }
+    return { ...result, data: items as T[], cursor: next.next ? { ...result.cursor, nextUrl: next.next } : undefined, ...total !== undefined ? { total } : {}, ...etag }
   }
 
   async function* items<T>(path: string, options_: PaginateOptions = {}): AsyncGenerator<T> {

@@ -51,6 +51,7 @@ import type {
   OwnerRepoQuery,
   Page,
   PageOptions,
+  RateLimit,
   Reaction,
   ReactionContent,
   Release,
@@ -166,7 +167,7 @@ export interface ForgeOptionsBase {
   instanceVersion?: string
   /** Every write, including a mutating `request()`, rejects with `ReadOnlyError` and reports `false`. */
   readOnly?: boolean
-  /** Called before a request is retried after a secondary rate limit, with the wait in milliseconds. */
+  /** Called before a request is retried after a rate limit that names a wait of at most a minute, with the wait in milliseconds. */
   onRetry?: FetcherOptions['onRetry']
   /**
    * Called with the rate limit of every API response that reports one, so that you can follow the budget without
@@ -1160,6 +1161,19 @@ export interface ForgeProvider<HasWeb extends boolean = boolean> {
    * Updates `capabilities` and returns it.
    */
   refreshCapabilities: () => Promise<ForgeCapabilities>
+  /**
+   * The request budgets of the latest responses, one per `resource`, read without sending a request. GitHub keeps
+   * a budget per resource, such as `core`, `search` and `graphql`; other forges report one budget with no
+   * `resource`. Empty until a response reports a budget. A budget whose `resetAt` has passed is left out.
+   * @example
+   * ```ts
+   * const core = forge.rateLimits().find(budget => !budget.resource || budget.resource === 'core')
+   * if (core?.remaining !== undefined && core.limit && core.remaining / core.limit < 0.1) {
+   *   await slowDown(core.resetAt)
+   * }
+   * ```
+   */
+  rateLimits: () => RateLimit[]
   /** Rewrites Markdown into the dialect the forge renders; returns it unchanged where the forge renders CommonMark. */
   normaliseMarkdown: (body: string) => string
   readonly repos: ReposApi

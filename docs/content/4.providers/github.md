@@ -147,7 +147,7 @@ A file keeps its mode when you write over it: an executable file stays executabl
 
 ## Search
 
-GitHub gives search a lower rate limit than the rest of its API, and commit search has a limit of its own, separate from issue and repository search. After a search, `page.rateLimit` reports the limit that the search used, and its `resource` names it, such as `search` or `code_search`. `onRateLimit` reports the same, so you can keep the search budget apart from the `core` one.
+GitHub gives search a lower rate limit than the rest of its API, and code search has a limit of its own, separate from the search for issues, commits and repositories. After a search, `page.rateLimit` reports the limit that the search used, and its `resource` names it, such as `search` or `code_search`. `rateLimits()` and `onRateLimit` keep it apart from the `core` budget of the rest of the API.
 
 Repository search can't sort by creation time. If you ask for that order, you get the results by relevance, together with a `sort_unsupported` warning.
 
@@ -163,7 +163,7 @@ const page = await gh.search.threadsPage({ kind: 'pull_request', queryRaw: 'revi
 
 ## GraphQL
 
-For what the data model doesn't cover, a GitHub provider has `graphql()`, which sends a query or mutation to the GraphQL API of its instance with the provider's credentials. It resolves with the `data` of the response. When the response carries errors, it rejects with a `ForgeApiError`, or with an `InsufficientScopeError` when the token lacks a scope that a field needs:
+For what the data model doesn't cover, a GitHub provider has `graphql()`, which sends a query or mutation to the GraphQL API of its instance with the provider's credentials. It resolves with the `data` of the response. When the response carries errors, it rejects with a `ForgeApiError`, with an `InsufficientScopeError` when the token lacks a scope that a field needs, or with a `RateLimitedError` for a rate limit, which GitHub reports with a `200`:
 
 ```ts
 const { viewer } = await forge.graphql<{ viewer: { login: string } }>(

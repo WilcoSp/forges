@@ -60,7 +60,7 @@ import { toBase64 } from '../crypto.ts'
 import { defineForgeProvider, perKind, verb } from '../define.ts'
 import { BranchMovedError, ForgeApiError, ForgeError, MergeConflictError, NotFoundError, soleMergeMethod, toMergeError, UnsupportedOperationError } from '../errors.ts'
 import { isNamespaceRef } from '../model.ts'
-import { createListing, getManyConcurrently, hostOf, mergeCommitMessage, phased, requireThread, resolveToken, summariseChecks, syntheticReview, toPage, toWarning } from '../utils.ts'
+import { createListing, getManyConcurrently, hostOf, isFirstPage, mergeCommitMessage, phased, rateLimitPart, requireThread, resolveToken, summariseChecks, syntheticReview, toPage, toWarning } from '../utils.ts'
 import { nativeEventsFor } from '../webhooks.ts'
 import {
   FORGE,
@@ -342,7 +342,7 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
         return { items: [], warnings: [{ code: 'kind_unsupported', message: `Bitbucket Cloud has no ${query.kind === 'issue' ? 'issues' : 'discussions'}` }] }
       }
       const warnings: ForgeWarning[] = []
-      if (!query.cursor) {
+      if (isFirstPage(query.cursor)) {
         if (query.labels?.length) {
           warnings.push({ code: 'filter_unsupported', message: 'Bitbucket has no labels; the labels filter was ignored' })
         }
@@ -403,7 +403,7 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
         throw new UnsupportedOperationError('Bitbucket has no cross-repository issue or pull request search; pass `repo`', context)
       }
       const warnings: ForgeWarning[] = []
-      if (!query.cursor) {
+      if (isFirstPage(query.cursor)) {
         if (query.labels?.length) {
           warnings.push({ code: 'filter_unsupported', message: 'Bitbucket has no labels; the label filter was ignored' })
         }
@@ -459,7 +459,7 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
           q: query.visibility === 'public' || query.visibility === 'private' ? `is_private = ${query.visibility === 'private'}` : undefined,
           sort: field && `${(query.direction ?? (field === 'name' ? 'asc' : 'desc')) === 'desc' ? '-' : ''}${field}`,
         },
-        warnings: query.sort === 'pushed' && !query.cursor ? [{ code: 'sort_unsupported', message: 'Bitbucket does not report pushes; sorted by update time' }] : undefined,
+        warnings: query.sort === 'pushed' && isFirstPage(query.cursor) ? [{ code: 'sort_unsupported', message: 'Bitbucket does not report pushes; sorted by update time' }] : undefined,
         select: page<BitbucketRepositoryDetail>,
       })
     }
@@ -629,7 +629,8 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
           if (ref.kind !== 'pull_request') {
             throw new UnsupportedOperationError('Only pull requests have participants', context)
           }
-          return { items: toParticipantReviews(ref, (await fetcher.json<BitbucketPullRequest>(threadPath(ref), { signal: listOptions?.signal })).data) }
+          const { data, response } = await fetcher.json<BitbucketPullRequest>(threadPath(ref), { signal: listOptions?.signal })
+          return { items: toParticipantReviews(ref, data), ...rateLimitPart(response) }
         }),
         createReview: verb('emulated', createReview),
         get: perKind({ pull_request: true, commit: true }, get),
