@@ -1,5 +1,5 @@
 import type { ProviderContext, ProviderDefinition, ProviderFactoryFunction, ProviderSpec } from '../define.ts'
-import type { BaseOptions, Comment, ForgeEventInput, ListOptions, Page, PageOptions, Release, RepoRef, ResolvedThreadRef, Thread, ThreadQuery, ThreadRef } from '../model.ts'
+import type { BaseOptions, Comment, ForgeEventInput, ListOptions, Page, PageOptions, Release, ReleaseUpdate, RepoRef, ResolvedThreadRef, Thread, ThreadQuery, ThreadRef } from '../model.ts'
 import type { AnonymousAuth, ForgeOptionsBase, TokenAuth, VerbScopes } from '../provider.ts'
 import type { ForgeVerb } from '../supports.ts'
 import type { WebLinks } from '../web.ts'
@@ -96,6 +96,15 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
     return list(`${repoPath(repo)}/releases`, listOptions, (raw: PushinRelease) => toRelease(repo, raw))
   }
 
+  async function writeRelease(repo: RepoRef, path: string, method: 'POST' | 'PATCH', input: ReleaseUpdate, options?: BaseOptions): Promise<Release> {
+    const { data } = await fetcher.json<PushinRelease>(path, {
+      method,
+      json: { tag_name: input.tag, target_commitish: input.target, name: input.name, body: input.body, draft: input.draft, prerelease: input.prerelease },
+      signal: options?.signal,
+    })
+    return toRelease(repo, data)
+  }
+
   return {
     traits: {
       eventKinds: 'native',
@@ -183,6 +192,12 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
         }
       }),
       listPage: verb('experimental', releasesPage),
+      downloadAsset: verb('unverified', async (ref, downloadOptions = {}) => (await fetcher.stream(`${repoPath(ref.repo)}/releases/assets/${encodeURIComponent(ref.id)}`, {
+        headers: { accept: 'application/octet-stream' },
+        signal: downloadOptions.signal,
+      })).body),
+      create: verb('unverified', (repo, input, options) => writeRelease(repo, `${repoPath(repo)}/releases`, 'POST', input, options)),
+      update: verb('unverified', (ref, update, options) => writeRelease(ref.repo, `${repoPath(ref.repo)}/releases/${encodeURIComponent(ref.id)}`, 'PATCH', update, options)),
     },
   }
 }
