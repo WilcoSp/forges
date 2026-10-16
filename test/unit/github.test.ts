@@ -255,6 +255,17 @@ describe('github discussions', () => {
     expect(JSON.parse(calls[1]!.body!).variables).toEqual({ id: 'D_kwDOAAB5ac4AAQ1f', reason: 'RESOLVED' })
   })
 
+  it('resolves a discussion state change with the discussion from the mutation', async () => {
+    const { provider, calls } = tokenProvider()
+    const ref = { ...discussion, externalId: 'D_kwDOAAB5ac4AAQ1f' }
+
+    await expect(provider.threads.close(ref)).resolves.toMatchObject({ kind: 'discussion', title: 'Weekly digest discussion', state: 'closed', closedAt: new Date('2025-09-18T09:00:00Z') })
+    await expect(provider.threads.reopen!(ref)).resolves.toMatchObject({ kind: 'discussion', state: 'open', closedAt: undefined })
+
+    expect(calls.map(call => call.operationName)).toEqual(['CloseDiscussion', 'ReopenDiscussion'])
+    expect(JSON.parse(calls[0]!.body!).query).toContain('closeDiscussion(input: { discussionId: $id, reason: $reason }) { discussion { id number title body closed')
+  })
+
   it('maps close reasons a discussion has, and passes `reasonRaw` through', async () => {
     const { provider, calls } = tokenProvider()
     const ref = { ...discussion, externalId: 'D_kwDOAAB5ac4AAQ1f' }
@@ -279,11 +290,13 @@ describe('github discussions', () => {
       auth: { type: 'token', token: 't' },
       fetch: async (url, init) => {
         requests.push({ method: init?.method, url, body: init?.body && JSON.parse(String(init.body)) })
-        return new Response(null, { status: 204 })
+        return Response.json({ number: 7, title: 'Flaky test', state: 'closed', state_reason: 'not_planned', closed_at: '2025-09-18T09:00:00Z' })
       },
     }).create()
 
-    await provider.threads.close({ forge: 'github', instance: 'github.com', repo, kind: 'issue', number: '7' }, { reason: 'not_planned' })
+    const closed = await provider.threads.close({ forge: 'github', instance: 'github.com', repo, kind: 'issue', number: '7' }, { reason: 'not_planned' })
+
+    expect(closed).toMatchObject({ title: 'Flaky test', state: 'closed', stateReason: 'not_planned', closedAt: new Date('2025-09-18T09:00:00Z') })
 
     expect(requests).toEqual([{ method: 'PATCH', url: 'https://api.github.com/repos/acme/widgets/issues/7', body: { state: 'closed', state_reason: 'not_planned' } }])
   })
@@ -297,9 +310,10 @@ describe('github discussions', () => {
         auth: { type: 'token', token: 't' },
         fetch: async (url, init) => {
           requests.push({ method: init?.method, url, body: init?.body && JSON.parse(String(init.body)) })
+          const milestones = [{ number: 3, title: 'v1.0', state: 'closed' }, { number: 4, title: 'v2.0', state: 'open' }]
           return url.includes('/milestones')
-            ? Response.json([{ number: 3, title: 'v1.0', state: 'closed' }, { number: 4, title: 'v2.0', state: 'open' }])
-            : new Response(null, { status: 204 })
+            ? Response.json(milestones)
+            : Response.json({ number: 7, milestone: milestones.find(milestone => milestone.number === (requests.at(-1)!.body as { milestone: number | null }).milestone) ?? null })
         },
       }).create()
       return { provider, requests }
@@ -308,7 +322,7 @@ describe('github discussions', () => {
     it('sends a numeric id as it is', async () => {
       const { provider, requests } = milestoneProvider()
 
-      await provider.threads.setMilestone(issue, '3')
+      await expect(provider.threads.setMilestone(issue, '3')).resolves.toMatchObject({ id: '3', title: 'v1.0', state: 'closed' })
 
       expect(requests).toEqual([{ method: 'PATCH', url: 'https://api.github.com/repos/acme/widgets/issues/7', body: { milestone: 3 } }])
     })
@@ -316,7 +330,7 @@ describe('github discussions', () => {
     it('looks a title up among open and closed milestones', async () => {
       const { provider, requests } = milestoneProvider()
 
-      await provider.threads.setMilestone(issue, 'v2.0')
+      await expect(provider.threads.setMilestone(issue, 'v2.0')).resolves.toMatchObject({ id: '4', title: 'v2.0', state: 'open' })
 
       expect(requests.map(request => request.url)).toEqual([
         'https://api.github.com/repos/acme/widgets/milestones?state=all',
@@ -394,11 +408,11 @@ describe('github thread updates', () => {
     expect(JSON.parse(calls[0]!.body!)).toEqual({ title: 'Retry uploads', state: 'closed' })
   })
 
-  it('closes a discussion before it reads it back', async () => {
+  it('resolves a discussion state update with the discussion from the mutation', async () => {
     const { provider, calls } = tokenProvider()
-    await provider.threads.update(discussion, { state: 'closed' })
 
-    expect(calls.map(call => call.operationName)).toEqual(['DiscussionThread', 'CloseDiscussion', 'DiscussionThread'])
+    await expect(provider.threads.update(discussion, { state: 'closed' })).resolves.toMatchObject({ state: 'closed' })
+    expect(calls.map(call => call.operationName)).toEqual(['DiscussionThread', 'CloseDiscussion'])
   })
 
   it('refuses labels on a discussion before it writes anything', async () => {
@@ -593,10 +607,40 @@ describe('github repository and thread metadata', () => {
     const { provider } = tokenProvider({
       'DELETE https://api.github.com/repos/acme/widgets/issues/42/labels/bug': { status: 404, body: { message: 'Label does not exist', documentation_url: 'https://docs.github.com/rest/issues/labels#remove-a-label-from-an-issue' } },
       'DELETE https://api.github.com/repos/acme/widgets/issues/43/labels/bug': { status: 404, body: { message: 'Not Found' } },
+      'GET https://api.github.com/repos/acme/widgets/issues/42/labels?per_page=100': { status: 200, body: [{ name: 'triage', color: 'ededed' }] },
     })
 
-    await expect(provider.threads.removeLabels(pull, ['bug'])).resolves.toBeUndefined()
+    await expect(provider.threads.removeLabels(pull, ['bug'])).resolves.toEqual([{ name: 'triage', colour: 'ededed' }])
     await expect(provider.threads.removeLabels({ ...pull, number: '43' }, ['bug'])).rejects.toThrow(NotFoundError)
+  })
+
+  it('resolves removeLabels with the labels in the last delete response', async () => {
+    const { provider, calls } = tokenProvider({
+      'DELETE https://api.github.com/repos/acme/widgets/issues/42/labels/bug': { status: 200, body: [{ name: 'triage', color: 'ededed' }, { name: 'ui', color: '0e8a16' }] },
+      'DELETE https://api.github.com/repos/acme/widgets/issues/42/labels/ui': { status: 200, body: [{ name: 'triage', color: 'ededed' }] },
+    })
+
+    await expect(provider.threads.removeLabels(pull, ['bug', 'ui'])).resolves.toEqual([{ name: 'triage', colour: 'ededed' }])
+    expect(calls.map(call => call.method)).toEqual(['DELETE', 'DELETE'])
+  })
+
+  it.each(['setLabels', 'addLabels'] as const)('resolves %s with the labels in the response', async (verb) => {
+    const labels = [{ name: 'bug', color: 'd73a4a', description: 'Something is broken' }, { name: 'triage', color: 'ededed', description: null }]
+    const { provider, calls } = tokenProvider({
+      [`${verb === 'setLabels' ? 'PUT' : 'POST'} https://api.github.com/repos/acme/widgets/issues/42/labels`]: { status: 200, body: labels },
+    })
+
+    await expect(provider.threads[verb](pull, ['bug'])).resolves.toEqual([{ name: 'bug', colour: 'd73a4a', description: 'Something is broken' }, { name: 'triage', colour: 'ededed' }])
+    expect(calls).toHaveLength(1)
+  })
+
+  it('resolves setAssignees with the assignees in the response', async () => {
+    const { provider, calls } = tokenProvider({
+      'PATCH https://api.github.com/repos/acme/widgets/issues/42': { status: 200, body: { number: 42, assignees: [{ login: 'octocat', id: 583231, type: 'User' }] } },
+    })
+
+    await expect(provider.threads.setAssignees(pull, ['octocat'])).resolves.toMatchObject([{ login: 'octocat', id: '583231' }])
+    expect(calls.map(call => [call.method, JSON.parse(call.body!)])).toEqual([['PATCH', { assignees: ['octocat'] }]])
   })
 
   it('adds and removes labels without replacing the rest', async () => {

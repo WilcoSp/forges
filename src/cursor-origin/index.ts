@@ -2,14 +2,14 @@ import type { ProviderContext, ProviderDefinition, ProviderFactoryFunction, Prov
 import type { BaseOptions, Check, Comment, Cursor, ForgeEventInput, ForgeWarning, Installation, ListOptions, MergeMethod, Page, PageOptions, RateLimit, Repo, RepoRef, ResolvedThreadRef, Review, ReviewEvent, ReviewInput, Thread, ThreadQuery, ThreadRef } from '../model.ts'
 import type { AnonymousAuth, ForgeOptionsBase, InstallationsApi } from '../provider.ts'
 import type { CursorOriginAuth, OriginAppCredentials } from './auth.ts'
-import type { OriginBlob, OriginBranch, OriginCheckRun, OriginComment, OriginCommit, OriginCommitFile, OriginComparison, OriginContent, OriginGitRef, OriginInstallation, OriginPullRequest, OriginRepo, OriginReview, OriginTree } from './types.ts'
+import type { OriginBlob, OriginBranch, OriginCheckRun, OriginComment, OriginCommit, OriginCommitFile, OriginComparison, OriginContent, OriginGitRef, OriginInstallation, OriginLabel, OriginPullRequest, OriginRepo, OriginReview, OriginTree } from './types.ts'
 import { fromBase64, toFileContent } from '../contents.ts'
 import { defineForgeProvider, perKind, supportOnly, verb } from '../define.ts'
 import { ForgeError, soleMergeMethod, toMergeError, UnsupportedOperationError } from '../errors.ts'
 import { createFetcher as createFetcherBase } from '../fetch.ts'
 import { forgeIterable, getManyConcurrently, isFirstPage, iteratePages, phased, rateLimitPart, requireThread, resolveToken, summariseChecks, toWarning } from '../utils.ts'
 import { createOriginAppCredentials } from './auth.ts'
-import { FORGE, isConversationComment, toBranch, toChangedFile, toCheck, toComment, toCommentEvent, toCommit, toRepo, toReview, toReviewEvent, toTag, toThread, toTreeEntry } from './normalise.ts'
+import { FORGE, isConversationComment, toBranch, toChangedFile, toCheck, toComment, toCommentEvent, toCommit, toLabel, toRepo, toReview, toReviewEvent, toTag, toThread, toTreeEntry } from './normalise.ts'
 import { cursorOriginWebhooks } from './webhooks.ts'
 
 export type { CursorOriginAuth } from './auth.ts'
@@ -297,12 +297,18 @@ function setupOrigin({ options, baseUrl, instance, origin: context, fetcher, cre
         return { ...page, items: page.items.map(raw => toCommit(thread.repo, raw)) }
       }),
       commentsPage: perKind(PULL, commentsPage),
-      getComment: perKind(UNVERIFIED, async (ref, options) => toComment(ref.thread, (await fetcher.json<OriginComment>(`${repoPath(ref.thread.repo)}/pulls/comments/${encodeURIComponent(ref.id)}`, { signal: options?.signal })).data)),
+      getComment: perKind(UNVERIFIED, async (ref, options) => {
+        const thread = requireThread(ref.thread, context)
+        return toComment(thread, (await fetcher.json<OriginComment>(`${repoPath(thread.repo)}/pulls/comments/${encodeURIComponent(ref.id)}`, { signal: options?.signal })).data)
+      }),
       comment: perKind(PULL, async (thread, body, options) => {
         const ref = requireThread(thread, context)
         return toComment(ref, (await fetcher.json<OriginComment>(`${pullPath(ref)}/comments`, { method: 'POST', json: { body }, signal: options?.signal })).data)
       }),
-      editComment: perKind(UNVERIFIED, async (ref, body, options) => toComment(ref.thread, (await fetcher.json<OriginComment>(`${repoPath(ref.thread.repo)}/pulls/comments/${encodeURIComponent(ref.id)}`, { method: 'PATCH', json: { body }, signal: options?.signal })).data)),
+      editComment: perKind(UNVERIFIED, async (ref, body, options) => {
+        const thread = requireThread(ref.thread, context)
+        return toComment(thread, (await fetcher.json<OriginComment>(`${repoPath(thread.repo)}/pulls/comments/${encodeURIComponent(ref.id)}`, { method: 'PATCH', json: { body }, signal: options?.signal })).data)
+      }),
       deleteComment: perKind(UNVERIFIED, async (ref, options) => {
         await fetcher.raw(`${repoPath(ref.thread.repo)}/pulls/comments/${encodeURIComponent(ref.id)}`, { method: 'DELETE', signal: options?.signal })
       }),
@@ -338,13 +344,17 @@ function setupOrigin({ options, baseUrl, instance, origin: context, fetcher, cre
         return toThread(ref, (await fetcher.json<OriginPullRequest>(pullPath(ref), edits ? { method: 'PATCH', json, signal: options?.signal } : { signal: options?.signal })).data)
       }),
       close: perKind(PULL, async (thread, options) => {
-        await fetcher.raw(pullPath(requireThread(thread, context)), { method: 'PATCH', json: { state: 'closed' }, signal: options?.signal })
+        const ref = requireThread(thread, context)
+        return toThread(ref, (await fetcher.json<OriginPullRequest>(pullPath(ref), { method: 'PATCH', json: { state: 'closed' }, signal: options?.signal })).data)
       }),
       reopen: perKind(PULL, async (thread, options) => {
-        await fetcher.raw(pullPath(requireThread(thread, context)), { method: 'PATCH', json: { state: 'open' }, signal: options?.signal })
+        const ref = requireThread(thread, context)
+        return toThread(ref, (await fetcher.json<OriginPullRequest>(pullPath(ref), { method: 'PATCH', json: { state: 'open' }, signal: options?.signal })).data)
       }),
       setLabels: perKind(UNVERIFIED, async (thread, labels, options) => {
-        await fetcher.raw(`${pullPath(requireThread(thread, context))}/labels`, { method: 'PUT', json: { labels }, signal: options?.signal })
+        const { data } = await fetcher.json<OriginLabel[] | { labels?: OriginLabel[] } | undefined>(`${pullPath(requireThread(thread, context))}/labels`, { method: 'PUT', json: { labels }, signal: options?.signal })
+        const written = Array.isArray(data) ? data : data?.labels
+        return written ? written.map(toLabel) : labels.map(name => ({ name }))
       }),
       requestReview: perKind(UNVERIFIED, async (thread, reviewers, options) => {
         const users = reviewers.map(reviewer => typeof reviewer === 'string' ? reviewer : reviewer.id)
@@ -370,7 +380,8 @@ function setupOrigin({ options, baseUrl, instance, origin: context, fetcher, cre
           method = soleMergeMethod({ merge: repo.allowMergeCommit, squash: repo.allowSquashMerge }, context)
         }
         await hooks.beforeMerge?.()
-        await fetcher.raw(`${pullPath(ref)}/merge`, { method: 'POST', json: { mergeMethod: method, expectedHeadSha: mergeOptions.sha }, mapError: toMergeError, signal: mergeOptions.signal })
+        const { data } = await fetcher.json<{ mergeCommitSha?: string } | undefined>(`${pullPath(ref)}/merge`, { method: 'POST', json: { mergeMethod: method, expectedHeadSha: mergeOptions.sha }, mapError: toMergeError, signal: mergeOptions.signal })
+        return { status: 'merged' as const, sha: data?.mergeCommitSha, raw: data }
       }),
       reviewsPage: verb('experimental', async (thread, listOptions: PageOptions = {}) => {
         const ref = requireThread(thread, context)

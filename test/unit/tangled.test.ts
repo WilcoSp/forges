@@ -276,6 +276,36 @@ describe('tangled writes', () => {
     })
   })
 
+  describe('editing a comment whose ref has no thread number', () => {
+    const uri = `at://${OWNER}/sh.tangled.feed.comment/3mwqowncomment`
+    const unnumbered = { forge: 'tangled', instance: 'tangled.org', thread: { ...pull, number: undefined }, id: uri } as const
+    const edit = (subject: string) => provider({
+      [`GET ${PDS}/xrpc/com.atproto.repo.getRecord?repo=${OWNER}&collection=sh.tangled.feed.comment&rkey=3mwqowncomment`]: { status: 200, body: { uri, cid: 'bafyreiowncomment', value: {
+        $type: 'sh.tangled.feed.comment',
+        body: { $type: 'sh.tangled.markup.markdown', text: 'Before' },
+        subject: { uri: subject, cid: 'bafyreisubject' },
+        createdAt: '2025-09-16T09:00:00Z',
+      } } },
+      [`POST ${PDS}/xrpc/com.atproto.repo.putRecord`]: { status: 200, body: { uri, cid: 'bafyreiedited' } },
+    })
+
+    it('takes the thread from the comment record', async () => {
+      const { instance, calls } = edit(PULL)
+      const comment = await instance.threads.editComment(unnumbered, 'After')
+
+      expect(comment.ref.thread).toMatchObject({ kind: 'pull_request', number: PULL })
+      expect(comment.body).toBe('After')
+      expect(calls.filter(call => call.url.endsWith('putRecord'))).toHaveLength(1)
+    })
+
+    it('rejects before it writes when the record names no thread', async () => {
+      const { instance, calls } = edit(`at://${OWNER}/sh.tangled.repo/widgets`)
+
+      await expect(instance.threads.editComment(unnumbered, 'After')).rejects.toThrow(UnresolvedThreadError)
+      expect(calls.filter(call => call.url.endsWith('putRecord'))).toEqual([])
+    })
+  })
+
   it('signs in at the PDS a handle resolves to', async () => {
     const { fetch, calls } = fixtureFetch('tangled', {
       'GET https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=acme.example.com': { status: 200, body: { did: OWNER } },
@@ -301,7 +331,20 @@ describe('tangled writes', () => {
     })
     await instance.threads.reopen!(pull)
 
-    expect(calls.at(-1)!.url).toBe(`${PDS}/xrpc/com.atproto.repo.createRecord`)
+    expect(calls.filter(call => call.url === `${PDS}/xrpc/com.atproto.repo.createRecord`)).toHaveLength(1)
+  })
+
+  it('resolves a state change with the thread in its new state before the backlink index lists it', async () => {
+    const { instance, calls } = provider()
+    const before = await instance.threads.get(pull)
+
+    const closed = await instance.threads.close!(pull)
+
+    expect(before.state).toBe('open')
+    expect(closed).toMatchObject({ ref: { number: before.ref.number }, title: before.title, state: 'closed', stateRaw: 'closed', closedAt: expect.any(Date) })
+    expect(closed.updatedAt).toEqual(closed.closedAt)
+    expect((await instance.threads.reopen!(pull))).toMatchObject({ state: 'open', stateRaw: 'open', closedAt: undefined })
+    expect(calls.filter(call => call.method === 'POST' && call.url.endsWith('createRecord'))).toHaveLength(2)
   })
 
   it('refreshes an expired session once', async () => {
@@ -321,7 +364,7 @@ describe('tangled writes', () => {
     await instance.threads.close!(pull)
 
     expect(calls.map(call => call.url.split('/').at(-1))).toContain('com.atproto.server.refreshSession')
-    expect(calls.at(-1)!.authorization).toBe('Bearer fresh-jwt')
+    expect(calls.filter(call => call.url.endsWith('createRecord')).at(-1)!.authorization).toBe('Bearer fresh-jwt')
   })
 
   it('sends writes through the OAuth client fetch', async () => {
@@ -701,6 +744,27 @@ describe('tangled thread updates', () => {
     expect(thread.state).toBe('closed')
     expect(thread.labels).toEqual([{ name: 'bug', colour: 'EF4444' }])
     expect(thread.assignees.map(actor => actor.id)).toEqual([ADA])
+  })
+
+  it.each([
+    ['setLabels', ['bug', 'priority:high'], [{ name: 'bug', colour: 'EF4444' }, { name: 'priority:high', colour: 'F59E0B' }]],
+    ['addLabels', ['bug'], [{ name: 'priority:low', colour: 'F59E0B' }, { name: 'bug', colour: 'EF4444' }]],
+    ['removeLabels', ['priority:low'], []],
+  ] as const)('resolves %s with the labels its op leaves, reading the label ops once', async (verb, names, expected) => {
+    const { instance, calls } = provider(labelled)
+
+    await expect(instance.threads[verb](pull, [...names])).resolves.toEqual(expected)
+    expect(calls.filter(call => call.url.includes('collection=sh.tangled.label.op&path=.subject'))).toHaveLength(1)
+    expect(written(calls).map(write => write.collection)).toEqual(['sh.tangled.label.op'])
+  })
+
+  it('resolves setAssignees with the assignees its op leaves, reading the label ops once', async () => {
+    const { instance, calls } = provider(labelled)
+
+    const assignees = await instance.threads.setAssignees(pull, [ADA, GRACE])
+
+    expect(assignees.map(actor => actor.id)).toEqual([GRACE, ADA])
+    expect(calls.filter(call => call.url.includes('collection=sh.tangled.label.op&path=.subject'))).toHaveLength(1)
   })
 
   it('clears assignees as a no-op where the repository has no assignee label', async () => {

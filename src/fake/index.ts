@@ -32,6 +32,7 @@ import type {
   ReleaseRef,
   Repo,
   RepoRef,
+  ResolvedThreadRef,
   Review,
   ReviewComment,
   ReviewEvent,
@@ -55,7 +56,7 @@ import { BranchMovedError, ForbiddenError, ForgeApiError, ForgeNetworkError, For
 import { completeEvent } from '../events.ts'
 import { sleep } from '../fetch.ts'
 import { capabilityOf } from '../supports.ts'
-import { getManyConcurrently } from '../utils.ts'
+import { getManyConcurrently, requireThread } from '../utils.ts'
 import { verifyHmacSignature } from '../webhooks.ts'
 
 /** A repository to seed, as `owner/name` plus whatever the test cares about. */
@@ -610,7 +611,8 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
   }
 
   function threadState(ref: ThreadRef): FakeThreadState {
-    const state = repoState(ref.repo).threads.get(String(ref.number))
+    const { number } = requireThread(ref, origin)
+    const state = repoState(ref.repo).threads.get(number)
     if (!state || state.thread.kind !== ref.kind) {
       throw notFound(`No ${ref.kind} ${slugOf(ref.repo)}#${ref.number}`)
     }
@@ -620,7 +622,7 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
   function addThread(seed: FakeThreadSeed): Thread {
     const repo = store.repos.get(seed.repo) ?? (addRepo({ repo: seed.repo }), store.repos.get(seed.repo)!)
     const number = String(seed.number ?? repo.threads.size + 1)
-    const ref: ThreadRef = { ...origin, repo: repo.repo.ref, kind: seed.kind, number }
+    const ref: ResolvedThreadRef = { ...origin, repo: repo.repo.ref, kind: seed.kind, number }
     const at = now()
     const thread: Thread = {
       ref,
@@ -914,6 +916,8 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
     return commit
   }
 
+  let merges = 0
+
   function setState(ref: ThreadRef, state: ThreadState, action: EventAction): void {
     const current = threadState(ref).thread
     if (current.state === state) {
@@ -928,7 +932,7 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
     record(ref, 'state_change', action, action, { type: 'state_change', state })
   }
 
-  function setLabels(ref: ThreadRef, labels: string[]): void {
+  function setLabels(ref: ThreadRef, labels: string[]): Label[] {
     const thread = threadState(ref).thread
     const before = new Set(thread.labels.map(item => item.name))
     const after = new Set(labels)
@@ -939,9 +943,10 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
     for (const name of [...before].filter(name => !after.has(name))) {
       record(ref, 'label', 'unlabelled', `removed label ${name}`, { type: 'label', label: name })
     }
+    return thread.labels
   }
 
-  function setAssignees(ref: ThreadRef, assignees: Array<string | Actor>): void {
+  function setAssignees(ref: ThreadRef, assignees: Array<string | Actor>): Actor[] {
     const thread = threadState(ref).thread
     const before = thread.assignees
     thread.assignees = assignees.map(item => typeof item === 'string' ? actor(item) : { ...item })
@@ -951,6 +956,7 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
     for (const assignee of before.filter(item => !thread.assignees.some(kept => kept.login === item.login))) {
       record(ref, 'assignment', 'unassigned', `unassigned ${assignee.login}`, { type: 'assignment', assignee })
     }
+    return thread.assignees
   }
 
   function runState(ref: CiRunRef): FakeRunState {
@@ -1238,14 +1244,19 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
         close: perKind(kinds('threads.close', WRITABLE), async (ref, closeOptions = {}) => {
           threadState(ref).thread.stateReason = closeOptions.reasonRaw ?? closeOptions.reason
           setState(ref, 'closed', 'closed')
+          return threadState(ref).thread
         }),
-        reopen: perKind(kinds('threads.reopen', WRITABLE), async ref => setState(ref, 'open', 'reopened')),
+        reopen: perKind(kinds('threads.reopen', WRITABLE), async (ref) => {
+          setState(ref, 'open', 'reopened')
+          return threadState(ref).thread
+        }),
         addLabels: perKind(kinds('threads.addLabels', WRITABLE), async (ref, labels) => {
           const thread = threadState(ref).thread
           for (const name of labels.filter(name => !thread.labels.some(item => item.name === name))) {
             thread.labels = [...thread.labels, label(name)]
             record(ref, 'label', 'labelled', `added label ${name}`, { type: 'label', label: name })
           }
+          return thread.labels
         }),
         removeLabels: perKind(kinds('threads.removeLabels', WRITABLE), async (ref, labels) => {
           const thread = threadState(ref).thread
@@ -1253,6 +1264,7 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
             thread.labels = thread.labels.filter(item => item.name !== name)
             record(ref, 'label', 'unlabelled', `removed label ${name}`, { type: 'label', label: name })
           }
+          return thread.labels
         }),
         setLabels: perKind(kinds('threads.setLabels', WRITABLE), async (ref, labels) => setLabels(ref, labels)),
         setAssignees: perKind(kinds('threads.setAssignees', WRITABLE), async (ref, assignees) => setAssignees(ref, assignees)),
@@ -1270,7 +1282,7 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
             throw notFound(`No pull request ${slugOf(ref.repo)}#${ref.number}`)
           }
           await hooks.beforeMerge?.()
-          if (state.thread.state !== 'open' || state.mergeable === 'blocked') {
+          if (state.thread.state !== 'open' || (state.mergeable === 'blocked' && !mergeOptions.whenChecksPass)) {
             throw new MergeBlockedError(`Pull request ${slugOf(ref.repo)}#${ref.number} is not mergeable`, 405, '', origin)
           }
           if (state.mergeable === 'conflict') {
@@ -1279,7 +1291,15 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
           if (mergeOptions.sha !== undefined && mergeOptions.sha !== state.thread.branches?.head.sha) {
             throw new MergeConflictError(`Head branch of ${slugOf(ref.repo)}#${ref.number} moved from ${mergeOptions.sha}`, 409, '', origin)
           }
+          if (mergeOptions.whenChecksPass) {
+            return { status: 'queued' }
+          }
+          const sha = (++merges).toString(16).padStart(40, 'f')
+          if (state.thread.branches) {
+            state.thread.branches = { ...state.thread.branches, mergeCommitSha: sha }
+          }
           setState(ref, 'merged', 'merged')
+          return { status: 'merged', sha, raw: { sha } }
         }),
         subscriptions: perKind(kinds('threads.subscription', WRITABLE), {
           subscription: async ref => threadState(ref).subscription,

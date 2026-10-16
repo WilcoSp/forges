@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { BranchMovedError, ContentNotTextError, NotFoundError, UnsupportedOperationError } from '../../src/errors.ts'
+import { BranchMovedError, ContentNotTextError, NotFoundError, UnresolvedThreadError, UnsupportedOperationError } from '../../src/errors.ts'
 import { fake } from '../../src/fake/index.ts'
 import { commentMarker } from '../../src/model.ts'
 import { signDelivery } from '../../src/testing/index.ts'
@@ -103,6 +103,15 @@ describe('fake forge', () => {
 
     await expect(forge.repos.get(repo)).rejects.toThrow(NotFoundError)
     await expect(forge.threads.get({ forge: 'fake', instance: 'fake.test', repo: { ...repo, name: 'widgets' }, kind: 'issue', number: '99' })).rejects.toThrow(NotFoundError)
+  })
+
+  it('rejects a thread ref without a number with UnresolvedThreadError', async () => {
+    const forge = fake({ seed }).create()
+    const thread = { forge: 'fake', instance: 'fake.test', repo: { forge: 'fake', instance: 'fake.test', owner: 'acme', name: 'widgets' }, kind: 'issue' as const }
+
+    await expect(forge.threads.get(thread)).rejects.toThrow(UnresolvedThreadError)
+    await expect(forge.threads.comment(thread, 'Thanks!')).rejects.toThrow(UnresolvedThreadError)
+    await expect(forge.threads.editComment({ forge: 'fake', instance: 'fake.test', thread, id: '1-1' }, 'Edited')).rejects.toThrow(UnresolvedThreadError)
   })
 
   it('streams writes to subscribers as they happen', async () => {
@@ -573,5 +582,88 @@ describe('fake capabilities', () => {
 
     expect(forge.capabilities.writes.addLabels).toMatchObject({ issue: false, pull_request: 'experimental' })
     expect(forge.can('threads.close', 'issue')).toBe(false)
+  })
+})
+
+describe('fake write results', () => {
+  const repo = { forge: 'fake', instance: 'fake.test', owner: 'acme', name: 'widgets' }
+  const issue = { forge: 'fake', instance: 'fake.test', repo, kind: 'issue' as const, number: '1' }
+  const pull = { forge: 'fake', instance: 'fake.test', repo, kind: 'pull_request' as const, number: '2' }
+
+  it.each(['merge', 'approveAndMerge'] as const)('resolves %s with the merge commit that a following read reports', async (verb) => {
+    const forge = fake({ seed }).create()
+
+    const result = await forge.threads[verb](pull)
+
+    expect(result).toMatchObject({ status: 'merged', sha: expect.stringMatching(/^[0-9a-f]{40}$/) })
+    expect((await forge.threads.get(pull)).branches?.mergeCommitSha).toBe(result.sha)
+  })
+
+  it.each(['merge', 'approveAndMerge'] as const)('resolves %s with whenChecksPass as queued and leaves the pull request open', async (verb) => {
+    const forge = fake({ seed }).create()
+
+    await expect(forge.threads[verb](pull, { method: 'squash', whenChecksPass: true })).resolves.toEqual({ status: 'queued' })
+
+    const thread = await forge.threads.get(pull)
+    expect(thread.state).toBe('open')
+    expect(thread.branches?.mergeCommitSha).toBeUndefined()
+  })
+
+  it('queues a merge with whenChecksPass while the pull request is blocked', async () => {
+    const forge = fake({ seed: { ...seed, threads: seed.threads.map(thread => thread.kind === 'pull_request' ? { ...thread, mergeable: 'blocked' as const } : thread) } }).create()
+
+    await expect(forge.threads.merge(pull, { whenChecksPass: true })).resolves.toEqual({ status: 'queued' })
+  })
+
+  it.each([
+    ['setLabels', ['bug']],
+    ['addLabels', ['bug']],
+  ] as const)('resolves %s with the labels that a following read returns', async (verb, labels) => {
+    const forge = fake({ seed }).create()
+
+    const result = await forge.threads[verb](issue, [...labels])
+
+    expect(result.map(label => label.name)).toContain('bug')
+    expect(result).toEqual((await forge.threads.get(issue)).labels)
+  })
+
+  it('resolves removeLabels with the labels that a following read returns', async () => {
+    const forge = fake({ seed }).create()
+    await forge.threads.setLabels(issue, ['bug', 'triage'])
+
+    const result = await forge.threads.removeLabels(issue, ['bug'])
+
+    expect(result.map(label => label.name)).toEqual(['triage'])
+    expect(result).toEqual((await forge.threads.get(issue)).labels)
+  })
+
+  it('resolves close and reopen with the thread that a following read returns', async () => {
+    const forge = fake({ seed }).create()
+
+    const closed = await forge.threads.close(issue, { reason: 'not_planned' })
+    expect(closed).toMatchObject({ state: 'closed', stateReason: 'not_planned' })
+    expect(closed).toEqual(await forge.threads.get(issue))
+
+    const reopened = await forge.threads.reopen(issue)
+    expect(reopened.state).toBe('open')
+    expect(reopened).toEqual(await forge.threads.get(issue))
+  })
+
+  it('resolves setAssignees with the assignees that a following read returns', async () => {
+    const forge = fake({ seed }).create()
+
+    const result = await forge.threads.setAssignees(issue, ['octocat'])
+
+    expect(result.map(actor => actor.login)).toEqual(['octocat'])
+    expect(result).toEqual((await forge.threads.get(issue)).assignees)
+  })
+
+  it('resolves approve with the review that a following read returns', async () => {
+    const forge = fake({ seed }).create()
+
+    const review = await forge.threads.approve(pull, 'Ship it')
+
+    expect(review).toMatchObject({ state: 'approved', body: 'Ship it' })
+    expect(await forge.threads.getReview(review.ref)).toEqual(review)
   })
 })

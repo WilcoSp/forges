@@ -92,11 +92,15 @@ A ref from a webhook has no `number` until it is matched to a record. To fill in
 
 The state of a thread is the latest state record that was written by the author of the thread, the owner of the repo or a collaborator. The provider ignores state records from other accounts. If another account calls `close()` or `reopen()`, the call throws `InsufficientScopeError` and writes no record.
 
+`close()` and `reopen()` read the thread after writing the state record, and resolve with it in the state they wrote, even while the backlink index still lists the earlier state.
+
 ## Labels and assignees
 
 Labels are `sh.tangled.label.definition` records, and a thread's labels are the label ops that the owner of the repo or a collaborator wrote for it, applied in order. A label with a value, such as `priority`, appears as `priority:high`. Tangled stores assignees as an `assignee` label whose values are DIDs, so they appear in `assignees` rather than in `labels`.
 
 Each call to `setLabels()`, `addLabels()`, `removeLabels()` or `setAssignees()` writes one label op with what it adds and removes. `update()` packs `labels` and `assignees` into a single op too, and writes it before the state record and the thread edit, so a name the repo doesn't have stops it before anything changes. Only the owner of the repo or a collaborator can write one that counts, so for any other account these calls throw `InsufficientScopeError`. A name must match a label that the repo record lists, or the call throws `NotFoundError`. `createLabel()` writes a definition that applies to issues and pulls and adds it to the repo record, so only the owner of the repo can call it.
+
+The backlink index can take a while to list a new label op, so `setLabels()`, `addLabels()`, `removeLabels()` and `setAssignees()` don't read the labels back. They resolve with what the op leaves, worked out from the label ops they read before writing it.
 
 `repos.collaborators()` lists the owner of the repo with the role `admin` and each collaborator with the role `write`. `permissionFor()` returns `read` for any other account, because every Tangled repo is public.
 

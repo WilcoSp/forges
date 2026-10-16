@@ -14,6 +14,7 @@ import type {
   ListOptions,
   MergeMethod,
   MergeOptions,
+  MergeResult,
   OwnerRepoQuery,
   Page,
   PageOptions,
@@ -201,7 +202,8 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
         .map(method => [method, true])), context)
     }
 
-    async function merge(thread: ThreadRef, mergeOptions: MergeOptions = {}, hooks: MergeHooks = {}): Promise<void> {
+    /** A merge that outlasts Bitbucket's own timeout responds with `202` and finishes in the background. */
+    async function merge(thread: ThreadRef, mergeOptions: MergeOptions = {}, hooks: MergeHooks = {}): Promise<MergeResult> {
       const ref = requireThread(thread, context)
       if (ref.kind !== 'pull_request') {
         throw new UnsupportedOperationError('Only pull requests can be merged', context)
@@ -219,12 +221,15 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
       }
       const method = mergeOptions.method ?? await resolveMergeMethod(ref, pull, mergeOptions.signal)
       await hooks.beforeMerge?.()
-      await fetcher.raw(`${threadPath(ref)}/merge`, {
+      const { data, response } = await fetcher.json<BitbucketPullRequest | undefined>(`${threadPath(ref)}/merge`, {
         method: 'POST',
         json: { merge_strategy: toStrategy(method), message: mergeCommitMessage(mergeOptions) },
         mapError: toMergeError,
         signal: mergeOptions.signal,
       })
+      return response.status === 202 || data?.state !== 'MERGED'
+        ? { status: 'queued', raw: data }
+        : { status: 'merged', sha: data.merge_commit?.hash, raw: data }
     }
 
     const STATUS_STATES: Record<CheckState, string> = { pending: 'INPROGRESS', success: 'SUCCESSFUL', failure: 'FAILED', neutral: 'STOPPED', unknown: 'INPROGRESS' }
@@ -666,8 +671,9 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
           return toComment(ref, data)
         }),
         editComment: perKind({ pull_request: true, commit: true }, async (ref, body, options) => {
+          const thread = requireThread(ref.thread, context)
           const { data } = await fetcher.json<BitbucketComment>(commentPath(ref), { method: 'PUT', json: { content: { raw: body } }, signal: options?.signal })
-          return toComment(ref.thread, data)
+          return toComment(thread, data)
         }),
         deleteComment: perKind({ pull_request: true, commit: true }, async (ref, options) => {
           await fetcher.raw(commentPath(ref), { method: 'DELETE', signal: options?.signal })
@@ -736,7 +742,8 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
           })
         }),
         close: perKind({ pull_request: true }, async (thread, options) => {
-          await fetcher.raw(`${threadPath(requirePull(thread, 'declined'))}/decline`, { method: 'POST', signal: options?.signal })
+          const ref = requirePull(thread, 'declined')
+          return toPullThread(ref, (await fetcher.json<BitbucketPullRequest>(`${threadPath(ref)}/decline`, { method: 'POST', signal: options?.signal })).data)
         }),
         merge: verb(true, merge),
       },

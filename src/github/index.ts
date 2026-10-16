@@ -31,6 +31,7 @@ import type {
   ListOptions,
   MergeMethod,
   MergeOptions,
+  MergeResult,
   Notification,
   NotificationListOptions,
   NotificationRef,
@@ -152,6 +153,7 @@ import {
   toEvent,
   toGitCommit,
   toLabel,
+  toLabels,
   toMilestone,
   toNotification,
   toRelease,
@@ -676,7 +678,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       : `${repoPath(ref.thread.repo)}/issues/comments/${encodeURIComponent(ref.id)}`
   }
 
-  async function setState(thread: ThreadRef, state: 'open' | 'closed', options_: CloseOptions = {}): Promise<void> {
+  async function setState(thread: ThreadRef, state: 'open' | 'closed', options_: CloseOptions = {}): Promise<Thread> {
     const ref = requireThread(thread, context)
     if (ref.kind === 'commit') {
       throw new UnsupportedOperationError('Commits have no open or closed state', context)
@@ -687,20 +689,21 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         throw new UnsupportedOperationError(`GitHub discussions have no ${options_.reason} close reason; pass reasonRaw: 'outdated'`, context)
       }
       const id = await discussionId(ref, options_)
-      await (state === 'closed'
-        ? graphql('CLOSE_DISCUSSION', { id, reason: reason?.toUpperCase() ?? null }, options_)
-        : graphql('REOPEN_DISCUSSION', { id }, options_))
-      return
+      const data = state === 'closed'
+        ? (await graphql<{ closeDiscussion: { discussion: GraphQLDiscussion } }>('CLOSE_DISCUSSION', { id, reason: reason?.toUpperCase() ?? null }, options_)).closeDiscussion
+        : (await graphql<{ reopenDiscussion: { discussion: GraphQLDiscussion } }>('REOPEN_DISCUSSION', { id }, options_)).reopenDiscussion
+      return (await import('./graphql.ts')).toDiscussionThread(ref, data.discussion)
     }
     const reason = options_.reasonRaw ?? options_.reason
-    await fetcher.raw(threadPath(ref), {
+    const { data } = await fetcher.json<GitHubIssue>(threadPath(ref), {
       method: 'PATCH',
       json: ref.kind === 'issue' && state === 'closed' && reason ? { state, state_reason: reason } : { state },
       signal: options_.signal,
     })
+    return toThread(ref, data)
   }
 
-  async function merge(thread: ThreadRef, options_: MergeOptions = {}, hooks: MergeHooks = {}): Promise<void> {
+  async function merge(thread: ThreadRef, options_: MergeOptions = {}, hooks: MergeHooks = {}): Promise<MergeResult> {
     const ref = requireThread(thread, context)
     if (ref.kind !== 'pull_request') {
       throw new UnsupportedOperationError('Only pull requests can be merged', context)
@@ -721,10 +724,10 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       method = soleMergeMethod({ merge: repo.allow_merge_commit, squash: repo.allow_squash_merge, rebase: repo.allow_rebase_merge }, context)
     }
     await hooks.beforeMerge?.()
-    await directMerge(ref, method, options_)
+    return directMerge(ref, method, options_)
   }
 
-  async function directMerge(ref: ResolvedThreadRef, method: MergeMethod, mergeOptions: MergeOptions): Promise<void> {
+  async function directMerge(ref: ResolvedThreadRef, method: MergeMethod, mergeOptions: MergeOptions): Promise<MergeResult> {
     const path = `${threadPath(ref)}/merge`
     const { sha, title, message } = mergeOptions
     const body = { merge_method: method, sha, commit_title: title, commit_message: message }
@@ -757,8 +760,8 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         }
         if (enterprise && error instanceof NotFoundError) {
           url = fetcher.resolve(path)
-          await fetcher.raw(path, { method: 'PUT', json: body, mapError: toMergeError, signal })
-          return
+          const { data } = await fetcher.json<{ sha?: string } | undefined>(path, { method: 'PUT', json: body, mapError: toMergeError, signal })
+          return { status: 'merged', sha: data?.sha, raw: data }
         }
         state = pendingMergeFrom(error, method, sha, title, message)
         status = 409
@@ -780,7 +783,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       const excerpt = JSON.stringify(state).slice(0, 512)
       switch (state.status as string) {
         case 'merged':
-          return
+          return { status: 'merged', sha: state.details?.sha, raw: state }
         case 'enqueued':
           throw new MergeBlockedError('Pull request was added to a merge queue and has not merged', status, excerpt, errorContext)
         case 'failed':
@@ -925,15 +928,16 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
   }
 
   async function getComment(ref: CommentRef, options?: BaseOptions): Promise<Comment> {
-    if (ref.thread.kind === 'discussion') {
+    const thread = requireThread(ref.thread, context)
+    if (thread.kind === 'discussion') {
       const data = await graphql<{ node: GraphQLComment | null }>('GET_DISCUSSION_COMMENT', { id: ref.id }, options)
       if (!data.node?.id) {
         throw new NotFoundError(`Comment ${ref.id} not found`, 404, '', context)
       }
-      return (await import('./graphql.ts')).toDiscussionComment(ref.thread, data.node)
+      return (await import('./graphql.ts')).toDiscussionComment(thread, data.node)
     }
     const { data } = await fetcher.json<GitHubComment>(commentPath(ref), { signal: options?.signal })
-    return toComment(ref.thread, data)
+    return toComment(thread, data)
   }
 
   async function getReview(ref: ReviewRef, options?: BaseOptions): Promise<Review> {
@@ -1591,9 +1595,9 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
     }
   }
 
-  async function issuePatch(thread: ThreadRef, json: Record<string, unknown>, action: string, signal?: AbortSignal): Promise<void> {
+  async function issuePatch(thread: ThreadRef, json: Record<string, unknown>, action: string, signal?: AbortSignal): Promise<GitHubIssue> {
     const ref = requireIssueOrPull(thread, context, action)
-    await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}`, { method: 'PATCH', json, signal })
+    return (await fetcher.json<GitHubIssue>(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}`, { method: 'PATCH', json, signal })).data
   }
 
   /** Check runs need an installation credential; a token writes a commit status instead. */
@@ -1940,12 +1944,13 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         return toComment(ref, data)
       }),
       editComment: perKind({ issue: true, pull_request: true, discussion: true, commit: true }, async (ref, body, options) => {
-        if (ref.thread.kind === 'discussion') {
+        const thread = requireThread(ref.thread, context)
+        if (thread.kind === 'discussion') {
           const data = await graphql<{ updateDiscussionComment: { comment: GraphQLComment } }>('UPDATE_DISCUSSION_COMMENT', { id: ref.id, body }, options)
-          return (await import('./graphql.ts')).toDiscussionComment(ref.thread, data.updateDiscussionComment.comment)
+          return (await import('./graphql.ts')).toDiscussionComment(thread, data.updateDiscussionComment.comment)
         }
         const { data } = await fetcher.json<GitHubComment>(commentPath(ref), { method: 'PATCH', json: { body }, signal: options?.signal })
-        return toComment(ref.thread, data)
+        return toComment(thread, data)
       }),
       deleteComment: perKind({ issue: true, pull_request: true, discussion: true, commit: true }, async (ref, options) => {
         if (ref.thread.kind === 'discussion') {
@@ -1994,11 +1999,9 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
             throw new UnsupportedOperationError('Setting labels or assignees on a GitHub discussion is not supported', context)
           }
           const id = await discussionId(ref, options)
-          if (input.state) {
-            await setState({ ...ref, externalId: id }, input.state, options)
-          }
+          const changed = input.state && await setState({ ...ref, externalId: id }, input.state, options)
           if (input.title === undefined && input.body === undefined) {
-            return getDiscussion(ref, options)
+            return changed || getDiscussion(ref, options)
           }
           const data = await graphql<{ updateDiscussion: { discussion: GraphQLDiscussion } }>('UPDATE_DISCUSSION', { id, title: input.title, body: input.body }, options)
           return (await import('./graphql.ts')).toDiscussionThread(ref, data.updateDiscussion.discussion)
@@ -2014,13 +2017,15 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       }),
       addLabels: perKind({ issue: true, pull_request: true }, async (thread, labels, options) => {
         const ref = requireIssueOrPull(thread, context, 'label')
-        await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/labels`, { method: 'POST', json: { labels }, signal: options?.signal })
+        return toLabels((await fetcher.json<GitHubIssue['labels']>(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/labels`, { method: 'POST', json: { labels }, signal: options?.signal })).data)
       }),
       removeLabels: perKind({ issue: true, pull_request: true }, async (thread, labels, options) => {
         const ref = requireIssueOrPull(thread, context, 'label')
+        const path = `${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/labels`
+        let remaining: GitHubIssue['labels'] | undefined
         for (const label of labels) {
           try {
-            await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/labels/${encodeURIComponent(label)}`, { method: 'DELETE', signal: options?.signal })
+            remaining = (await fetcher.json<GitHubIssue['labels']>(`${path}/${encodeURIComponent(label)}`, { method: 'DELETE', signal: options?.signal })).data
           }
           catch (error) {
             if (!(error instanceof NotFoundError && error.body.includes('Label does not exist'))) {
@@ -2028,13 +2033,14 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
             }
           }
         }
+        return toLabels(remaining ?? (await fetcher.json<GitHubIssue['labels']>(path, { query: { per_page: 100 }, signal: options?.signal })).data)
       }),
-      setMilestone: perKind({ issue: true, pull_request: true }, async (thread, milestone, options) => issuePatch(
+      setMilestone: perKind({ issue: true, pull_request: true }, async (thread, milestone, options) => toMilestone((await issuePatch(
         thread,
         { milestone: milestone === undefined ? null : await milestoneId(milestone, page => milestonesPage(requireThread(thread, context).repo, page), context, options) },
         'set the milestone of',
         options?.signal,
-      )),
+      )).milestone)),
       reactions: perKind({ issue: true, pull_request: true, discussion: true }, { react, unreact }),
       reactionsPage: perKind({ issue: true, pull_request: true, discussion: !anonymous }, reactionsPage),
       transfer: verb(true, async (thread, repo, options) => {
@@ -2054,11 +2060,11 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       }),
       setLabels: perKind({ issue: true, pull_request: true }, async (thread, labels, options) => {
         const ref = requireIssueOrPull(thread, context, 'label')
-        await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/labels`, { method: 'PUT', json: { labels }, signal: options?.signal })
+        return toLabels((await fetcher.json<GitHubIssue['labels']>(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/labels`, { method: 'PUT', json: { labels }, signal: options?.signal })).data)
       }),
       setAssignees: perKind({ issue: true, pull_request: true }, async (thread, assignees, options) => {
-        const ref = requireIssueOrPull(thread, context, 'assign')
-        await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}`, { method: 'PATCH', json: { assignees: assignees.map(actorLogin) }, signal: options?.signal })
+        const data = await issuePatch(thread, { assignees: assignees.map(actorLogin) }, 'assign', options?.signal)
+        return (data.assignees ?? []).flatMap(user => toActor(instance, user) ?? [])
       }),
       requestReview: perKind({ pull_request: true }, async (thread, reviewers, options) => {
         const ref = requireThread(thread, context)

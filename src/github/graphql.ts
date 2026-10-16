@@ -1,4 +1,4 @@
-import type { Actor, ChecksSummary, Comment, Commit, CommitSignature, ForgeEventInput, Milestone, ReactionContent, RepoRef, ResolvedThreadRef, Reviewer, SubscriptionState, Thread, ThreadRef } from '../model.ts'
+import type { Actor, ChecksSummary, Comment, Commit, CommitSignature, ForgeEventInput, Milestone, ReactionContent, RepoRef, ResolvedThreadRef, Reviewer, SubscriptionState, Thread } from '../model.ts'
 import { eventTime } from '../events.ts'
 import { toDate, toPullStats } from '../utils.ts'
 
@@ -332,11 +332,11 @@ export const ADD_DISCUSSION_COMMENT = `mutation AddDiscussionComment($id: ID!, $
 }`
 
 export const CLOSE_DISCUSSION = `mutation CloseDiscussion($id: ID!, $reason: DiscussionCloseReason) {
-  closeDiscussion(input: { discussionId: $id, reason: $reason }) { discussion { id } }
+  closeDiscussion(input: { discussionId: $id, reason: $reason }) { discussion { ${DISCUSSION_FIELDS} } }
 }`
 
 export const REOPEN_DISCUSSION = `mutation ReopenDiscussion($id: ID!) {
-  reopenDiscussion(input: { discussionId: $id }) { discussion { id } }
+  reopenDiscussion(input: { discussionId: $id }) { discussion { ${DISCUSSION_FIELDS} } }
 }`
 
 export interface GraphQLActor {
@@ -453,7 +453,7 @@ export function toDiscussionCommentEvent(ref: ResolvedThreadRef, comment: GraphQ
   }
 }
 
-export function toDiscussionComment(thread: ThreadRef, raw: GraphQLComment): Comment {
+export function toDiscussionComment(thread: ResolvedThreadRef, raw: GraphQLComment): Comment {
   return {
     ref: { forge: FORGE, instance: thread.instance, thread, id: raw.id },
     body: raw.body ?? '',
