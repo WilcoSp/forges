@@ -1,5 +1,6 @@
 import type { Actor, Branch, ChangedFile, Check, CheckState, Comment, Commit, ForgeEventInput, Repo, RepoRef, ResolvedThreadRef, ReviewState, Tag, Team, Thread, ThreadRef, TreeEntry } from '../model.ts'
 import type { AzureChange, AzureComment, AzureCommit, AzureIdentity, AzureItem, AzurePolicyEvaluation, AzurePullRequest, AzureRef, AzureRepository, AzureReviewer, AzureStatus, AzureTeam, AzureThread, AzureWorkItem, AzureWorkItemComment, AzureWorkItemUpdate } from './types.ts'
+import { eventTime } from '../events.ts'
 import { toDate } from '../utils.ts'
 
 export const FORGE = 'azure-devops' as const
@@ -153,7 +154,9 @@ export function toThreadEvents(ref: ThreadRef, thread: AzureThread): ForgeEventI
     const actor = toActor(ref.instance, comment.author)
     const system = comment.commentType === 'system'
     const vote = thread.properties?.CodeReviewThreadType?.$value === 'VoteUpdate'
-    const kind: ForgeEventInput['kind'] = vote ? 'review' : system ? 'other' : thread.threadContext?.filePath ? 'review_comment' : 'comment'
+    const path = thread.threadContext?.filePath
+    const kind: ForgeEventInput['kind'] = vote ? 'review' : system ? 'other' : path ? 'review_comment' : 'comment'
+    const commentRef = { forge: FORGE, instance: ref.instance, thread: ref, id: commentId(thread, comment) }
     return {
       forge: FORGE,
       instance: ref.instance,
@@ -161,10 +164,13 @@ export function toThreadEvents(ref: ThreadRef, thread: AzureThread): ForgeEventI
       kind,
       kindRaw: (thread.properties?.CodeReviewThreadType?.$value as string | undefined) ?? comment.commentType,
       summary: `${actor?.login ?? 'someone'} ${system ? comment.content ?? 'updated the pull request' : 'commented'}`,
-      occurredAt: toDate(comment.publishedDate) ?? new Date(0),
+      ...eventTime(toDate(comment.publishedDate), new Date(0)),
       actor,
       repo: ref.repo,
       thread: ref,
+      detail: kind === 'review_comment'
+        ? { type: 'review_comment' as const, comment: commentRef, body: comment.content, path }
+        : kind === 'comment' ? { type: 'comment' as const, comment: commentRef, body: comment.content } : undefined,
       source: 'poll' as const,
       payload: comment,
     }
@@ -197,7 +203,7 @@ export function toWorkItemEvents(ref: ThreadRef, updates: AzureWorkItemUpdate[],
       kind,
       kindRaw: Object.keys(fields).join(','),
       summary: `${actor?.login ?? 'someone'} changed ${kind === 'state_change' ? `state to ${String(fields['System.State']?.newValue)}` : kind === 'assignment' ? 'the assignee' : 'the tags'}`,
-      occurredAt: toDate(update.revisedDate) ?? new Date(0),
+      ...eventTime(toDate(update.revisedDate), new Date(0)),
       actor,
       repo: ref.repo,
       thread: ref,
@@ -207,7 +213,7 @@ export function toWorkItemEvents(ref: ThreadRef, updates: AzureWorkItemUpdate[],
   })
   for (const comment of comments) {
     const actor = toActor(ref.instance, comment.createdBy)
-    events.push({ forge: FORGE, instance: ref.instance, id: `comment:${comment.id}`, kind: 'comment', kindRaw: 'comment', summary: `${actor?.login ?? 'someone'} commented`, occurredAt: toDate(comment.createdDate) ?? new Date(0), actor, repo: ref.repo, thread: ref, source: 'poll', payload: comment })
+    events.push({ forge: FORGE, instance: ref.instance, id: `comment:${comment.id}`, kind: 'comment', kindRaw: 'comment', summary: `${actor?.login ?? 'someone'} commented`, ...eventTime(toDate(comment.createdDate), new Date(0)), actor, repo: ref.repo, thread: ref, detail: { type: 'comment', comment: { forge: FORGE, instance: ref.instance, thread: ref, id: String(comment.id) }, body: comment.text }, source: 'poll', payload: comment })
   }
   return events.sort((a, b) => a.occurredAt.getTime() - b.occurredAt.getTime())
 }

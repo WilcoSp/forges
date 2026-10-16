@@ -1,13 +1,14 @@
 import type { WebhookHandlers } from '../define.ts'
-import type { EventKind, ForgeEventInput, ThreadRef } from '../model.ts'
+import type { EventAction, EventKind, ForgeEventInput, ReviewState, ThreadRef } from '../model.ts'
 import type { WebhookDelivery } from '../provider.ts'
 import type { BitbucketOptions } from './index.ts'
 import type { BitbucketComment, BitbucketPullRequest, BitbucketRepository, BitbucketUser } from './types.ts'
 import { bodyText, headerValue } from '../crypto.ts'
 import { WebhookVerificationError } from '../errors.ts'
+import { eventTime } from '../events.ts'
 import { toDate } from '../utils.ts'
 import { refEvent, verifyHmacSignature } from '../webhooks.ts'
-import { FORGE, toActor, toRepoRef } from './normalise.ts'
+import { FORGE, participantReview, toActor, toRepoRef } from './normalise.ts'
 import { BITBUCKET_WEBHOOK_EVENTS } from './webhook-events.ts'
 
 export const SIGNATURE_HEADER = 'x-hub-signature'
@@ -40,6 +41,18 @@ interface BitbucketWebhookPayload {
   previous_workspace?: { slug: string }
 }
 
+const REVIEW_STATES: Record<string, ReviewState> = {
+  'pullrequest:approved': 'approved',
+  'pullrequest:unapproved': 'dismissed',
+  'pullrequest:changes_request_created': 'changes_requested',
+  'pullrequest:changes_request_removed': 'dismissed',
+}
+
+const EVENT_ACTIONS: Record<string, EventAction> = {
+  'pullrequest:comment_updated': 'edited',
+  'pullrequest:comment_deleted': 'deleted',
+}
+
 const EVENT_KINDS: Record<string, EventKind> = {
   'pullrequest:created': 'state_change',
   'pullrequest:fulfilled': 'state_change',
@@ -49,6 +62,29 @@ const EVENT_KINDS: Record<string, EventKind> = {
   'pullrequest:changes_request_created': 'review',
   'pullrequest:changes_request_removed': 'review',
   'pullrequest:comment_created': 'comment',
+  'pullrequest:comment_updated': 'comment',
+  'pullrequest:comment_deleted': 'comment',
+}
+
+/** The time of the change a pull request delivery reports, else the time the pull request last changed. */
+function pullTime(event: string, payload: BitbucketWebhookPayload): string | undefined {
+  const { comment, pullrequest: pull } = payload
+  switch (event) {
+    case 'pullrequest:created':
+      return pull?.created_on
+    case 'pullrequest:comment_created':
+      return comment?.created_on
+    case 'pullrequest:comment_updated':
+      return comment?.updated_on
+    case 'pullrequest:approved':
+    case 'pullrequest:unapproved':
+      return payload.approval?.date
+    case 'pullrequest:changes_request_created':
+    case 'pullrequest:changes_request_removed':
+      return payload.changes_request?.date
+    default:
+      return undefined
+  }
 }
 
 export function translateBitbucketWebhook(instance: string, delivery: WebhookDelivery): ForgeEventInput[] {
@@ -83,31 +119,35 @@ export function translateBitbucketWebhook(instance: string, delivery: WebhookDel
           forced: change.forced,
           commits: (change.commits ?? []).map(commit => ({ sha: commit.hash, message: commit.message, author: commit.author?.raw, url: commit.links?.html?.href })),
         }),
-        occurredAt: toDate(change.commits?.[0]?.date) ?? new Date(),
+        ...eventTime(toDate(change.commits?.[0]?.date)),
       }
     })
   }
 
   if (event === 'repo:updated' && payload.changes?.name) {
-    return [{ forge: FORGE, instance, id: deliveryId, kind: 'repo', action: 'renamed', kindRaw: event, summary: `${who} renamed the repository`, occurredAt: new Date(), actor, repo, detail: { type: 'repo_renamed', from: payload.changes.name.old, to: payload.changes.name.new }, source: 'webhook', payload }]
+    return [{ forge: FORGE, instance, id: deliveryId, kind: 'repo', action: 'renamed', kindRaw: event, summary: `${who} renamed the repository`, occurredAt: new Date(), undated: true, actor, repo, detail: { type: 'repo_renamed', from: payload.changes.name.old, to: payload.changes.name.new }, source: 'webhook', payload }]
   }
 
   if (event === 'repo:transfer') {
-    return [{ forge: FORGE, instance, id: deliveryId, kind: 'repo', action: 'transferred', kindRaw: event, summary: `${who} transferred the repository`, occurredAt: new Date(), actor, repo, detail: { type: 'repo_transferred', fromOwner: payload.previous_workspace?.slug, toOwner: repo?.owner }, source: 'webhook', payload }]
+    return [{ forge: FORGE, instance, id: deliveryId, kind: 'repo', action: 'transferred', kindRaw: event, summary: `${who} transferred the repository`, occurredAt: new Date(), undated: true, actor, repo, detail: { type: 'repo_transferred', fromOwner: payload.previous_workspace?.slug, toOwner: repo?.owner }, source: 'webhook', payload }]
   }
 
   const kind = EVENT_KINDS[event] ?? 'other'
+  const comment = kind === 'comment' && thread && payload.comment ? { forge: FORGE, instance, thread, id: String(payload.comment.id) } : undefined
   return [{
     forge: FORGE,
     instance,
     id: deliveryId,
     kind,
+    ...EVENT_ACTIONS[event] && { action: EVENT_ACTIONS[event] },
     kindRaw: event,
     summary: `${who} ${event.split(':')[1]?.replaceAll('_', ' ') ?? event}`,
-    occurredAt: toDate(payload.comment?.created_on ?? payload.approval?.date ?? payload.pullrequest?.updated_on) ?? new Date(),
+    ...eventTime(EVENT_ACTIONS[event] === 'deleted' ? undefined : toDate(pullTime(event, payload) ?? payload.pullrequest?.updated_on)),
     actor,
     repo,
     thread,
+    ...kind === 'comment' && { detail: { type: 'comment', comment, body: payload.comment?.content?.raw } },
+    ...kind === 'review' && thread && { detail: participantReview(thread, (payload.approval ?? payload.changes_request)?.user ?? payload.actor, REVIEW_STATES[event] ?? 'unknown', event) },
     source: 'webhook',
     payload,
   }]

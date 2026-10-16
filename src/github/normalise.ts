@@ -81,7 +81,7 @@ import type {
   GitHubWorkflowJob,
   GitHubWorkflowRun,
 } from './types.ts'
-import { reviewState } from '../events.ts'
+import { eventTime, reviewState } from '../events.ts'
 import { REACTION_CONTENTS } from '../model.ts'
 import { checkRunState, toDate, toFileStatus, toPullStats } from '../utils.ts'
 import { eventKindsOf } from '../webhooks.ts'
@@ -558,7 +558,7 @@ function timelineDetail(instance: string, thread: ThreadRef, entry: GitHubTimeli
     case 'comment':
       return { type: 'comment', comment: entry.id !== undefined ? { forge: FORGE, instance, thread, id: String(entry.id) } : undefined, body: entry.body ?? undefined }
     case 'review':
-      return { type: 'review', state: reviewState(entry.state), stateRaw: entry.state, body: entry.body ?? undefined }
+      return { type: 'review', state: reviewState(entry.state), stateRaw: entry.state, body: entry.body ?? undefined, review: entry.id !== undefined ? { forge: FORGE, instance, thread, id: String(entry.id) } : undefined }
     case 'label':
       return entry.label ? { type: 'label', label: entry.label.name } : undefined
     case 'assignment':
@@ -590,8 +590,7 @@ export function toEvent(
     kindRaw: entry.event,
     detail: timelineDetail(instance, thread, entry, kind),
     summary: summarise(entry, kind, actor),
-    occurredAt: toDate(entry.created_at ?? entry.submitted_at ?? entry.author?.date ?? entry.committer?.date)
-      ?? new Date(0),
+    ...eventTime(toDate(entry.created_at ?? entry.submitted_at ?? entry.author?.date ?? entry.committer?.date), new Date(0)),
     actor,
     repo: thread.repo,
     thread,

@@ -1,8 +1,9 @@
 import type { EventAction, ForgeEventInput, RepoRef, ThreadRef, ThreadState } from '../model.ts'
 import type { GitLabEvent } from './types.ts'
+import { eventTime } from '../events.ts'
 import { toDate } from '../utils.ts'
 import { refEvent } from '../webhooks.ts'
-import { FORGE, toActor, toThreadKind } from './normalise.ts'
+import { approvalId, FORGE, toActor, toThreadKind } from './normalise.ts'
 
 const FEED_STATES: Record<string, { action: EventAction, state: ThreadState }> = {
   opened: { action: 'opened', state: 'open' },
@@ -47,7 +48,7 @@ function feedLevel(instance: string, raw: GitLabEvent, repo: RepoRef | undefined
     return { kind: 'state_change', action: state.action, thread, detail: { type: 'state_change', state: state.state }, summary: `${who} ${state.action} ${noun}` }
   }
   if (thread && raw.action_name === 'approved') {
-    return { kind: 'review', action: 'submitted', thread, detail: { type: 'review', state: 'approved', stateRaw: 'approved' }, summary: `${who} approved ${noun}` }
+    return { kind: 'review', action: 'submitted', thread, detail: { type: 'review', state: 'approved', stateRaw: 'approved', review: { forge: FORGE, instance: thread.instance, thread, id: approvalId(raw.author ?? { username: raw.author_username }) } }, summary: `${who} approved ${noun}` }
   }
   if (raw.target_type === 'Project' && (raw.action_name === 'joined' || raw.action_name === 'left')) {
     return {
@@ -73,7 +74,7 @@ export function toFeedEvent(instance: string, raw: GitLabEvent, repo: RepoRef | 
     kindRaw: [raw.target_type, raw.action_name].filter(Boolean).join('.'),
     actionRaw: raw.action_name,
     ...feedLevel(instance, raw, repo, actor?.login ?? raw.author_username ?? 'someone'),
-    occurredAt: toDate(raw.created_at) ?? new Date(),
+    ...eventTime(toDate(raw.created_at)),
     actor,
     repo,
     source: 'poll',

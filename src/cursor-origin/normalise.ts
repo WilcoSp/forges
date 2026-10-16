@@ -1,5 +1,6 @@
-import type { Actor, Branch, ChangedFile, Check, Comment, Commit, ForgeEventInput, Repo, RepoRef, ResolvedThreadRef, Review, ReviewState, Tag, Thread, ThreadRef, TreeEntry } from '../model.ts'
+import type { Actor, Branch, ChangedFile, Check, Comment, Commit, EventDetail, ForgeEventInput, Repo, RepoRef, ResolvedThreadRef, Review, ReviewState, Tag, Thread, ThreadRef, TreeEntry } from '../model.ts'
 import type { OriginActor, OriginBranch, OriginCheckRun, OriginComment, OriginCommit, OriginCommitFile, OriginGitRef, OriginPullRequest, OriginRepo, OriginRepositoryReference, OriginReview, OriginTreeEntry } from './types.ts'
+import { eventTime } from '../events.ts'
 import { checkRunState, toDate, toFileStatus, toPullStats } from '../utils.ts'
 
 export const FORGE = 'cursor-origin' as const
@@ -104,6 +105,13 @@ export function toComment(thread: ThreadRef, raw: OriginComment): Comment {
   }
 }
 
+export function commentDetail(thread: ThreadRef, raw: OriginComment): EventDetail {
+  const comment = { forge: FORGE, instance: thread.instance, thread, id: raw.id }
+  return isConversationComment(raw)
+    ? { type: 'comment', comment, body: raw.body }
+    : { type: 'review_comment', comment, body: raw.body, path: raw.thread?.path, line: raw.thread?.endLine ?? raw.thread?.startLine }
+}
+
 export function toCommentEvent(thread: ThreadRef, raw: OriginComment): ForgeEventInput {
   const anchored = !isConversationComment(raw)
   const actor = toActor(thread.instance, raw.author)
@@ -114,10 +122,11 @@ export function toCommentEvent(thread: ThreadRef, raw: OriginComment): ForgeEven
     kind: anchored ? 'review_comment' : 'comment',
     kindRaw: anchored ? 'pull_request.review_comment' : 'pull_request.comment',
     summary: `${actor?.login ?? 'someone'} ${anchored ? `commented on ${raw.thread!.path}` : 'commented'}`,
-    occurredAt: toDate(raw.createdAt) ?? new Date(0),
+    ...eventTime(toDate(raw.createdAt), new Date(0)),
     actor,
     repo: thread.repo,
     thread,
+    detail: commentDetail(thread, raw),
     source: 'poll',
     payload: raw,
   }
@@ -138,7 +147,8 @@ export function toReviewEvent(thread: ThreadRef, raw: OriginReview, source: Forg
     kind: 'review',
     kindRaw: raw.dismissal ? 'pull_request.review.dismissed' : `pull_request.review.${raw.verdict}`,
     summary: `${actor?.login ?? 'someone'} ${raw.dismissal ? 'dismissed a review' : `reviewed (${VERDICTS[raw.verdict] ?? raw.verdict})`}`,
-    occurredAt: toDate(raw.submittedAt) ?? new Date(0),
+    detail: { type: 'review', state: raw.dismissal ? 'dismissed' : VERDICTS[raw.verdict] ?? 'unknown', stateRaw: raw.verdict, body: raw.body || undefined, review: { forge: FORGE, instance: thread.instance, thread, id: raw.id } },
+    ...eventTime(toDate(raw.submittedAt), new Date(0)),
     actor,
     repo: thread.repo,
     thread,

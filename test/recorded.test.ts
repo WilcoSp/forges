@@ -1,10 +1,10 @@
-import type { FileContent, ForgeEvent, Notification, NotificationReason, Page, Repo, Thread } from '../src/model.ts'
+import type { Comment, FileContent, ForgeEvent, Notification, NotificationReason, Page, Repo, ResolvedThreadRef, Review, Thread } from '../src/model.ts'
 import type { RecordingManifest, Step, StepContext } from './recording/steps.ts'
 import type { WriteContext, WriteManifest, WriteStep } from './recording/write-steps.ts'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import process from 'node:process'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { notificationThread, repoKey } from '../src/model.ts'
+import { affectedKeys, commentKey, isResolvedThread, notificationThread, parseCommentKey, parseRepoKey, parseThreadKey, repoKey } from '../src/model.ts'
 import { recordedSteps } from './recording/layout.ts'
 import { redact } from './recording/redact.ts'
 import { golden, REPLAYED_PROVIDERS } from './recording/replay.ts'
@@ -138,6 +138,35 @@ for (const { name, create } of REPLAYED_PROVIDERS) {
 
         expect(withoutTimes(sent.map(call => call.body === undefined ? undefined : redact(parsed(call.body))))).toEqual(withoutTimes(sent.map(call => call.fixture?.request.body)))
         expect(recordedFixtures(directory).filter(fixture => fixture.request.body !== undefined && !served.has(JSON.stringify(fixture))).map(fixture => `${fixture.request.method} ${fixture.request.url}`)).toEqual([])
+      })
+
+      it.skipIf(!manifest?.deliveries)('keys every delivered event so that each key reads back', () => {
+        const keys = (manifest!.deliveries ?? []).flatMap(name => output[name] as ForgeEvent[]).map(event => affectedKeys(event))
+
+        expect(keys.flatMap(({ repos }) => repos).filter(key => !parseRepoKey(key))).toEqual([])
+        expect(keys.flatMap(({ threads }) => threads).filter(key => !parseThreadKey(key))).toEqual([])
+        expect(keys.flatMap(({ comments }) => comments).filter(key => !parseCommentKey(key))).toEqual([])
+        expect(keys.some(({ threads }) => threads.length)).toBe(true)
+      })
+
+      it.for(['issue', 'pull', 'commit', 'discussion'].filter(key => recorded.has(`${key} events`) && recorded.has(`${key} comments`)))('keys the comments that %s events name as its comment listing does', (key, context) => {
+        const listed = items<Comment>(`${key} comments`).map(comment => comment.ref).filter(ref => isResolvedThread(ref.thread)).map(ref => commentKey({ ...ref, thread: ref.thread as ResolvedThreadRef }))
+        const commented = items<ForgeEvent>(`${key} events`).filter(event => event.kind === 'comment')
+        if (!listed.length || !commented.length) {
+          return context.skip()
+        }
+
+        expect(commented.flatMap(event => affectedKeys(event).comments).filter(key => listed.includes(key))).not.toEqual([])
+      })
+
+      it.skipIf(!recorded.has('pull events') || !recorded.has('pull reviews'))('names the reviews of pull events as its review listing does', (context) => {
+        const listed = items<Review>('pull reviews').map(review => review.ref.id)
+        const reviewed = items<ForgeEvent>('pull events').filter(event => event.kind === 'review')
+        if (!listed.length || !reviewed.length) {
+          return context.skip()
+        }
+
+        expect(reviewed.flatMap(event => event.detail?.type === 'review' && event.detail.review ? [event.detail.review.id] : []).filter(id => listed.includes(id))).not.toEqual([])
       })
 
       it.skipIf(!manifest?.deliveries)('matches the committed golden output (regenerate with `vitest -u`)', async () => {

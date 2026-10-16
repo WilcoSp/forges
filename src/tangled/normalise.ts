@@ -1,4 +1,4 @@
-import type { Actor, Comment, EventAction, EventKind, ForgeEventInput, ForgeWarning, Label, NotificationReason, ReactionContent, RepoRef, ResolvedThreadRef, SourceKind, Thread, ThreadKind, ThreadRef, ThreadState } from '../model.ts'
+import type { Actor, Comment, EventAction, EventDetail, EventKind, ForgeEventInput, ForgeWarning, Label, NotificationReason, ReactionContent, RepoRef, ResolvedThreadRef, SourceKind, Thread, ThreadKind, ThreadRef, ThreadState } from '../model.ts'
 import type { AtUri, Identity } from './atproto.ts'
 import type {
   FeedCommentRecord,
@@ -11,6 +11,7 @@ import type {
   StateRecord,
   TangledRecord,
 } from './types.ts'
+import { eventTime } from '../events.ts'
 import { toDate } from '../utils.ts'
 import { atUri } from './atproto.ts'
 
@@ -218,6 +219,16 @@ function occurredAt(record: TangledRecord | undefined): Date | undefined {
   return toDate('performedAt' in record ? record.performedAt : (record as { createdAt?: string }).createdAt)
 }
 
+function activityDetail(activity: ActivityRecord, kind: EventKind, thread: ResolvedThreadRef | undefined): EventDetail | undefined {
+  if (kind === 'comment') {
+    const record = activity.record as FeedCommentRecord | LegacyCommentRecord | undefined
+    return { type: 'comment', comment: thread && { forge: FORGE, instance: thread.instance, thread, id: activity.uri }, body: record?.body === undefined ? undefined : commentBody(record) }
+  }
+  return kind === 'state_change' && (activity.collection === COLLECTIONS.issueState || activity.collection === COLLECTIONS.pullStatus)
+    ? { type: 'state_change', state: toThreadState(stateToken(activity.record as StateRecord)) }
+    : undefined
+}
+
 export function toActivityEvent(
   instance: string,
   activity: ActivityRecord,
@@ -235,11 +246,9 @@ export function toActivityEvent(
     kindRaw: activity.operation === 'create' ? activity.collection : `${activity.collection}:${activity.operation}`,
     action: toEventAction(activity),
     actionRaw: activity.operation,
-    detail: kind === 'state_change' && (activity.collection === COLLECTIONS.issueState || activity.collection === COLLECTIONS.pullStatus)
-      ? { type: 'state_change', state: toThreadState(stateToken(activity.record as StateRecord)) }
-      : undefined,
+    detail: activityDetail(activity, kind, thread),
     summary: summarise(activity, kind, actor.login),
-    occurredAt: occurredAt(activity.record) ?? fallbackTime,
+    ...eventTime(occurredAt(activity.record), fallbackTime),
     actor,
     repo: thread?.repo,
     thread,
@@ -283,11 +292,14 @@ export function toThread(
   }
 }
 
+function commentBody(record: FeedCommentRecord | LegacyCommentRecord): string {
+  return typeof record.body === 'string' ? record.body : record.body.original ?? record.body.text ?? ''
+}
+
 export function toRecordComment(thread: ThreadRef, uri: string, record: FeedCommentRecord | LegacyCommentRecord, author: Actor): Comment {
-  const body = typeof record.body === 'string' ? record.body : record.body.original ?? record.body.text ?? ''
   return {
     ref: { forge: FORGE, instance: thread.instance, thread, id: uri },
-    body,
+    body: commentBody(record),
     author,
     createdAt: toDate(record.createdAt),
     raw: { uri, ...record },

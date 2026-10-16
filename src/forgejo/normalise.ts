@@ -64,7 +64,7 @@ import type {
   GiteaActionJob,
   GiteaActionRun,
 } from './types.ts'
-import { reviewState } from '../events.ts'
+import { eventTime, reviewState } from '../events.ts'
 import { toDate, toFileStatus, toPullStats } from '../utils.ts'
 import { eventKindsOf } from '../webhooks.ts'
 import { FORGEJO_NATIVE_EVENTS } from './webhook-events.ts'
@@ -387,6 +387,21 @@ function crossReference(thread: ThreadRef, entry: ForgejoTimelineEntry): EventDe
   }
 }
 
+function timelineDetail(thread: ThreadRef, entry: ForgejoTimelineEntry, kind: EventKind): EventDetail | undefined {
+  const origin = { forge: thread.forge, instance: thread.instance }
+  switch (kind) {
+    case 'comment':
+    case 'review_comment':
+      return { type: kind, comment: entry.id === undefined ? undefined : { ...origin, thread, id: String(entry.id) }, body: entry.body ?? undefined }
+    case 'review':
+      return { type: 'review', state: 'unknown', body: entry.body || undefined, review: entry.review_id ? { ...origin, thread, id: String(entry.review_id) } : undefined }
+    case 'referenced':
+      return crossReference(thread, entry)
+    default:
+      return undefined
+  }
+}
+
 export function toEvent(
   thread: ThreadRef,
   entry: ForgejoTimelineEntry,
@@ -401,11 +416,11 @@ export function toEvent(
     kind,
     kindRaw: entry.type,
     summary: summarise(entry, kind, actor),
-    occurredAt: toDate(entry.created_at) ?? new Date(0),
+    ...eventTime(toDate(entry.created_at), new Date(0)),
     actor,
     repo: thread.repo,
     thread,
-    ...kind === 'referenced' ? { detail: crossReference(thread, entry) } : {},
+    detail: timelineDetail(thread, entry, kind),
     source,
     payload: entry,
   }

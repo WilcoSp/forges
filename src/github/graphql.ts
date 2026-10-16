@@ -1,4 +1,5 @@
 import type { Actor, ChecksSummary, Comment, Commit, CommitSignature, ForgeEventInput, Milestone, ReactionContent, RepoRef, ResolvedThreadRef, Reviewer, SubscriptionState, Thread, ThreadRef } from '../model.ts'
+import { eventTime } from '../events.ts'
 import { toDate, toPullStats } from '../utils.ts'
 
 // Not imported from normalise.ts: when two lazy chunks of a provider import from its main chunk, rolldown keeps the provider in bundles that never use it.
@@ -442,10 +443,11 @@ export function toDiscussionCommentEvent(ref: ResolvedThreadRef, comment: GraphQ
     kind: 'comment',
     kindRaw: isReply ? 'DiscussionCommentReply' : 'DiscussionComment',
     summary: `${actor?.login ?? 'someone'} ${isReply ? 'replied' : 'commented'}`,
-    occurredAt: toDate(comment.createdAt) ?? new Date(0),
+    ...eventTime(toDate(comment.createdAt), new Date(0)),
     actor,
     repo: ref.repo,
     thread: ref,
+    detail: { type: 'comment', comment: { forge: FORGE, instance: ref.instance, thread: ref, id: comment.id }, body: comment.body ?? undefined },
     source: 'poll',
     payload: comment,
   }
