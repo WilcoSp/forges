@@ -187,13 +187,14 @@ describe('request compatibility with Octokit', () => {
     )
   })
 
-  it('lists open Dependabot, code scanning and secret scanning alerts', async () => {
+  it('lists open Dependabot, code scanning and secret scanning alerts, and repository advisories', async () => {
     await compare(
       provider => drain(provider.securityAlerts!.list(repo)),
       async (octokit) => {
         await octokit.rest.dependabot.listAlertsForRepo({ owner, repo: name, state: 'open' })
         await octokit.rest.codeScanning.listAlertsForRepo({ owner, repo: name, state: 'open' })
         await octokit.rest.secretScanning.listAlertsForRepo({ owner, repo: name, state: 'open' })
+        await octokit.rest.securityAdvisories.listRepositoryAdvisories({ owner, repo: name })
       },
     )
   })

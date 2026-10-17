@@ -165,6 +165,7 @@ import {
   toRelease,
   toRepo,
   toRepoRef,
+  toRepositoryAdvisory,
   toReview,
   toReviewComment,
   toRole,
@@ -1639,6 +1640,11 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       states: { open: 'open', closed: 'resolved' },
       map: toSecretScanningAlert,
     },
+    advisory: {
+      path: 'security-advisories',
+      states: { open: undefined, closed: undefined },
+      map: toRepositoryAdvisory,
+    },
   } as const
 
   async function alertsPage(repo: RepoRef, listOptions: SecurityAlertListOptions = {}): Promise<Page<SecurityAlert>> {
@@ -1646,13 +1652,17 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
     return phased(kinds.map(kind => async (cursor?: Cursor): Promise<Page<SecurityAlert>> => {
       const source = ALERT_SOURCES[kind as keyof typeof ALERT_SOURCES]
       const state = listOptions.state ?? 'open'
+      const filter = state === 'all' ? undefined : source.states[state]
       try {
         const result = await fetcher.page<never>(`${repoPath(repo)}/${source.path}`, {
-          query: { state: state === 'all' ? undefined : source.states[state], per_page: listOptions.perPage },
+          query: { state: filter, per_page: listOptions.perPage },
           cursor,
           signal: listOptions.signal,
         })
-        return toPage(result, raw => source.map(repo, raw))
+        return toPage(result, (raw) => {
+          const alert = source.map(repo, raw)
+          return filter || state === 'all' || (alert.state === 'open') === (state === 'open') ? alert : undefined
+        })
       }
       catch (error) {
         if (!listOptions.kind && (error instanceof InsufficientScopeError || error instanceof NotFoundError)) {
@@ -1874,6 +1884,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         dependency: !anonymous && (enterprise ? ({ version }) => versionAtLeast(version, GHES_DEPENDABOT_ALERTS) && 'unverified' : true),
         code_scanning: !anonymous,
         secret: !anonymous,
+        advisory: !anonymous && !enterprise,
       },
       listPage: alertsPage,
     },
@@ -2276,7 +2287,11 @@ export function githubScopesFor(verb: ForgeVerb): VerbScopes {
     return { token: ['notifications'], note: 'Notifications need a classic personal access token or an OAuth app token; fine-grained tokens and GitHub Apps have no access to them' }
   }
   if (group === 'securityAlerts') {
-    return { token: ['security_events', 'repo'], permissions: { vulnerability_alerts: 'read', secret_scanning_alerts: 'read', code_scanning_alerts: 'read' } }
+    return {
+      token: ['security_events', 'repo'],
+      permissions: { vulnerability_alerts: 'read', secret_scanning_alerts: 'read', code_scanning_alerts: 'read', repository_advisories: 'read' },
+      note: 'Drafts and private vulnerability reports need a security manager, an administrator, or a collaborator on the advisory',
+    }
   }
   if (group === 'installations') {
     return { note: 'App credentials: an app JWT signed with the app private key' }

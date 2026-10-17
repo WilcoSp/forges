@@ -115,7 +115,7 @@ export const contracts: ProviderContract[] = [
     checks: { summary: { state: 'failure', total: 3, failed: 1 }, names: ['test (ubuntu-latest)', 'lint', 'ci/netlify'] },
     reviews: { states: ['changes_requested', 'approved'], comments: true },
     releases: { count: 2, get: { id: '9001', tag: 'v1.2.0' }, latest: 'v1.2.0', writes: true },
-    securityAlerts: { kinds: ['dependency', 'code_scanning', 'secret'], severities: ['high', 'critical', 'unknown'] },
+    securityAlerts: { kinds: ['dependency', 'code_scanning', 'secret', 'advisory', 'advisory'], severities: ['high', 'critical', 'unknown', 'high', 'unknown'] },
     fixtures: 'github',
     instance: 'github.com',
     repo: { owner: 'acme', name: 'widgets' },

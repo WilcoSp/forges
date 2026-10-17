@@ -307,6 +307,24 @@ export interface GitHubCodeScanningAlert {
   dismissed_at?: string | null
 }
 
+export interface GitHubRepositoryAdvisory {
+  ghsa_id: string
+  cve_id?: string | null
+  html_url?: string
+  summary: string
+  severity?: string | null
+  state: string
+  created_at?: string
+  updated_at?: string
+  closed_at?: string | null
+  withdrawn_at?: string | null
+  vulnerabilities?: Array<{
+    package?: { ecosystem?: string, name?: string | null } | null
+    vulnerable_version_range?: string | null
+    patched_versions?: string | null
+  }> | null
+}
+
 export interface GitHubSecretScanningAlert {
   number: number
   state: string

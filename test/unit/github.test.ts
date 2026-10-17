@@ -1756,11 +1756,39 @@ describe('github checks, releases and security alerts', () => {
     const provider = github({ auth: { type: 'token', token: 't' }, fetch }).create()
     const page = await provider.securityAlerts!.listPage(widgets)
     const rest = await provider.securityAlerts!.listPage(widgets, { cursor: page.cursor })
-    const last = await provider.securityAlerts!.listPage(widgets, { cursor: rest.cursor })
+    const secret = await provider.securityAlerts!.listPage(widgets, { cursor: rest.cursor })
+    const last = await provider.securityAlerts!.listPage(widgets, { cursor: secret.cursor })
 
-    expect(last.items).toEqual([])
-    expect(last.warnings?.map(warning => warning.code)).toEqual(['insufficient_scope'])
+    expect(secret.items).toEqual([])
+    expect(secret.warnings?.map(warning => warning.code)).toEqual(['insufficient_scope'])
+    expect(last.items.map(alert => alert.kind)).toEqual(['advisory', 'advisory'])
+    expect(last.cursor).toBeUndefined()
     await expect(provider.securityAlerts!.listPage(widgets, { kind: 'secret' })).rejects.toThrow(InsufficientScopeError)
+  })
+
+  it('lists repository advisories, drafts and private vulnerability reports included, by state', async () => {
+    const { fetch, calls } = fixtureFetch('github')
+    const provider = github({ auth: { type: 'token', token: 't' }, fetch }).create()
+
+    const open = await provider.securityAlerts!.listPage(widgets, { kind: 'advisory' })
+    const closed = await provider.securityAlerts!.listPage(widgets, { kind: 'advisory', state: 'closed' })
+    const all = await provider.securityAlerts!.listPage(widgets, { kind: 'advisory', state: 'all' })
+
+    expect(open.items.map(alert => `${alert.ref.id} ${alert.stateRaw} ${alert.severity}`)).toEqual(['GHSA-7r2x-4m9q-hv3c triage high', 'GHSA-c5pf-8w3j-qj6m draft unknown'])
+    expect(open.items[0]).toMatchObject({
+      ref: { id: 'GHSA-7r2x-4m9q-hv3c', kind: 'advisory' },
+      kindRaw: 'repository_advisory',
+      state: 'open',
+      title: 'Path traversal in the template cache',
+      package: { ecosystem: 'npm', name: 'widgets', vulnerableRange: '< 2.4.1', fixedIn: '2.4.1' },
+      url: 'https://github.com/acme/widgets/security/advisories/GHSA-7r2x-4m9q-hv3c',
+    })
+    expect(open.items[1]!.package).toBeUndefined()
+    expect(closed.items.map(alert => `${alert.stateRaw} ${alert.state} ${alert.dismissedAt?.toISOString()}`)).toEqual(['published fixed undefined', 'withdrawn dismissed 2025-12-01T08:00:00.000Z'])
+    expect(all.items).toHaveLength(4)
+    expect(calls.map(call => call.url)).toEqual(Array.from({ length: 3 }).fill('https://api.github.com/repos/acme/widgets/security-advisories'))
+    expect(github({ baseUrl: 'https://ghe.example.com/api/v3', auth: { type: 'token', token: 't' } }).create().can('securityAlerts.list', 'advisory')).toBe(false)
+    expect(provider.scopesFor('securityAlerts.list').permissions).toMatchObject({ repository_advisories: 'read' })
   })
 
   it('resolves vulnerability and release notification subjects to refs', () => {

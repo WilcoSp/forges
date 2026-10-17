@@ -69,6 +69,7 @@ import type {
   GitHubReactions,
   GitHubRelease,
   GitHubRepository,
+  GitHubRepositoryAdvisory,
   GitHubRepositoryDetail,
   GitHubReview,
   GitHubReviewComment,
@@ -751,6 +752,38 @@ export function toSecretScanningAlert(repo: RepoRef, raw: GitHubSecretScanningAl
     createdAt: toDate(raw.created_at),
     updatedAt: toDate(raw.updated_at),
     dismissedAt: state === 'dismissed' ? toDate(raw.resolved_at) : undefined,
+    raw,
+  }
+}
+
+/** A private vulnerability report in triage, or a draft, is open; a published advisory is fixed; a closed or withdrawn one is dismissed. */
+export function toRepositoryAdvisory(repo: RepoRef, raw: GitHubRepositoryAdvisory): SecurityAlert {
+  const state = raw.state === 'triage' || raw.state === 'draft' ? 'open' : raw.state === 'published' ? 'fixed' : raw.state === 'closed' || raw.state === 'withdrawn' ? 'dismissed' : 'unknown'
+  const severityRaw = raw.severity ?? undefined
+  const vulnerability = raw.vulnerabilities?.find(item => item.package?.name)
+  return {
+    ref: { forge: FORGE, instance: repo.instance, repo, id: raw.ghsa_id, kind: 'advisory', severityRaw },
+    kind: 'advisory',
+    kindRaw: 'repository_advisory',
+    severity: toSeverity(severityRaw),
+    severityRaw,
+    state,
+    stateRaw: raw.state,
+    title: raw.summary,
+    ...vulnerability?.package?.name
+      ? {
+          package: {
+            ecosystem: vulnerability.package.ecosystem,
+            name: vulnerability.package.name,
+            vulnerableRange: vulnerability.vulnerable_version_range ?? undefined,
+            fixedIn: vulnerability.patched_versions ?? undefined,
+          },
+        }
+      : {},
+    url: raw.html_url,
+    createdAt: toDate(raw.created_at),
+    updatedAt: toDate(raw.updated_at),
+    dismissedAt: state === 'dismissed' ? toDate(raw.withdrawn_at ?? raw.closed_at) : undefined,
     raw,
   }
 }

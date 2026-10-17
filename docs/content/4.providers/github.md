@@ -145,6 +145,10 @@ GitHub doesn't support replies to replies, so when you pass a reply to `replyToR
 
 What `checks.report()` writes depends on your credential. With the credential of an app installation, it writes a check run, and with any other credential it writes a commit status. `checks.rerun()` re-requests a check run, so it can't re-run a commit status.
 
+## Security advisories
+
+With `kind: 'advisory'`, `securityAlerts.list()` lists the security advisories of the repository, including the drafts and private vulnerability reports that the credential can see. Those need a security manager, an administrator, or a collaborator on the advisory. A report in triage or a draft is `open`, a published advisory is `fixed`, and a closed or withdrawn one is `dismissed`. For `open` and `closed`, the provider reads every advisory and keeps those in that state, so a page can hold fewer than `perPage`. GitHub Enterprise Server doesn't list advisories.
+
 ## Large files and trees
 
 Files over 1 MB are read through the Git blobs API, so the result of `contents.file()` has `encoding: 'none'` for them. When GitHub truncates a large tree, `contents.tree()` adds a `tree_truncated` warning to the result.
@@ -403,7 +407,7 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `search.repos` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `search.commits` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `search.code` | ✅ | ✅ | ✅ | ❌ | ❌ |
-| `securityAlerts` | dependency, code scanning, secret | dependency, code scanning, secret | dependency, code scanning, secret | ❌ | ❌ |
+| `securityAlerts` | dependency, code scanning, secret, advisory | dependency, code scanning, secret, advisory | dependency, code scanning, secret, advisory | ❌ | ❌ |
 | `eventKinds` | native | native | native | native | native |
 | `authKinds` | `token`, `app`, `anonymous` | `token`, `app`, `anonymous` | `token`, `app`, `anonymous` | `token`, `app`, `anonymous` | `token`, `app`, `anonymous` |
 | `limits` | body 65536, comment 65536, label 50 | body 65536, comment 65536, label 50 | body 65536, comment 65536, label 50 | body 65536, comment 65536, label 50 | body 65536, comment 65536, label 50 |

@@ -1,0 +1,263 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "GET",
+    "url": "https://api.github.com/repos/acme/widgets/security-advisories"
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": [
+      {
+        "ghsa_id": "GHSA-7r2x-4m9q-hv3c",
+        "cve_id": null,
+        "url": "https://api.github.com/repos/acme/widgets/security-advisories/GHSA-7r2x-4m9q-hv3c",
+        "html_url": "https://github.com/acme/widgets/security/advisories/GHSA-7r2x-4m9q-hv3c",
+        "summary": "Path traversal in the template cache",
+        "description": "A crafted template path escapes the cache directory.",
+        "severity": "high",
+        "author": {
+          "login": "octocat",
+          "id": 583231,
+          "node_id": "MDQ6VXNlcjU4MzIzMQ==",
+          "avatar_url": "https://avatars.githubusercontent.com/u/583231?v=4",
+          "html_url": "https://github.com/octocat",
+          "type": "User",
+          "site_admin": false
+        },
+        "publisher": null,
+        "identifiers": [
+          {
+            "type": "GHSA",
+            "value": "GHSA-7r2x-4m9q-hv3c"
+          }
+        ],
+        "state": "triage",
+        "created_at": "2026-02-10T09:00:00Z",
+        "updated_at": "2026-02-12T15:30:00Z",
+        "published_at": null,
+        "closed_at": null,
+        "withdrawn_at": null,
+        "submission": {
+          "accepted": false
+        },
+        "vulnerabilities": [
+          {
+            "package": {
+              "ecosystem": "npm",
+              "name": "widgets"
+            },
+            "vulnerable_version_range": "< 2.4.1",
+            "patched_versions": "2.4.1",
+            "vulnerable_functions": []
+          }
+        ],
+        "cvss": {
+          "vector_string": null,
+          "score": null
+        },
+        "cvss_severities": null,
+        "cwes": [
+          {
+            "cwe_id": "CWE-22",
+            "name": "Path Traversal"
+          }
+        ],
+        "cwe_ids": [
+          "CWE-22"
+        ],
+        "credits": [],
+        "credits_detailed": [],
+        "collaborating_users": null,
+        "collaborating_teams": null,
+        "private_fork": null
+      },
+      {
+        "ghsa_id": "GHSA-c5pf-8w3j-qj6m",
+        "cve_id": null,
+        "url": "https://api.github.com/repos/acme/widgets/security-advisories/GHSA-c5pf-8w3j-qj6m",
+        "html_url": "https://github.com/acme/widgets/security/advisories/GHSA-c5pf-8w3j-qj6m",
+        "summary": "Prototype pollution in option merging",
+        "description": "A crafted template path escapes the cache directory.",
+        "severity": null,
+        "author": {
+          "login": "octocat",
+          "id": 583231,
+          "node_id": "MDQ6VXNlcjU4MzIzMQ==",
+          "avatar_url": "https://avatars.githubusercontent.com/u/583231?v=4",
+          "html_url": "https://github.com/octocat",
+          "type": "User",
+          "site_admin": false
+        },
+        "publisher": null,
+        "identifiers": [
+          {
+            "type": "GHSA",
+            "value": "GHSA-c5pf-8w3j-qj6m"
+          }
+        ],
+        "state": "draft",
+        "created_at": "2026-02-10T09:00:00Z",
+        "updated_at": "2026-02-12T15:30:00Z",
+        "published_at": null,
+        "closed_at": null,
+        "withdrawn_at": null,
+        "submission": null,
+        "vulnerabilities": [
+          {
+            "package": {
+              "ecosystem": "npm",
+              "name": null
+            },
+            "vulnerable_version_range": null,
+            "patched_versions": null,
+            "vulnerable_functions": []
+          }
+        ],
+        "cvss": {
+          "vector_string": null,
+          "score": null
+        },
+        "cvss_severities": null,
+        "cwes": [
+          {
+            "cwe_id": "CWE-22",
+            "name": "Path Traversal"
+          }
+        ],
+        "cwe_ids": [
+          "CWE-22"
+        ],
+        "credits": [],
+        "credits_detailed": [],
+        "collaborating_users": null,
+        "collaborating_teams": null,
+        "private_fork": null
+      },
+      {
+        "ghsa_id": "GHSA-3f9v-hx2p-rr8w",
+        "cve_id": "CVE-2025-31337",
+        "url": "https://api.github.com/repos/acme/widgets/security-advisories/GHSA-3f9v-hx2p-rr8w",
+        "html_url": "https://github.com/acme/widgets/security/advisories/GHSA-3f9v-hx2p-rr8w",
+        "summary": "Regular expression denial of service in the router",
+        "description": "A crafted template path escapes the cache directory.",
+        "severity": "medium",
+        "author": {
+          "login": "octocat",
+          "id": 583231,
+          "node_id": "MDQ6VXNlcjU4MzIzMQ==",
+          "avatar_url": "https://avatars.githubusercontent.com/u/583231?v=4",
+          "html_url": "https://github.com/octocat",
+          "type": "User",
+          "site_admin": false
+        },
+        "publisher": null,
+        "identifiers": [
+          {
+            "type": "GHSA",
+            "value": "GHSA-3f9v-hx2p-rr8w"
+          }
+        ],
+        "state": "published",
+        "created_at": "2026-02-10T09:00:00Z",
+        "updated_at": "2026-02-12T15:30:00Z",
+        "published_at": "2025-11-03T12:00:00Z",
+        "closed_at": null,
+        "withdrawn_at": null,
+        "submission": null,
+        "vulnerabilities": [
+          {
+            "package": {
+              "ecosystem": "npm",
+              "name": "widgets"
+            },
+            "vulnerable_version_range": "< 2.4.1",
+            "patched_versions": "2.4.1",
+            "vulnerable_functions": []
+          }
+        ],
+        "cvss": {
+          "vector_string": null,
+          "score": null
+        },
+        "cvss_severities": null,
+        "cwes": [
+          {
+            "cwe_id": "CWE-22",
+            "name": "Path Traversal"
+          }
+        ],
+        "cwe_ids": [
+          "CWE-22"
+        ],
+        "credits": [],
+        "credits_detailed": [],
+        "collaborating_users": null,
+        "collaborating_teams": null,
+        "private_fork": null
+      },
+      {
+        "ghsa_id": "GHSA-9mqc-6v4r-ww7j",
+        "cve_id": null,
+        "url": "https://api.github.com/repos/acme/widgets/security-advisories/GHSA-9mqc-6v4r-ww7j",
+        "html_url": "https://github.com/acme/widgets/security/advisories/GHSA-9mqc-6v4r-ww7j",
+        "summary": "Open redirect in the login page",
+        "description": "A crafted template path escapes the cache directory.",
+        "severity": "low",
+        "author": {
+          "login": "octocat",
+          "id": 583231,
+          "node_id": "MDQ6VXNlcjU4MzIzMQ==",
+          "avatar_url": "https://avatars.githubusercontent.com/u/583231?v=4",
+          "html_url": "https://github.com/octocat",
+          "type": "User",
+          "site_admin": false
+        },
+        "publisher": null,
+        "identifiers": [
+          {
+            "type": "GHSA",
+            "value": "GHSA-9mqc-6v4r-ww7j"
+          }
+        ],
+        "state": "withdrawn",
+        "created_at": "2026-02-10T09:00:00Z",
+        "updated_at": "2026-02-12T15:30:00Z",
+        "published_at": null,
+        "closed_at": null,
+        "withdrawn_at": "2025-12-01T08:00:00Z",
+        "submission": null,
+        "vulnerabilities": [
+          {
+            "package": {
+              "ecosystem": "npm",
+              "name": "widgets"
+            },
+            "vulnerable_version_range": "< 2.4.1",
+            "patched_versions": "2.4.1",
+            "vulnerable_functions": []
+          }
+        ],
+        "cvss": {
+          "vector_string": null,
+          "score": null
+        },
+        "cvss_severities": null,
+        "cwes": [
+          {
+            "cwe_id": "CWE-22",
+            "name": "Path Traversal"
+          }
+        ],
+        "cwe_ids": [
+          "CWE-22"
+        ],
+        "credits": [],
+        "credits_detailed": [],
+        "collaborating_users": null,
+        "collaborating_teams": null,
+        "private_fork": null
+      }
+    ]
+  }
+}

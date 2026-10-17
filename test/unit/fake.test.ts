@@ -667,6 +667,7 @@ describe('fake security alerts', () => {
         { repo: 'acme/widgets', kind: 'dependency', title: 'Prototype pollution', severity: 'high', package: { ecosystem: 'npm', name: 'lodash', fixedIn: '4.17.21' } },
         { repo: 'acme/widgets', kind: 'secret', title: 'Token in config' },
         { repo: 'acme/widgets', kind: 'dependency', title: 'ReDoS', state: 'fixed' },
+        { repo: 'acme/widgets', kind: 'advisory', title: 'Path traversal', severity: 'critical' },
       ],
     },
   }).create()
@@ -675,9 +676,9 @@ describe('fake security alerts', () => {
     const open = await forge.securityAlerts.listPage(repo)
     const closed = await forge.securityAlerts.listPage(repo, { kind: 'dependency', state: 'closed' })
 
-    expect(open.items.map(alert => [alert.kind, alert.ref.id, alert.severity])).toEqual([['secret', '1', 'medium'], ['dependency', '1', 'high']])
+    expect(open.items.map(alert => [alert.kind, alert.ref.id, alert.severity])).toEqual([['advisory', '1', 'critical'], ['secret', '1', 'medium'], ['dependency', '1', 'high']])
     expect(closed.items).toMatchObject([{ ref: { id: '2', kind: 'dependency' }, title: 'ReDoS', state: 'fixed' }])
-    expect(forge.capabilities.securityAlerts).toMatchObject({ dependency: true, code_scanning: true, secret: true })
+    expect(forge.capabilities.securityAlerts).toMatchObject({ dependency: true, code_scanning: true, secret: true, advisory: true })
   })
 })
 

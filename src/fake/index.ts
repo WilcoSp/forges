@@ -1200,7 +1200,7 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
     if (given !== undefined && typeof given === 'object') {
       return given
     }
-    return { dependency: given ?? true, code_scanning: given ?? true, secret: given ?? true }
+    return { dependency: given ?? true, code_scanning: given ?? true, secret: given ?? true, advisory: given ?? true }
   })()
 
   /** An `'emulated'` `markDone()` marks the notification read and keeps it. */
