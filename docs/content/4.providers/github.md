@@ -105,6 +105,14 @@ GitHub links at most the first 500 author emails in a repository to accounts. A 
 
 GitHub computes the statistics behind `repos.contributorStats()` in the background, and responds with `202 Accepted` until they are ready. The provider asks again for about 15 seconds, and then throws a `ForgeApiError` with status `202`, so you can try again later. The statistics leave out merge commits and empty commits. In a repository with 10,000 or more commits, GitHub reports `0` lines added and deleted for every week.
 
+## Templates
+
+`repos.templates()` reads the folders GitHub reads: `.github/ISSUE_TEMPLATE/` for issues, forms first and then Markdown templates, as in the template chooser, and `.github/`, the root or `docs/` for the pull request template, first match wins. Every file in a `PULL_REQUEST_TEMPLATE/` folder comes after it. It's one request per folder and one per template.
+
+When a repository has nothing of a kind, the templates come from the `.github` repository of its owner, like on the web, and carry it in `source`. That is the owner the repository lives under now, so a transferred repository gets the templates of its new owner. The provider uses a `.github` repository only while it is public, or internal, as GitHub does, which costs one more request. A lone `config.yml` in `.github/ISSUE_TEMPLATE/` still counts as having issue templates, so GitHub skips the fallback, and so does the provider. If reading the `.github` repository fails for any reason other than a `404`, `repos.templates()` rejects.
+
+The provider returns each file as it is, so `body` is the raw file, `name` is the file name, and `title`, `about`, `labels` and `fields` stay empty. Parse the front matter or the form in `body` for the name GitHub shows.
+
 ## Merging
 
 If you call `merge()` without a `method`, the provider asks GitHub which merge methods the repository allows. When exactly one method is allowed, it uses that one. When several are allowed, it can't choose for you and throws `MergeMethodRequiredError`.
@@ -286,6 +294,7 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `repos.collaborators` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `repos.contributors` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `repos.contributorStats` | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `repos.templates` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `repos.permissionFor` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `repos.addCollaborator` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `repos.assignableUsers` | ✅ | ✅ | ✅ | ❌ | ✅ |

@@ -31,6 +31,8 @@ import type {
   RepoRef,
   RepoRole,
   RepoSearchQuery,
+  RepoTemplate,
+  RepoTemplateOptions,
   ResolvedThreadRef,
   Review,
   SearchQuery,
@@ -78,9 +80,12 @@ import type {
   GitLabNote,
   GitLabNoteDetail,
   GitLabPipeline,
+  GitLabProject,
   GitLabProjectDetail,
   GitLabProjectSettings,
   GitLabRelease,
+  GitLabTemplate,
+  GitLabTemplateName,
   GitLabTodo,
   GitLabUser,
   GitLabVulnerability,
@@ -89,7 +94,7 @@ import { changeBase64, existingFiles, fromBase64, toFileContent } from '../conte
 import { defineForgeProvider, perKind, verb } from '../define.ts'
 import { AuthenticationRequiredError, BranchMovedError, ForgeApiError, InsufficientScopeError, NotFoundError, soleMergeMethod, TokenRevokedError, toMergeError, UnresolvedThreadError, UnsupportedOperationError } from '../errors.ts'
 import { isNamespaceRef, reactionContent } from '../model.ts'
-import { createListing, degradesToWarning, firstPageEtag, getManyConcurrently, hexColour, isFirstPage, memo, memoBy, mergeCommitMessage, milestoneId, phased, rateLimitPart, requireIssueOrPull, requireThread, resolveToken, syntheticReview, teamOrg, toDate, toPage, toWarning, versionAtLeast, withEtag } from '../utils.ts'
+import { createListing, degradesToWarning, firstPageEtag, getManyConcurrently, hexColour, isFirstPage, iteratePages, mapConcurrent, memo, memoBy, mergeCommitMessage, milestoneId, phased, rateLimitPart, requireIssueOrPull, requireThread, resolveToken, syntheticReview, teamOrg, toDate, toPage, toWarning, versionAtLeast, withEtag } from '../utils.ts'
 import { webUrlFor } from '../web.ts'
 import { nativeEventsFor } from '../webhooks.ts'
 import {
@@ -283,6 +288,37 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
 
     function projectPath(repo: RepoRef): string {
       return `/projects/${projectId(repo)}`
+    }
+
+    /**
+     * The listing gives only names, group templates included, so every body costs one more request. A name in both
+     * the project and a group reads as the group's template unless the project's id picks the project's own.
+     */
+    async function templates(repo: RepoRef, options: RepoTemplateOptions = {}): Promise<RepoTemplate[]> {
+      const signal = options.signal
+      const kinds = options.kind ? [options.kind] : ['issue', 'pull_request'] as const
+      const found = await Promise.all(kinds.map(async (kind) => {
+        const type = kind === 'issue' ? 'issues' : 'merge_requests'
+        const names = await Array.fromAsync(iteratePages(listOptions => list(`${projectPath(repo)}/templates/${type}`, { ...listOptions, perPage: 100, signal }, (raw: GitLabTemplateName) => raw)))
+        const keys = [...new Set(names.map(({ key }) => key))]
+        const shared = keys.filter(key => names.filter(name => name.key === key).length > 1)
+        const id = shared.length ? repo.externalId ?? String((await fetcher.json<GitLabProject>(projectPath(repo), { signal })).data.id) : undefined
+        const read = async (key: string, source?: string): Promise<RepoTemplate> => {
+          const { data } = await fetcher.json<GitLabTemplate>(`${projectPath(repo)}/templates/${type}/${encodeURIComponent(key)}`, { query: { source_template_project_id: source }, signal })
+          return { kind, name: data.name, format: 'markdown', body: data.content, raw: data }
+        }
+        const [inherited, own] = await Promise.all([
+          mapConcurrent(keys, 4, key => read(key)),
+          mapConcurrent(shared, 4, key => read(key, id).catch((error: unknown) => {
+            if (error instanceof NotFoundError) {
+              return undefined
+            }
+            throw error
+          })),
+        ])
+        return [...inherited, ...own.filter(template => template !== undefined)]
+      }))
+      return found.flat()
     }
 
     /** GitLab has no write that creates or updates, so each file is looked up first, at the commit the change builds on. */
@@ -791,6 +827,7 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
         })).data)),
         milestonesPage: verb(!anonymous, milestonesPage),
         collaboratorsPage: verb(!anonymous, (repo, listOptions = {}) => list(`${projectPath(repo)}/members/all`, listOptions, (raw: GitLabMember) => ({ actor: toActor(instance, raw)!, role: toRole(raw.access_level), roleRaw: String(raw.access_level), raw }))),
+        templates: verb(true, templates),
         contributorsPage: verb(true, (repo, listOptions = {}) => list(`${projectPath(repo)}/repository/contributors`, listOptions, (raw: GitLabContributor) => ({ name: raw.name || undefined, email: raw.email || undefined, contributions: raw.commits, raw }), { query: { order_by: 'commits', sort: 'desc' } })),
         permissionFor: verb(!anonymous, async (repo, actor, options) => {
           try {
@@ -1243,6 +1280,6 @@ export function gitlabScopesFor(verb: ForgeVerb): VerbScopes {
   if (group === 'orgs') {
     return { token: ['read_api'], note: 'A member of the group, for a private group' }
   }
-  const reads = new Set(['get', 'list', 'listPage', 'byOwner', 'byOwnerPage', 'page', 'events', 'eventsPage', 'comments', 'commentsPage', 'getMany', 'reviews', 'reviewsPage', 'checks', 'files', 'filesPage', 'commits', 'commitsPage', 'code', 'codePage', 'subscription', 'unreadCount', 'threads', 'threadsPage', 'repos', 'reposPage', 'tree', 'treePage', 'branches', 'branchesPage', 'tags', 'tagsPage', 'file', 'compare', 'resolveRef', 'commit', 'latest', 'getByTag', 'downloadAsset', 'runs', 'runsPage', 'run', 'jobs', 'jobsPage', 'log', 'permissionFor', 'labels', 'labelsPage', 'milestones', 'milestonesPage', 'collaborators', 'collaboratorsPage', 'contributors', 'contributorsPage', 'assignableUsers', 'assignableUsersPage', 'reviewerCandidates', 'reviewerCandidatesPage'])
+  const reads = new Set(['get', 'list', 'listPage', 'byOwner', 'byOwnerPage', 'page', 'events', 'eventsPage', 'comments', 'commentsPage', 'getMany', 'reviews', 'reviewsPage', 'checks', 'files', 'filesPage', 'commits', 'commitsPage', 'code', 'codePage', 'subscription', 'unreadCount', 'threads', 'threadsPage', 'repos', 'reposPage', 'tree', 'treePage', 'branches', 'branchesPage', 'tags', 'tagsPage', 'file', 'compare', 'resolveRef', 'commit', 'latest', 'getByTag', 'downloadAsset', 'runs', 'runsPage', 'run', 'jobs', 'jobsPage', 'log', 'permissionFor', 'labels', 'labelsPage', 'milestones', 'milestonesPage', 'collaborators', 'collaboratorsPage', 'contributors', 'contributorsPage', 'templates', 'assignableUsers', 'assignableUsersPage', 'reviewerCandidates', 'reviewerCandidatesPage'])
   return { token: [reads.has(name) ? 'read_api' : 'api'] }
 }
