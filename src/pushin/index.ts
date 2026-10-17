@@ -160,7 +160,7 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
         }
       }),
       listPage: verb('experimental', releasesPage),
-      downloadAsset: verb('unverified', async (ref, downloadOptions = {}) => (await fetcher.stream(`${repoPath(ref.repo)}/releases/assets/${encodeURIComponent(ref.id)}`, {
+      downloadAsset: verb('experimental', async (ref, downloadOptions = {}) => (await fetcher.stream(`${repoPath(ref.repo)}/releases/assets/${encodeURIComponent(ref.id)}`, {
         headers: { accept: 'application/octet-stream' },
         signal: downloadOptions.signal,
       })).body),

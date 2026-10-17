@@ -166,7 +166,7 @@ Since `pushin()` contains no webhook code, there is no `pushinLite()` factory fo
 | `releases.get` | experimental | experimental |
 | `releases.latest` | experimental | experimental |
 | `releases.getByTag` | experimental | experimental |
-| `releases.downloadAsset` | unverified | unverified |
+| `releases.downloadAsset` | experimental | experimental |
 | `releases.create` | unverified | ❌ |
 | `releases.update` | unverified | ❌ |
 | `webhooks.list` | ❌ | ❌ |
