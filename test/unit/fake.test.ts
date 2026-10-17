@@ -36,6 +36,16 @@ describe('fake forge', () => {
     expect(factory.store.events).toHaveLength(4)
   })
 
+  it('reports the seeded author association of a thread and its comments', async () => {
+    const forge = fake({
+      seed: { threads: [{ repo: 'acme/widgets', kind: 'issue', title: 'Hi', author: 'ada', authorAssociation: 'first_time_contributor', comments: [{ body: 'Thanks', authorAssociation: 'owner' }] }] },
+    }).create()
+    const ref = { forge: 'fake', instance: 'fake.test', repo: { forge: 'fake', instance: 'fake.test', owner: 'acme', name: 'widgets' }, kind: 'issue', number: '1' } as const
+
+    expect((await forge.threads.get(ref)).authorAssociation).toBe('first_time_contributor')
+    expect((await forge.threads.commentsPage(ref)).items.map(comment => comment.authorAssociation)).toEqual(['owner'])
+  })
+
   it('closes, relabels and reassigns a thread in one update, with an event for each change', async () => {
     const forge = fake({ seed }).create()
     const repo = (await forge.repos.get({ forge: 'fake', instance: 'fake.test', owner: 'acme', name: 'widgets' })).ref
@@ -601,7 +611,9 @@ describe('fake writes by someone else', () => {
 
     expect(comment.author?.login).toBe('octocat')
     expect(factory.store.events.at(-1)).toMatchObject({ actor: { login: 'octocat' }, summary: 'octocat commented' })
-    expect((await viewer.notifications.listPage()).items).toMatchObject([{ ref: { id: '1' }, reason: 'author', unread: true }])
+    const [notification] = (await viewer.notifications.listPage()).items
+    expect(notification).toMatchObject({ ref: { id: '1' }, reason: 'author', unread: true, latestComment: { id: comment.ref.id } })
+    expect((await viewer.threads.getComment(notification!.latestComment!)).body).toBe('Any news?')
     expect((await octocat.users.me()).login).toBe('octocat')
   })
 

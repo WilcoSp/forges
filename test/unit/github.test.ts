@@ -147,6 +147,24 @@ describe('github provider', () => {
     })
   })
 
+  it('links the latest comment only when the notification names an issue comment', () => {
+    const notification = (latest: string | null) => toNotification('github.com', {
+      id: '901234572',
+      unread: true,
+      reason: 'comment',
+      updated_at: '2025-09-18T09:12:44Z',
+      last_read_at: null,
+      url: 'https://api.github.com/notifications/threads/901234572',
+      repository: { name: 'widgets', full_name: 'acme/widgets' },
+      subject: { title: 'Bug', url: 'https://api.github.com/repos/acme/widgets/pulls/7', latest_comment_url: latest, type: 'PullRequest' },
+    })
+
+    expect(notification('https://api.github.com/repos/acme/widgets/issues/comments/770001').latestComment).toMatchObject({ id: '770001', thread: { kind: 'pull_request', number: '7' } })
+    expect(notification('https://api.github.com/repos/acme/widgets/pulls/7').latestComment).toBeUndefined()
+    expect(notification('https://api.github.com/repos/acme/widgets/pulls/comments/880001').latestComment).toBeUndefined()
+    expect(notification(null).latestComment).toBeUndefined()
+  })
+
   it('refuses to address an unresolved or other thread', async () => {
     const { provider } = tokenProvider()
     await expect(provider.threads.get({ ...pull, number: undefined })).rejects.toThrow(UnresolvedThreadError)
@@ -1064,7 +1082,7 @@ describe('github checks and CI', () => {
     const { fetch } = fixtureFetch('github/recorded/github.com-app/steps/check')
     const provider = github({ auth: { type: 'token', token: 't' }, fetch }).create()
 
-    const page = await provider.checks.list({ forge: 'github', instance: 'github.com', owner: 'h3js', name: 'h3' }, 'dd84e37fca0559506ad97022b5ac9438b427e6e2')
+    const page = await provider.checks.list({ forge: 'github', instance: 'github.com', owner: 'h3js', name: 'h3' }, '04ba6e021cde76fa6fc0084866f231c575647beb')
 
     // The recording has seven check runs and one commit status.
     expect(page.items).toHaveLength(8)
@@ -1551,6 +1569,14 @@ describe('github checks, releases and security alerts', () => {
     expect(result?.ok && result.thread.reviewers?.map(reviewer => [reviewer.actor.login, reviewer.requestedAt])).toEqual([['hubot', new Date('2025-09-17T11:30:00Z')]])
   })
 
+  it('reads how the author relates to the repository when reading several pull requests', async () => {
+    const { fetch } = fixtureFetch('github')
+    const provider = github({ auth: { type: 'token', token: 't' }, fetch }).create()
+    const [result] = await provider.threads.getMany([{ forge: 'github', instance: 'github.com', repo: widgets, kind: 'pull_request', number: '42' }])
+
+    expect(result?.ok && result.thread).toMatchObject({ authorAssociation: 'first_time_contributor', authorAssociationRaw: 'FIRST_TIME_CONTRIBUTOR' })
+  })
+
   it('reports a token missing a GraphQL scope on every thread it could not read', async () => {
     const message = 'Your token has not been granted the required scopes to execute this query.'
     const provider = github({
@@ -1560,6 +1586,16 @@ describe('github checks, releases and security alerts', () => {
     const results = await provider.threads.getMany([{ forge: 'github', instance: 'github.com', repo: widgets, kind: 'pull_request', number: '42' }, { forge: 'github', instance: 'github.com', repo: widgets, kind: 'issue', number: '7' }])
 
     expect(results.map(result => !result.ok && result.warning)).toEqual(Array.from({ length: 2 }, () => expect.objectContaining({ code: 'insufficient_scope', message: `GraphQL ThreadsBatch failed: ${message}`, cause: expect.objectContaining({ name: 'InsufficientScopeError' }) })))
+  })
+
+  it('reads the scopes that a GraphQL scope error names', async () => {
+    const message = 'Your token has not been granted the required scopes to execute this query. The \'email\' field requires one of the following scopes: [\'user:email\', \'read:user\'], but your token has only been granted the: [\'repo\'] scopes. Please modify your token\'s scopes at: https://github.com/settings/tokens.'
+    const provider = github({
+      auth: { type: 'token', token: 't' },
+      fetch: async () => Response.json({ errors: [{ type: 'INSUFFICIENT_SCOPES', message }] }),
+    }).create()
+
+    await expect(provider.graphql('query { viewer { email } }')).rejects.toMatchObject({ name: 'InsufficientScopeError', acceptedScopes: ['user:email', 'read:user'], grantedScopes: ['repo'] })
   })
 
   it('reports a missing GraphQL scope only on the thread whose alias was denied', async () => {
