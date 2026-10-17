@@ -256,6 +256,10 @@ export interface ForgeCapabilities {
     list: PerKind
     /** Support for `threads.getMany()`. */
     getMany: Support
+    /** Support for `threads.closingIssues()` and `threads.closingIssuesPage()`. */
+    closingIssues: Support
+    /** Support for `threads.closingPullRequests()` and `threads.closingPullRequestsPage()`. */
+    closingPullRequests: Support
     /** Support for `threads.events()` and `threads.eventsPage()`, per thread kind. */
     events: PerKind
   }
@@ -573,6 +577,23 @@ export interface ThreadsApi {
   list: (repo: RepoRef, query?: ThreadQuery) => ForgeIterable<Thread>
   /** One page of `list`; pass `cursor` back in `query` to read the next. */
   listPage: (repo: RepoRef, query?: ThreadQuery) => Promise<Page<Thread>>
+  /**
+   * Lists the issues that a pull request closes when it merges, such as those its description names after `Fixes`.
+   * They can be in other repositories. GitHub also lists the issues linked to the pull request by hand.
+   * @example
+   * ```ts
+   * for await (const issue of provider.threads.closingIssues(pull)) {
+   *   console.log(`#${issue.ref.number} ${issue.title}`)
+   * }
+   * ```
+   */
+  closingIssues: (ref: ThreadRef, options?: PageOptions) => ForgeIterable<Thread>
+  /** One page of `closingIssues()`. */
+  closingIssuesPage: (ref: ThreadRef, options?: PageOptions) => Promise<Page<Thread>>
+  /** Lists the pull requests that close an issue when they merge, whether they are open, closed or merged. */
+  closingPullRequests: (ref: ThreadRef, options?: PageOptions) => ForgeIterable<Thread>
+  /** One page of `closingPullRequests()`. */
+  closingPullRequestsPage: (ref: ThreadRef, options?: PageOptions) => Promise<Page<Thread>>
   /** Lists the events on a thread, such as comments, label changes and state changes. */
   events: (ref: ThreadRef, options?: ListOptions) => ForgeIterable<ForgeEvent>
   /** One page of `events()`. */

@@ -105,6 +105,8 @@ Artifacts sends no webhooks. It publishes [events](https://developers.cloudflare
 | `threads.get` | ❌ | ❌ |
 | `threads.list` | ❌ | ❌ |
 | `threads.getMany` | ❌ | ❌ |
+| `threads.closingIssues` | ❌ | ❌ |
+| `threads.closingPullRequests` | ❌ | ❌ |
 | `threads.events` | ❌ | ❌ |
 | `comments.list` | ❌ | ❌ |
 | `comments.get` | ❌ | ❌ |

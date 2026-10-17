@@ -1,0 +1,112 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "POST",
+    "url": "https://api.github.com/graphql",
+    "operationName": "ClosingPullRequests"
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": {
+      "data": {
+        "repository": {
+          "thread": {
+            "references": {
+              "pageInfo": {
+                "hasNextPage": false,
+                "endCursor": "Y3Vyc29yOnYyOpHOAAABAw=="
+              },
+              "nodes": [
+                {
+                  "__typename": "PullRequest",
+                  "repository": {
+                    "databaseId": 1296269,
+                    "name": "widgets",
+                    "owner": {
+                      "login": "acme"
+                    }
+                  },
+                  "id": "PR_kwDOAAB5ac6abcdef",
+                  "number": 42,
+                  "title": "Create the cache directory on start",
+                  "body": "Fixes #17",
+                  "state": "OPEN",
+                  "isDraft": false,
+                  "createdAt": "2026-03-05T08:00:00Z",
+                  "updatedAt": "2026-03-06T10:30:00Z",
+                  "closedAt": null,
+                  "mergedAt": null,
+                  "url": "https://github.com/acme/widgets/pull/42",
+                  "locked": false,
+                  "author": {
+                    "__typename": "User",
+                    "login": "octocat",
+                    "databaseId": 583231,
+                    "avatarUrl": "https://avatars.githubusercontent.com/u/583231?v=4",
+                    "url": "https://github.com/octocat"
+                  },
+                  "authorAssociation": "MEMBER",
+                  "mergedBy": null,
+                  "assignees": {
+                    "nodes": []
+                  },
+                  "labels": {
+                    "nodes": []
+                  },
+                  "comments": {
+                    "totalCount": 0
+                  },
+                  "participants": {
+                    "nodes": [
+                      {
+                        "__typename": "User",
+                        "login": "octocat",
+                        "databaseId": 583231,
+                        "avatarUrl": "https://avatars.githubusercontent.com/u/583231?v=4",
+                        "url": "https://github.com/octocat"
+                      }
+                    ]
+                  },
+                  "milestone": null,
+                  "viewerSubscription": "SUBSCRIBED",
+                  "headRefName": "cache-dir",
+                  "headRefOid": "6dcb09b5b57875f334f61aebed695e2e4193db5e",
+                  "baseRefName": "main",
+                  "baseRefOid": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678",
+                  "headRepository": {
+                    "databaseId": 1296269,
+                    "name": "widgets",
+                    "owner": {
+                      "login": "acme"
+                    }
+                  },
+                  "mergeCommit": null,
+                  "additions": 12,
+                  "deletions": 3,
+                  "changedFiles": 2,
+                  "commits": {
+                    "totalCount": 1,
+                    "nodes": [
+                      {
+                        "commit": {
+                          "statusCheckRollup": null
+                        }
+                      }
+                    ]
+                  },
+                  "reviewRequests": {
+                    "nodes": []
+                  },
+                  "timelineItems": {
+                    "nodes": []
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

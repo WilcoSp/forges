@@ -102,6 +102,8 @@ Since `pushin()` contains no webhook code, there is no `pushinLite()` factory fo
 | `threads.get` | issue, PR | issue, PR |
 | `threads.list` | issue, PR | issue, PR |
 | `threads.getMany` | ✅ | ✅ |
+| `threads.closingIssues` | ❌ | ❌ |
+| `threads.closingPullRequests` | ❌ | ❌ |
 | `threads.events` | issue (emulated), PR (emulated) | issue (emulated), PR (emulated) |
 | `comments.list` | issue, PR | issue, PR |
 | `comments.get` | issue (emulated), PR (emulated) | issue (emulated), PR (emulated) |

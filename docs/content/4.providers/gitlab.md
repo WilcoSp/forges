@@ -83,6 +83,10 @@ When the user isn't allowed to approve, GitLab responds with `401`. The provider
 
 GitLab can only rebase a merge request onto its target branch, so `updateBranch()` rejects with `UnsupportedOperationError` for `method: 'merge'`. GitLab rebases in the background, so it resolves with `status: 'queued'`. The endpoint takes no expected head, so with `sha`, the provider reads the merge request first and rejects with `BranchMovedError` when the source branch has moved.
 
+## Closing references
+
+`closingIssues()` lists the issues that GitLab closes when the merge request merges, and `closingPullRequests()` the merge requests that close an issue. With an external issue tracker, GitLab lists issues that have no project, and `closingIssues()` leaves them out.
+
 ## Merge request stats
 
 GitLab reports the number of changed files on a single merge request, but not the lines added or removed or the number of commits, so `thread.stats` holds only `changedFileCount`. Past the diff limit of the instance, GitLab reports a capped count such as `1000+` instead of the number, and `thread.stats` is absent.
@@ -177,6 +181,8 @@ GitLab has no teams, so a subgroup stands in for one. `orgs.teams()` reads `GET 
 | `threads.get` | issue, PR, commit | issue, PR, commit |
 | `threads.list` | issue, PR | issue, PR |
 | `threads.getMany` | ✅ | ✅ |
+| `threads.closingIssues` | ✅ | ✅ |
+| `threads.closingPullRequests` | ✅ | ✅ |
 | `threads.events` | issue, PR, commit | ❌ |
 | `comments.list` | issue, PR, commit | commit |
 | `comments.get` | issue, PR, commit (emulated) | commit (unverified) |

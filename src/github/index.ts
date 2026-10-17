@@ -81,6 +81,7 @@ import type { ForgeVerb } from '../supports.ts'
 import type { WebLinks } from '../web.ts'
 import type { AppCredentials, GitHubAuth } from './auth.ts'
 import type {
+  ClosingReferencesResult,
   CreateCommitOnBranchResult,
   DiscussionCommentsResult,
   DiscussionThreadResult,
@@ -1088,6 +1089,27 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       throw new NotFoundError(`Thread ${ref.number} not found`, 404, '', context)
     }
     return { id: node.id, state: node.viewerSubscription }
+  }
+
+  async function closingPage(ref: ResolvedThreadRef, document: 'CLOSING_ISSUES' | 'CLOSING_PULL_REQUESTS', listOptions: PageOptions): Promise<Page<Thread>> {
+    const [data, { toGraphQLThread }] = await Promise.all([graphql<ClosingReferencesResult>(document, {
+      owner: ref.repo.owner,
+      name: ref.repo.name,
+      number: Number(ref.number),
+      first: Math.min(listOptions.perPage ?? 50, 100),
+      after: listOptions.cursor?.token ?? null,
+    }, listOptions), import('./graphql.ts')])
+    const references = data.repository?.thread?.references
+    if (!references) {
+      throw new NotFoundError(`Thread ${ref.number} not found`, 404, '', context)
+    }
+    return {
+      items: references.nodes.map((node) => {
+        const repo = { forge: FORGE, instance, owner: node.repository.owner.login, name: node.repository.name, externalId: node.repository.databaseId === undefined ? undefined : String(node.repository.databaseId) }
+        return toGraphQLThread({ forge: FORGE, instance, repo, kind: node.__typename === 'PullRequest' ? 'pull_request' : 'issue', number: String(node.number) }, node)
+      }),
+      cursor: references.pageInfo.hasNextPage && references.pageInfo.endCursor ? { token: references.pageInfo.endCursor } : undefined,
+    }
   }
 
   async function setSubscription(thread: ThreadRef, state: 'SUBSCRIBED' | 'UNSUBSCRIBED', options?: BaseOptions): Promise<void> {
@@ -2197,6 +2219,14 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       reopen: perKind({ issue: true, pull_request: true, discussion: true }, (ref, options) => setState(ref, 'open', options)),
       merge: verb(true, merge),
       updateBranch: verb(true, updateBranch),
+      closingIssuesPage: verb(!anonymous, async (thread, listOptions = {}) => closingPage(requirePull(thread, 'read for the issues they close'), 'CLOSING_ISSUES', listOptions)),
+      closingPullRequestsPage: verb(!anonymous, async (thread, listOptions = {}) => {
+        const ref = requireThread(thread, context)
+        if (ref.kind !== 'issue') {
+          throw new UnsupportedOperationError('Only issues are closed by pull requests', context)
+        }
+        return closingPage(ref, 'CLOSING_PULL_REQUESTS', listOptions)
+      }),
       subscriptions: perKind(ISSUE_LIKE, {
         subscription: async (thread, options): Promise<SubscriptionState> => {
           const { state } = await subscriptionNode(thread, options)

@@ -1,0 +1,51 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "GET",
+    "url": "https://gitlab.com/api/v4/projects/acme%2Fplatform%2Fwidgets/issues/11/closed_by"
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": [
+      {
+        "id": 9900123,
+        "iid": 23,
+        "project_id": 278964,
+        "title": "Cache compiled templates",
+        "description": "Closes #11",
+        "state": "opened",
+        "draft": false,
+        "merged_at": null,
+        "author": {
+          "id": 4101,
+          "username": "ada",
+          "name": "Ada",
+          "avatar_url": "https://gitlab.example/avatar/4101",
+          "web_url": "https://gitlab.com/ada",
+          "state": "active"
+        },
+        "labels": [
+          "enhancement",
+          "performance"
+        ],
+        "web_url": "https://gitlab.com/acme/platform/widgets/-/merge_requests/23",
+        "created_at": "2025-09-15T08:00:00.000Z",
+        "updated_at": "2025-09-18T09:20:00.000Z",
+        "closed_at": null,
+        "discussion_locked": null,
+        "user_notes_count": 3,
+        "source_branch": "cache-templates",
+        "target_branch": "main",
+        "sha": "9f1c2e3d4b5a",
+        "source_project_id": 278964,
+        "target_project_id": 278964,
+        "references": {
+          "short": "!23",
+          "relative": "!23",
+          "full": "acme/platform/widgets!23"
+        }
+      }
+    ]
+  }
+}

@@ -138,6 +138,8 @@ You can manage webhooks on repositories only. Gitee doesn't keep a delivery log,
 | `threads.get` | issue, PR | issue, PR |
 | `threads.list` | issue, PR | issue, PR |
 | `threads.getMany` | ✅ | ✅ |
+| `threads.closingIssues` | ❌ | ❌ |
+| `threads.closingPullRequests` | ❌ | ❌ |
 | `threads.events` | issue, PR | issue, PR |
 | `comments.list` | issue, PR | issue, PR |
 | `comments.get` | issue (emulated), PR (emulated) | issue (emulated), PR (emulated) |

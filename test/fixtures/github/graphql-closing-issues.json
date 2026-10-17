@@ -1,0 +1,142 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "POST",
+    "url": "https://api.github.com/graphql",
+    "operationName": "ClosingIssues"
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": {
+      "data": {
+        "repository": {
+          "thread": {
+            "references": {
+              "pageInfo": {
+                "hasNextPage": false,
+                "endCursor": "Y3Vyc29yOnYyOpHOAAABAg=="
+              },
+              "nodes": [
+                {
+                  "__typename": "Issue",
+                  "repository": {
+                    "databaseId": 1296269,
+                    "name": "widgets",
+                    "owner": {
+                      "login": "acme"
+                    }
+                  },
+                  "id": "I_kwDOAAB5ac6abc017",
+                  "number": 17,
+                  "title": "Crash when the cache directory is missing",
+                  "body": "Widgets crash when the cache directory is missing.",
+                  "state": "OPEN",
+                  "stateReason": null,
+                  "createdAt": "2026-03-02T09:14:00Z",
+                  "updatedAt": "2026-03-04T11:20:00Z",
+                  "closedAt": null,
+                  "url": "https://github.com/acme/widgets/issues/17",
+                  "locked": false,
+                  "author": {
+                    "__typename": "User",
+                    "login": "octocat",
+                    "databaseId": 583231,
+                    "avatarUrl": "https://avatars.githubusercontent.com/u/583231?v=4",
+                    "url": "https://github.com/octocat"
+                  },
+                  "authorAssociation": "MEMBER",
+                  "assignees": {
+                    "nodes": []
+                  },
+                  "labels": {
+                    "nodes": [
+                      {
+                        "name": "bug",
+                        "color": "d73a4a",
+                        "description": "Something isn't working"
+                      }
+                    ]
+                  },
+                  "comments": {
+                    "totalCount": 2
+                  },
+                  "participants": {
+                    "nodes": [
+                      {
+                        "__typename": "User",
+                        "login": "octocat",
+                        "databaseId": 583231,
+                        "avatarUrl": "https://avatars.githubusercontent.com/u/583231?v=4",
+                        "url": "https://github.com/octocat"
+                      }
+                    ]
+                  },
+                  "milestone": null,
+                  "viewerSubscription": "SUBSCRIBED"
+                },
+                {
+                  "__typename": "Issue",
+                  "repository": {
+                    "databaseId": 1296270,
+                    "name": "docs",
+                    "owner": {
+                      "login": "acme"
+                    }
+                  },
+                  "id": "I_kwDOAAB5ad6abc003",
+                  "number": 3,
+                  "title": "Document the cache directory",
+                  "body": "Widgets crash when the cache directory is missing.",
+                  "state": "OPEN",
+                  "stateReason": null,
+                  "createdAt": "2026-03-02T09:14:00Z",
+                  "updatedAt": "2026-03-04T11:20:00Z",
+                  "closedAt": null,
+                  "url": "https://github.com/acme/docs/issues/3",
+                  "locked": false,
+                  "author": {
+                    "__typename": "User",
+                    "login": "octocat",
+                    "databaseId": 583231,
+                    "avatarUrl": "https://avatars.githubusercontent.com/u/583231?v=4",
+                    "url": "https://github.com/octocat"
+                  },
+                  "authorAssociation": "MEMBER",
+                  "assignees": {
+                    "nodes": []
+                  },
+                  "labels": {
+                    "nodes": [
+                      {
+                        "name": "bug",
+                        "color": "d73a4a",
+                        "description": "Something isn't working"
+                      }
+                    ]
+                  },
+                  "comments": {
+                    "totalCount": 2
+                  },
+                  "participants": {
+                    "nodes": [
+                      {
+                        "__typename": "User",
+                        "login": "octocat",
+                        "databaseId": 583231,
+                        "avatarUrl": "https://avatars.githubusercontent.com/u/583231?v=4",
+                        "url": "https://github.com/octocat"
+                      }
+                    ]
+                  },
+                  "milestone": null,
+                  "viewerSubscription": "SUBSCRIBED"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

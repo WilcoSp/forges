@@ -763,6 +763,14 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
         : { status: 'queued', raw: data }
     }
 
+    /** An issue or merge request from a listing that spans projects, or `undefined` for one from an external issue tracker. */
+    function referencedThread(raw: GitLabIssue, kind: 'issue' | 'pull_request'): Thread | undefined {
+      const path = raw.references?.full?.replace(/[#!]\d+$/, '')
+      const project = kind === 'pull_request' ? raw.target_project_id : raw.project_id
+      const repo = path ? toRepoRef(instance, path, project) : repoRefFromWebUrl(instance, raw.web_url, project)
+      return repo && raw.iid !== undefined ? toThread({ forge: FORGE, instance, repo, kind, number: String(raw.iid) }, raw) : undefined
+    }
+
     /** GitLab rebases only, in the background, and takes no expected head, so `sha` is compared against a read of the merge request first. */
     async function updateBranch(thread: ThreadRef, updateOptions: UpdateBranchOptions = {}): Promise<UpdateBranchResult> {
       const ref = requireThread(thread, context)
@@ -1085,6 +1093,20 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
         }),
         get: perKind({ issue: true, pull_request: true, commit: true }, get),
         getMany: verb(true, (refs, options) => getManyConcurrently(refs, get, options)),
+        closingIssuesPage: verb(true, async (thread, listOptions = {}) => {
+          const ref = requireThread(thread, context)
+          if (ref.kind !== 'pull_request') {
+            throw new UnsupportedOperationError('Only merge requests close issues', context)
+          }
+          return list(`${threadPath(ref)}/closes_issues`, listOptions, (raw: GitLabIssue) => referencedThread(raw, 'issue'))
+        }),
+        closingPullRequestsPage: verb(true, async (thread, listOptions = {}) => {
+          const ref = requireThread(thread, context)
+          if (ref.kind !== 'issue') {
+            throw new UnsupportedOperationError('Only issues are closed by merge requests', context)
+          }
+          return list(`${threadPath(ref)}/closed_by`, listOptions, (raw: GitLabIssue) => referencedThread(raw, 'pull_request'))
+        }),
         listPage: perKind(ISSUE_LIKE, listPage),
         eventsPage: verb(!anonymous, async (thread: ThreadRef, listOptions: ListOptions = {}): Promise<Page<ForgeEventInput>> => {
           const ref = requireThread(thread, context)
@@ -1303,6 +1325,6 @@ export function gitlabScopesFor(verb: ForgeVerb): VerbScopes {
   if (group === 'orgs') {
     return { token: ['read_api'], note: 'A member of the group, for a private group' }
   }
-  const reads = new Set(['get', 'list', 'listPage', 'byOwner', 'byOwnerPage', 'page', 'events', 'eventsPage', 'comments', 'commentsPage', 'getMany', 'reviews', 'reviewsPage', 'checks', 'files', 'filesPage', 'commits', 'commitsPage', 'code', 'codePage', 'subscription', 'unreadCount', 'threads', 'threadsPage', 'repos', 'reposPage', 'tree', 'treePage', 'branches', 'branchesPage', 'tags', 'tagsPage', 'file', 'compare', 'resolveRef', 'commit', 'latest', 'getByTag', 'downloadAsset', 'runs', 'runsPage', 'run', 'jobs', 'jobsPage', 'log', 'permissionFor', 'labels', 'labelsPage', 'milestones', 'milestonesPage', 'collaborators', 'collaboratorsPage', 'contributors', 'contributorsPage', 'templates', 'assignableUsers', 'assignableUsersPage', 'reviewerCandidates', 'reviewerCandidatesPage'])
+  const reads = new Set(['get', 'list', 'listPage', 'byOwner', 'byOwnerPage', 'page', 'events', 'eventsPage', 'comments', 'commentsPage', 'getMany', 'closingIssues', 'closingIssuesPage', 'closingPullRequests', 'closingPullRequestsPage', 'reviews', 'reviewsPage', 'checks', 'files', 'filesPage', 'commits', 'commitsPage', 'code', 'codePage', 'subscription', 'unreadCount', 'threads', 'threadsPage', 'repos', 'reposPage', 'tree', 'treePage', 'branches', 'branchesPage', 'tags', 'tagsPage', 'file', 'compare', 'resolveRef', 'commit', 'latest', 'getByTag', 'downloadAsset', 'runs', 'runsPage', 'run', 'jobs', 'jobsPage', 'log', 'permissionFor', 'labels', 'labelsPage', 'milestones', 'milestonesPage', 'collaborators', 'collaboratorsPage', 'contributors', 'contributorsPage', 'templates', 'assignableUsers', 'assignableUsersPage', 'reviewerCandidates', 'reviewerCandidatesPage'])
   return { token: [reads.has(name) ? 'read_api' : 'api'] }
 }

@@ -133,6 +133,10 @@ Two options aren't available, and they reject with `UnsupportedOperationError`. 
 
 `updateBranch()` merges the base branch into the head branch through the REST API, which takes no method, and rebases through GraphQL with `method: 'rebase'`. GitHub checks `sha` against the head as it updates, and rejects with `BranchMovedError` when the head has moved. GitHub updates the branch in the background, so `updateBranch()` resolves with `status: 'queued'`. Read the pull request later to see the new head.
 
+## Closing references
+
+`closingIssues()` and `closingPullRequests()` read through GraphQL, so they need a credential. They list the issues that a closing keyword such as `Fixes #1` names, and the ones linked to the pull request by hand. `closingPullRequests()` lists closed and merged pull requests too.
+
 ## Review replies
 
 GitHub doesn't support replies to replies, so when you pass a reply to `replyToReviewComment()`, it posts to the comment in its `inReplyTo` instead. The new comment carries the `thread` of the comment you pass, so you can call `resolveReviewThread()` with it.
@@ -317,6 +321,8 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `threads.get` | issue, PR, discussion, commit | issue, PR, discussion, commit | issue, PR, discussion, commit | ❌ | issue, PR, commit |
 | `threads.list` | issue, PR, discussion | issue, PR, discussion | issue, PR, discussion | ❌ | issue, PR |
 | `threads.getMany` | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `threads.closingIssues` | ✅ | ✅ | ✅ | ❌ | ❌ |
+| `threads.closingPullRequests` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `threads.events` | issue, PR, discussion, commit | issue, PR, discussion, commit | issue, PR, discussion, commit | ❌ | issue, PR, commit |
 | `comments.list` | issue, PR, discussion, commit | issue, PR, discussion, commit | issue, PR, discussion, commit | ❌ | issue, PR, commit |
 | `comments.get` | issue, PR, discussion, commit | issue, PR, discussion, commit | issue, PR, discussion, commit | ❌ | issue (unverified), PR, commit (unverified) |

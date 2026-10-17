@@ -146,6 +146,25 @@ describe('gitlab provider', () => {
     expect(note('Mentioned in commit c0c5081dc665d64b56fcee63df5429b013bb69b6')).toBe('referenced')
   })
 
+  it('lists the issues a merge request closes, and the merge requests that close an issue, across projects', async () => {
+    const { fetch, calls } = fixtureFetch('gitlab')
+    const issue = { ...mr, kind: 'issue', number: '11' } as const
+
+    for (const instance of [gitlab({ auth: { type: 'token', token: 't' }, fetch }).create(), gitlab({ fetch }).create()]) {
+      const issues = (await instance.threads.closingIssuesPage(mr)).items
+      expect(issues.map(thread => `${thread.ref.repo.owner}/${thread.ref.repo.name}#${thread.ref.number}`)).toEqual(['acme/platform/widgets#11', 'acme/platform/docs#5'])
+      expect(issues[1]!.ref.repo.externalId).toBe('278965')
+      const [closing] = (await instance.threads.closingPullRequestsPage(issue)).items
+      expect(closing).toMatchObject({ kind: 'pull_request', ref: { number: '23', repo: { owner: 'acme/platform', name: 'widgets' } } })
+    }
+    expect(calls.map(call => `${call.method} ${call.url}`)).toEqual([
+      `GET ${P}/merge_requests/23/closes_issues`,
+      `GET ${P}/issues/11/closed_by`,
+      `GET ${P}/merge_requests/23/closes_issues`,
+      `GET ${P}/issues/11/closed_by`,
+    ])
+  })
+
   it('updates a merge request by rebasing it, and refuses a merge', async () => {
     const { instance, calls } = provider()
 

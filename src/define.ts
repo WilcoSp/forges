@@ -157,6 +157,8 @@ export interface ProviderSpec<TExtensions extends object = Record<never, never>>
      */
     listFilters?: readonly ThreadFilter[]
     getMany: Verb<ThreadsApi['getMany']>
+    closingIssuesPage?: Verb<ThreadsApi['closingIssuesPage']>
+    closingPullRequestsPage?: Verb<ThreadsApi['closingPullRequestsPage']>
     eventsPage: Verb<(ref: ThreadRef, options?: ListOptions) => Promise<Page<ForgeEventInput>>>
     commentsPage: ThreadVerb<'commentsPage'>
     getComment?: ThreadVerb<'getComment'>

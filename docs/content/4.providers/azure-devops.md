@@ -154,6 +154,8 @@ for await (const team of provider.orgs.teams(project)) {
 | `threads.get` | issue, PR | issue (unverified), PR |
 | `threads.list` | issue, PR | PR |
 | `threads.getMany` | ✅ | ✅ |
+| `threads.closingIssues` | ❌ | ❌ |
+| `threads.closingPullRequests` | ❌ | ❌ |
 | `threads.events` | issue, PR | issue (unverified), PR |
 | `comments.list` | issue (experimental), PR | issue (unverified), PR |
 | `comments.get` | issue (experimental), PR | issue (unverified), PR |

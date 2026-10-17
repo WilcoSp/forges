@@ -140,6 +140,36 @@ const PULL_FIELDS = `id number title body state isDraft createdAt updatedAt clos
       reviewRequests(first: 20) { nodes { requestedReviewer { __typename ... on User { login databaseId avatarUrl url } ... on Bot { login databaseId avatarUrl url } ... on Team { slug databaseId name url } } } }
       timelineItems(itemTypes: [REVIEW_REQUESTED_EVENT], last: 20) { nodes { ... on ReviewRequestedEvent { createdAt requestedReviewer { __typename ... on User { login } ... on Bot { login } ... on Team { slug } } } } }`
 
+const REFERENCE_PAGE = 'first: $first, after: $after) { pageInfo { hasNextPage endCursor }'
+const REFERENCE_REPOSITORY = 'repository { databaseId name owner { login } }'
+
+export const CLOSING_ISSUES = `query ClosingIssues($owner: String!, $name: String!, $number: Int!, $first: Int!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    thread: pullRequest(number: $number) {
+      references: closingIssuesReferences(${REFERENCE_PAGE} nodes { __typename ${REFERENCE_REPOSITORY} ${ISSUE_FIELDS} } }
+    }
+  }
+}`
+
+export const CLOSING_PULL_REQUESTS = `query ClosingPullRequests($owner: String!, $name: String!, $number: Int!, $first: Int!, $after: String) {
+  repository(owner: $owner, name: $name) {
+    thread: issue(number: $number) {
+      references: closedByPullRequestsReferences(includeClosedPrs: true, ${REFERENCE_PAGE} nodes { __typename ${REFERENCE_REPOSITORY} ${PULL_FIELDS} } }
+    }
+  }
+}`
+
+export interface ClosingReferencesResult {
+  repository: {
+    thread: {
+      references: {
+        pageInfo: { hasNextPage: boolean, endCursor: string | null }
+        nodes: Array<GraphQLIssueOrPull & { repository: { databaseId?: number, name: string, owner: { login: string } } }>
+      }
+    } | null
+  } | null
+}
+
 /** One aliased query reading many issues, pull requests and discussions. */
 export function threadsBatchQuery(refs: ResolvedThreadRef[]): { query: string, variables: Record<string, unknown> } {
   const variables: Record<string, unknown> = {}

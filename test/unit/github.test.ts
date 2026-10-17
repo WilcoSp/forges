@@ -798,6 +798,39 @@ describe('github repository and thread metadata', () => {
   })
 })
 
+describe('github closing references', () => {
+  const issue = { forge: 'github', instance: 'github.com', repo, kind: 'issue', number: '17' } as const
+
+  it('lists the issues a pull request closes, in any repository', async () => {
+    const { provider, calls } = tokenProvider()
+
+    const page = await provider.threads.closingIssuesPage(pull, { perPage: 10 })
+
+    expect(page.items.map(thread => `${thread.ref.repo.name}#${thread.ref.number} ${thread.kind} ${thread.state}`)).toEqual(['widgets#17 issue open', 'docs#3 issue open'])
+    expect(page.items[1]!.ref.repo).toMatchObject({ owner: 'acme', name: 'docs', externalId: '1296270' })
+    expect(page.cursor).toBeUndefined()
+    expect(JSON.parse(calls[0]!.body!).variables).toEqual({ owner: 'acme', name: 'widgets', number: 42, first: 10, after: null })
+  })
+
+  it('lists the pull requests that close an issue, merged or not', async () => {
+    const { provider, calls } = tokenProvider()
+
+    const pulls = await Array.fromAsync(provider.threads.closingPullRequests(issue))
+
+    expect(pulls.map(thread => `#${thread.ref.number} ${thread.kind} ${thread.branches?.head.ref}`)).toEqual(['#42 pull_request cache-dir'])
+    expect(calls[0]!.operationName).toBe('ClosingPullRequests')
+  })
+
+  it('reads closing references only for the kind they belong to, and only with a credential', async () => {
+    const { provider, calls } = tokenProvider()
+
+    await expect(provider.threads.closingIssuesPage(issue)).rejects.toThrow(UnsupportedOperationError)
+    await expect(provider.threads.closingPullRequestsPage(pull)).rejects.toThrow(UnsupportedOperationError)
+    expect(calls).toHaveLength(0)
+    expect(github().create().can('threads.closingIssues')).toBe(false)
+  })
+})
+
 describe('github organisation teams', () => {
   const org = { forge: 'github', instance: 'github.com', owner: 'acme', name: '', kind: 'namespace' } as const
 

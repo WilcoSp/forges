@@ -195,6 +195,9 @@ function threadSteps(kind: 'issue' | 'pull_request' | 'discussion', key: 'issue'
     { name: `${key} reactions`, verb: 'threads.reactionsPage', kind, run: (provider, manifest) => provider.threads.reactionsPage(ref(manifest), page) },
     { name: `${key} subscription`, verb: 'threads.subscription', kind, run: (provider, manifest) => provider.threads.subscription(ref(manifest)) },
   ]
+  if (kind === 'issue') {
+    steps.push({ name: 'issue closing pulls', verb: 'threads.closingPullRequestsPage', run: (provider, manifest) => provider.threads.closingPullRequestsPage(ref(manifest), page) })
+  }
   if (kind === 'pull_request') {
     steps.push(
       { name: 'pull reviews', verb: 'threads.reviewsPage', kind, run: async (provider, manifest, context) => {
@@ -206,6 +209,7 @@ function threadSteps(kind: 'issue' | 'pull_request' | 'discussion', key: 'issue'
       { name: 'pull checks', verb: 'threads.checks', kind, run: (provider, manifest) => provider.threads.checks(ref(manifest)) },
       { name: 'pull files', verb: 'threads.filesPage', kind, run: (provider, manifest) => provider.threads.filesPage(ref(manifest), page) },
       { name: 'pull commits', verb: 'threads.commitsPage', kind, run: (provider, manifest) => provider.threads.commitsPage(ref(manifest), page) },
+      { name: 'pull closing issues', verb: 'threads.closingIssuesPage', run: (provider, manifest) => provider.threads.closingIssuesPage(ref(manifest), page) },
       { name: 'pull reviewer candidates', verb: 'repos.reviewerCandidatesPage', run: (provider, manifest) => provider.repos.reviewerCandidatesPage(ref(manifest), page) },
     )
   }

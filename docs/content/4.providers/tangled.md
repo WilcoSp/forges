@@ -212,6 +212,8 @@ A `push` delivery becomes a `push` or `ref` event. Tangled has no API to registe
 | `threads.get` | issue, PR | issue, PR |
 | `threads.list` | issue, PR | issue, PR |
 | `threads.getMany` | ✅ | ✅ |
+| `threads.closingIssues` | ❌ | ❌ |
+| `threads.closingPullRequests` | ❌ | ❌ |
 | `threads.events` | issue, PR | issue, PR |
 | `comments.list` | issue, PR | issue, PR |
 | `comments.get` | issue (emulated), PR (emulated) | issue (emulated), PR (emulated) |

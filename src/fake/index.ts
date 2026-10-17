@@ -388,6 +388,13 @@ const COMPOSED_VERBS: Partial<Record<ForgeVerb, string>> = {
   'webhooks.ingest': 'it runs locally',
 }
 
+const CLOSING_KEYWORD = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?):?\s+#(\d+)\b/gi
+
+/** The numbers of the issues in the same repository that a pull request body names after a closing keyword, such as `Fixes #1`. */
+function closedNumbers(body: string | undefined): Set<string> {
+  return new Set([...(body ?? '').matchAll(CLOSING_KEYWORD)].map(match => match[1]!))
+}
+
 const ALL_KINDS: Partial<Record<VerbKind, SupportInput>> = { issue: true, pull_request: true, discussion: true, commit: true }
 const WRITABLE: Partial<Record<VerbKind, SupportInput>> = { issue: true, pull_request: true, discussion: true }
 const PULLS: Partial<Record<VerbKind, SupportInput>> = { pull_request: true }
@@ -650,6 +657,10 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
       throw notFound(`No webhook ${ref.id}`)
     }
     return hook
+  }
+
+  function threadsOf(repo: RepoRef, kind: ThreadKind): Thread[] {
+    return [...repoState(repo).threads.values()].map(state => state.thread).filter(thread => thread.kind === kind)
   }
 
   function threadState(ref: ThreadRef): FakeThreadState {
@@ -1311,6 +1322,20 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
         }),
         listFilters: ['involves', 'mentions', 'milestone'],
         getMany: verb(support('threads.getMany', true), refs => getManyConcurrently(refs, async ref => threadState(ref).thread)),
+        closingIssuesPage: verb(support('threads.closingIssues', true), async (ref, listOptions = {}) => {
+          if (ref.kind !== 'pull_request') {
+            throw notFound(`No pull request ${slugOf(ref.repo)}#${ref.number}`)
+          }
+          const numbers = closedNumbers(threadState(ref).thread.body)
+          return pageOf(threadsOf(ref.repo, 'issue').filter(thread => numbers.has(thread.ref.number)), listOptions)
+        }),
+        closingPullRequestsPage: verb(support('threads.closingPullRequests', true), async (ref, listOptions = {}) => {
+          if (ref.kind !== 'issue') {
+            throw notFound(`No issue ${slugOf(ref.repo)}#${ref.number}`)
+          }
+          const { number } = threadState(ref).thread.ref
+          return pageOf(threadsOf(ref.repo, 'pull_request').filter(thread => closedNumbers(thread.body).has(number)), listOptions)
+        }),
         eventsPage: verb(true, async (ref, listOptions = {}) => conditional(pageOf(store.events.filter(event => event.thread?.repo.owner === ref.repo.owner && event.thread.repo.name === ref.repo.name && event.thread.number === ref.number).map(event => polled(event, 'timeline')), listOptions), listOptions)),
         commentsPage: perKind(kinds('threads.comments', ALL_KINDS), async (ref, listOptions = {}) => conditional(pageOf(threadState(ref).comments, listOptions), listOptions)),
         reactionsPage: perKind(kinds('threads.reactions', ALL_KINDS), async (target, listOptions = {}) => {

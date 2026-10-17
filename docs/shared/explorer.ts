@@ -286,6 +286,8 @@ export const EXPLORER_OPERATIONS: ExplorerOperation[] = [
   threadRead('threads.get', 'Thread', (p, _, { thread }) => p.threads.get(thread)),
   operation('threads.getMany', { returns: 'GetManyResult[]', uses: 'thread', fields: fields('kind', 'number'), kind: threadKind, args: () => '[thread]', run: (p, _, { thread }) => p.threads.getMany([thread]) }),
   operation('threads.list', { method: 'threads.listPage', returns: 'Page<Thread>', fields: fields('kind', 'state'), kind: threadKind, args: ({ value }) => `repo, { kind: ${value('kind')}, state: ${value('state')}, perPage: 5 }`, run: (p, input, { repo }) => p.threads.listPage(repo, { kind: input.kind as 'issue' | 'pull_request', state: input.state as 'open' | 'closed' | 'merged' | 'all', perPage: 5 }) }),
+  threadRead('threads.closingIssues', 'Page<Thread>', (p, _, { thread }) => p.threads.closingIssuesPage(thread, perPage)),
+  threadRead('threads.closingPullRequests', 'Page<Thread>', (p, _, { thread }) => p.threads.closingPullRequestsPage(thread, perPage)),
   threadRead('threads.events', 'Page<ForgeEvent>', (p, _, { thread }) => p.threads.eventsPage(thread, perPage)),
   threadRead('threads.comments', 'Page<Comment>', (p, _, { thread }) => p.threads.commentsPage(thread, perPage)),
   threadRead('threads.reactions', 'Page<Reaction>', (p, _, { thread }) => p.threads.reactionsPage(thread, perPage)),

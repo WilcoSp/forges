@@ -127,6 +127,8 @@ Deliveries of `installation.*` events become `installation` events. You register
 | `threads.get` | PR (experimental) | PR (experimental) | ❌ | ❌ |
 | `threads.list` | PR (experimental) | PR (experimental) | ❌ | ❌ |
 | `threads.getMany` | experimental | experimental | ❌ | ❌ |
+| `threads.closingIssues` | ❌ | ❌ | ❌ | ❌ |
+| `threads.closingPullRequests` | ❌ | ❌ | ❌ | ❌ |
 | `threads.events` | PR (experimental) | PR (experimental) | ❌ | ❌ |
 | `comments.list` | PR (experimental) | PR (experimental) | ❌ | ❌ |
 | `comments.get` | PR (unverified) | PR (unverified) | ❌ | ❌ |

@@ -56,6 +56,8 @@ const TABLE = [
   { capability: 'threads.get', perKind: true },
   { capability: 'threads.list', listing: true, perKind: true },
   { capability: 'threads.getMany' },
+  { capability: 'threads.closingIssues', listing: true },
+  { capability: 'threads.closingPullRequests', listing: true },
   { capability: 'threads.events', spec: 'threads.eventsPage', derived: 'threadEvents' },
   { capability: 'comments.list', spec: 'threads.commentsPage', perKind: true },
   { capability: 'comments.get', spec: 'threads.getComment', derived: 'getComment', perKind: true },

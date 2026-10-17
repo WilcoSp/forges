@@ -1629,6 +1629,14 @@
             "$ref": "#/components/schemas/Support",
             "description": "Support for `threads.getMany()`."
           },
+          "closingIssues": {
+            "$ref": "#/components/schemas/Support",
+            "description": "Support for `threads.closingIssues()` and `threads.closingIssuesPage()`."
+          },
+          "closingPullRequests": {
+            "$ref": "#/components/schemas/Support",
+            "description": "Support for `threads.closingPullRequests()` and `threads.closingPullRequestsPage()`."
+          },
           "events": {
             "$ref": "#/components/schemas/PerKind",
             "description": "Support for `threads.events()` and `threads.eventsPage()`, per thread kind."
@@ -1638,6 +1646,8 @@
           "get",
           "list",
           "getMany",
+          "closingIssues",
+          "closingPullRequests",
           "events"
         ]
       },

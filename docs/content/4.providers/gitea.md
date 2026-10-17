@@ -135,6 +135,8 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `threads.get` | issue, PR, commit | issue, PR, commit |
 | `threads.list` | issue, PR | issue, PR |
 | `threads.getMany` | ✅ | ✅ |
+| `threads.closingIssues` | ❌ | ❌ |
+| `threads.closingPullRequests` | ❌ | ❌ |
 | `threads.events` | issue, PR, commit | issue, PR, commit |
 | `comments.list` | issue, PR | issue, PR |
 | `comments.get` | issue, PR | issue, PR |

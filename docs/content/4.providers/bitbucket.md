@@ -135,6 +135,8 @@ Bitbucket doesn't keep a delivery log, so `webhooks.deliveries()` and `webhooks.
 | `threads.get` | PR, commit | PR, commit |
 | `threads.list` | PR | PR |
 | `threads.getMany` | ✅ | ✅ |
+| `threads.closingIssues` | ❌ | ❌ |
+| `threads.closingPullRequests` | ❌ | ❌ |
 | `threads.events` | PR, commit | PR, commit |
 | `comments.list` | PR, commit | PR, commit |
 | `comments.get` | PR (emulated), commit (emulated) | PR (unverified), commit (unverified) |

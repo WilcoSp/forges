@@ -827,6 +827,15 @@ describe('fake write results', () => {
     expect(thread.branches?.mergeCommitSha).toBeUndefined()
   })
 
+  it('links a pull request to the issues its body closes with a keyword', async () => {
+    const forge = fake({ seed: { ...seed, threads: [...seed.threads.map(thread => thread.kind === 'pull_request' ? { ...thread, body: 'Fixes #1, refs #3' } : thread), { repo: 'acme/widgets', kind: 'issue' as const, title: 'Unrelated' }] } }).create()
+
+    expect((await forge.threads.closingIssuesPage(pull)).items.map(thread => thread.ref.number)).toEqual(['1'])
+    expect((await Array.fromAsync(forge.threads.closingPullRequests(issue))).map(thread => thread.ref.number)).toEqual(['2'])
+    expect((await forge.threads.closingPullRequestsPage({ ...issue, number: '3' })).items).toEqual([])
+    await expect(forge.threads.closingIssuesPage(issue)).rejects.toBeInstanceOf(NotFoundError)
+  })
+
   it('moves the head of a pull request on updateBranch, and refuses an update from a head that has moved', async () => {
     const forge = fake({ seed: { ...seed, threads: seed.threads.map(thread => thread.kind === 'pull_request' ? { ...thread, head: { sha: 'a'.repeat(40) } } : thread) } }).create()
 

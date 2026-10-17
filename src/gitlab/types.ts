@@ -191,8 +191,10 @@ export interface GitLabIssue {
   merge_commit_sha?: string | null
   squash_commit_sha?: string | null
   changes_count?: string | null
+  project_id?: number
   source_project_id?: number
   target_project_id?: number
+  references?: { full?: string }
   head_pipeline?: GitLabPipeline | null
   milestone?: GitLabMilestone | null
   upvotes?: number
