@@ -498,6 +498,154 @@ describe('fake forge', () => {
   })
 })
 
+describe('fake listing filters', () => {
+  const repo = { forge: 'fake', instance: 'fake.test', owner: 'acme', name: 'widgets' } as const
+
+  function clocked() {
+    let at = Date.parse('2026-01-01T00:00:00Z')
+    const factory = fake({
+      now: () => new Date(at),
+      seed: {
+        threads: [
+          { repo: 'acme/widgets', kind: 'issue', title: 'Old', author: 'ada', milestone: 'v1' },
+          { repo: 'acme/widgets', kind: 'issue', title: 'Mentions bob', body: 'cc @bob', comments: [{ body: 'one', author: 'cy' }, { body: 'two' }] },
+          { repo: 'acme/other', kind: 'issue', title: 'Elsewhere' },
+        ],
+        notifications: [{ repo: 'acme/widgets', number: 1 }, { repo: 'acme/widgets', number: 2 }, { repo: 'acme/other', number: 1 }],
+      },
+    })
+    return { factory, forge: factory.create(), tick: (ms: number) => (at += ms) }
+  }
+
+  it('filters threads by mention, involvement, milestone, update and creation time, and sorts them', async () => {
+    const { forge, tick } = clocked()
+    tick(60_000)
+    await forge.threads.comment({ forge: 'fake', instance: 'fake.test', repo, kind: 'issue', number: '1' }, 'bump')
+    const titles = async (query: Parameters<typeof forge.threads.listPage>[1]) => (await forge.threads.listPage(repo, query)).items.map(thread => thread.title)
+
+    expect(await titles({ mentions: 'bob' })).toEqual(['Mentions bob'])
+    expect(await titles({ involves: 'cy' })).toEqual(['Mentions bob'])
+    expect(await titles({ involves: 'ada' })).toEqual(['Old'])
+    expect(await titles({ milestone: 'v1' })).toEqual(['Old'])
+    expect(await titles({ milestone: 'none' })).toEqual(['Mentions bob'])
+    expect(await titles({ since: new Date('2026-01-01T00:00:30Z') })).toEqual(['Old'])
+    expect(await titles({ createdAfter: new Date('2026-01-01T00:00:30Z') })).toEqual([])
+    expect(await titles({ sort: 'updated' })).toEqual(['Old', 'Mentions bob'])
+    expect(await titles({ sort: 'comments', direction: 'asc' })).toEqual(['Old', 'Mentions bob'])
+    expect((await forge.threads.listPage(repo, { mentions: 'bob' })).warnings).toBeUndefined()
+  })
+
+  it('lists notifications updated since a time, and marks only those of a repository or before a time', async () => {
+    const { factory, forge, tick } = clocked()
+    factory.store.notifications[1]!.updatedAt = new Date(tick(60_000))
+    const unread = async () => (await forge.notifications.listPage()).items.map(item => item.ref.id)
+
+    expect((await forge.notifications.listPage({ since: new Date('2026-01-01T00:00:30Z') })).items.map(item => item.ref.id)).toEqual(['2'])
+    await forge.notifications.markAllRead({ before: new Date('2026-01-01T00:00:30Z'), repo })
+    expect(await unread()).toEqual(['2', '3'])
+    await forge.notifications.markAllDone({ repo })
+    expect((await forge.notifications.listPage({ all: true })).items.map(item => item.ref.id)).toEqual(['3'])
+  })
+})
+
+describe('fake event sources', () => {
+  it('reads polled events with source poll and an id of the listing\'s own', async () => {
+    const factory = fake({ seed })
+    const forge = factory.create()
+    const issue = { forge: 'fake', instance: 'fake.test', repo: { forge: 'fake', instance: 'fake.test', owner: 'acme', name: 'widgets' }, kind: 'issue', number: '1' } as const
+    await forge.threads.comment(issue, 'Hello')
+
+    const [timeline] = (await forge.threads.eventsPage(issue)).items
+    const [feed] = (await forge.repos.eventsPage(issue.repo)).items
+    const [pushed] = factory.store.events
+
+    expect([pushed!.source, timeline!.source, feed!.source]).toEqual(['subscribe', 'poll', 'poll'])
+    expect(new Set([pushed!.id, timeline!.id, feed!.id]).size).toBe(3)
+    expect(timeline!.detail).toEqual(pushed!.detail)
+  })
+
+  it('marks a notification read and keeps it on done where done is emulated', async () => {
+    const forge = fake({ seed, support: { 'notifications.markDone': 'emulated' } }).create()
+    const [notification] = (await forge.notifications.listPage()).items
+
+    await forge.notifications.markDone(notification!.ref)
+
+    expect((await forge.notifications.listPage()).items).toEqual([])
+    expect((await forge.notifications.listPage({ all: true })).items).toMatchObject([{ ref: notification!.ref, unread: false }])
+  })
+})
+
+describe('fake writes by someone else', () => {
+  const repo = { forge: 'fake', instance: 'fake.test', owner: 'acme', name: 'widgets' } as const
+  const issue = (number: string) => ({ forge: 'fake', instance: 'fake.test', repo, kind: 'issue', number }) as const
+
+  function forge() {
+    const factory = fake({
+      seed: {
+        threads: [
+          { repo: 'acme/widgets', kind: 'issue', title: 'Mine' },
+          { repo: 'acme/widgets', kind: 'issue', title: 'Theirs', author: 'ada' },
+          { repo: 'acme/widgets', kind: 'pull_request', title: 'Fix', author: 'ada' },
+        ],
+        notifications: [{ repo: 'acme/widgets', number: 1, unread: false }],
+      },
+    })
+    factory.store.repos.get('acme/widgets')!.threads.get('2')!.subscription = 'none'
+    return { factory, viewer: factory.create(), octocat: factory.as('octocat') }
+  }
+
+  it('records the write as theirs and marks the viewer\'s notification for the thread unread again', async () => {
+    const { factory, viewer, octocat } = forge()
+
+    const comment = await octocat.threads.comment(issue('1'), 'Any news?')
+
+    expect(comment.author?.login).toBe('octocat')
+    expect(factory.store.events.at(-1)).toMatchObject({ actor: { login: 'octocat' }, summary: 'octocat commented' })
+    expect((await viewer.notifications.listPage()).items).toMatchObject([{ ref: { id: '1' }, reason: 'author', unread: true }])
+    expect((await octocat.users.me()).login).toBe('octocat')
+  })
+
+  it('notifies the viewer of a mention or a review request on a thread the viewer is not subscribed to', async () => {
+    const { viewer, octocat } = forge()
+
+    await octocat.threads.comment(issue('2'), 'Nothing to see')
+    await octocat.threads.comment(issue('2'), 'cc @fake-user')
+    await octocat.threads.requestReview({ ...issue('3'), kind: 'pull_request' }, ['fake-user'])
+    await viewer.threads.comment(issue('1'), 'Own comment')
+
+    expect((await viewer.notifications.listPage()).items.map(item => [item.subject.type === 'thread' && item.subject.thread.number, item.reason])).toEqual([['2', 'mention'], ['3', 'review_requested']])
+  })
+
+  it('has no notifications or subscriptions of the viewer', async () => {
+    const { octocat } = forge()
+
+    expect(octocat.can('notifications.list')).toBe(false)
+    expect(octocat.can('threads.subscription', 'issue')).toBe(false)
+  })
+})
+
+describe('fake security alerts', () => {
+  const repo = { forge: 'fake', instance: 'fake.test', owner: 'acme', name: 'widgets' } as const
+  const forge = fake({
+    seed: {
+      securityAlerts: [
+        { repo: 'acme/widgets', kind: 'dependency', title: 'Prototype pollution', severity: 'high', package: { ecosystem: 'npm', name: 'lodash', fixedIn: '4.17.21' } },
+        { repo: 'acme/widgets', kind: 'secret', title: 'Token in config' },
+        { repo: 'acme/widgets', kind: 'dependency', title: 'ReDoS', state: 'fixed' },
+      ],
+    },
+  }).create()
+
+  it('lists seeded alerts by kind and state, numbering each kind separately', async () => {
+    const open = await forge.securityAlerts.listPage(repo)
+    const closed = await forge.securityAlerts.listPage(repo, { kind: 'dependency', state: 'closed' })
+
+    expect(open.items.map(alert => [alert.kind, alert.ref.id, alert.severity])).toEqual([['secret', '1', 'medium'], ['dependency', '1', 'high']])
+    expect(closed.items).toMatchObject([{ ref: { id: '2', kind: 'dependency' }, title: 'ReDoS', state: 'fixed' }])
+    expect(forge.capabilities.securityAlerts).toMatchObject({ dependency: true, code_scanning: true, secret: true })
+  })
+})
+
 describe('fake webhook management', () => {
   it('registers, updates and removes a hook without ever returning its secret', async () => {
     const factory = fake({ seed })
