@@ -4,11 +4,13 @@ import { toActivityEvent as toBitbucketActivityEvent } from '../../src/bitbucket
 import { translateBitbucketWebhook } from '../../src/bitbucket/webhooks.ts'
 import { toReview as toOriginReview, toReviewEvent as toOriginReviewEvent } from '../../src/cursor-origin/normalise.ts'
 import { translateOriginWebhook } from '../../src/cursor-origin/webhooks.ts'
-import { completeEvent, eventAction } from '../../src/events.ts'
+import { completeEvent, eventAction, threadSnapshot } from '../../src/events.ts'
 import { fake } from '../../src/fake/index.ts'
 import { toEvent as toForgejoEvent, toReview as toForgejoReview } from '../../src/forgejo/normalise.ts'
-import { translateGitHubWebhook } from '../../src/github/events.ts'
+import { translateForgejoWebhook } from '../../src/forgejo/webhooks.ts'
+import { toFeedEvent, translateGitHubWebhook } from '../../src/github/events.ts'
 import { toEvent as toGitHubEvent, toReview } from '../../src/github/normalise.ts'
+import { GITHUB_WEBHOOK_EVENTS } from '../../src/github/webhook-events.ts'
 import { toFeedEvent as toGitLabFeedEvent } from '../../src/gitlab/feed.ts'
 import { toNoteEvent as toGitLabNoteEvent } from '../../src/gitlab/normalise.ts'
 import { translateGitLabWebhook } from '../../src/gitlab/webhooks.ts'
@@ -40,11 +42,64 @@ describe('event actions', () => {
   })
 })
 
+describe('thread snapshots', () => {
+  it('keeps only the fields the source reports', () => {
+    expect(threadSnapshot({ title: 'Fix', state: 'unknown', labels: [], body: undefined })).toEqual({ title: 'Fix', labels: [] })
+    expect(threadSnapshot({ state: 'unknown' })).toBeUndefined()
+  })
+
+  it('carries a thin pull request from an activity feed as its branches alone', () => {
+    const event = toFeedEvent('github.com', {
+      id: '1',
+      type: 'PullRequestEvent',
+      actor: sender,
+      created_at: null,
+      repo: { id: 1, name: 'acme/widgets' },
+      payload: { action: 'opened', number: 4, pull_request: { number: 4, head: { ref: 'fix', sha: 'abc', repo: { id: 9, url: 'https://api.github.com/repos/fork/widgets', name: 'widgets' } }, base: { ref: 'main', sha: 'def' } } },
+    })
+
+    expect(event.threadSnapshot).toEqual({
+      branches: { head: { ref: 'fix', sha: 'abc', repo: { forge: 'github', instance: 'github.com', owner: 'fork', name: 'widgets', externalId: '9' } }, base: { ref: 'main', sha: 'def' } },
+    })
+  })
+
+  it('names who merged a pull request that a webhook reports merged', () => {
+    const [event] = translateGitHubWebhook('github.com', github('pull_request', { action: 'closed', pull_request: { number: 4, state: 'closed', merged: true, merged_by: { login: 'hubot', id: 4, type: 'User' } } }))
+
+    expect(event!.threadSnapshot).toMatchObject({ state: 'merged', mergedBy: { login: 'hubot' } })
+  })
+
+  it('keeps an empty GitLab description as an empty body', () => {
+    const project = { id: 1, path_with_namespace: 'acme/widgets', name: 'widgets', namespace: { full_path: 'acme' } }
+    const [event] = translateGitLabWebhook('gitlab.com', { headers: { 'x-gitlab-event': 'Issue Hook' }, body: JSON.stringify({ object_kind: 'issue', user: { id: 5, username: 'grace' }, project, object_attributes: { iid: 3, action: 'open', state: 'opened', title: 'Bug', description: '' } }) })
+
+    expect(event!.threadSnapshot).toMatchObject({ title: 'Bug', body: '' })
+  })
+
+  it('leaves out draft and labels when a pull request payload omits them', () => {
+    const [bitbucket] = translateBitbucketWebhook('bitbucket.org', { headers: { 'x-event-key': 'pullrequest:created' }, body: JSON.stringify({ repository: { full_name: 'acme/widgets', name: 'widgets' }, pullrequest: { id: 31, title: 'Fix', state: 'OPEN' } }) })
+    const [forgejo] = translateForgejoWebhook({ forge: 'forgejo', instance: 'codeberg.org' }, { headers: { 'x-forgejo-event': 'pull_request', 'x-forgejo-delivery': 'd' }, body: JSON.stringify({ action: 'opened', number: 4, pull_request: { id: 9, number: 4, title: 'Fix', state: 'open' }, repository: { id: 1, name: 'widgets', full_name: 'acme/widgets', owner: { login: 'acme' } }, sender: { login: 'ada', id: 3 } }) })
+
+    for (const event of [bitbucket!, forgejo!]) {
+      expect(event.threadSnapshot).toMatchObject({ title: 'Fix', state: 'open' })
+      expect(event.threadSnapshot).not.toHaveProperty('isDraft')
+      expect(event.threadSnapshot).not.toHaveProperty('labels')
+    }
+  })
+})
+
 describe('github webhook detail', () => {
   it('marks a merged pull as `merged` rather than `closed`', () => {
     const [event] = translateGitHubWebhook('github.com', github('pull_request', { action: 'closed', pull_request: { number: 4, merged: true } }))
 
     expect(event).toMatchObject({ kind: 'state_change', action: 'merged', actionRaw: 'closed', detail: { type: 'state_change', state: 'merged' } })
+  })
+
+  it.each(['created', 'edited', 'deleted'])('lists %s review comments among the events it delivers', (action) => {
+    const [event] = translateGitHubWebhook('github.com', github('pull_request_review_comment', { action, pull_request: { number: 4 }, comment: { id: 9, path: 'a.ts' } }))
+
+    expect(event).toMatchObject({ kind: 'review_comment', action })
+    expect(GITHUB_WEBHOOK_EVENTS).toContainEqual({ kind: 'review_comment', action })
   })
 
   it('types a comment on a pull as a pull request thread', () => {

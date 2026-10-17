@@ -11,7 +11,7 @@ import type {
   StateRecord,
   TangledRecord,
 } from './types.ts'
-import { eventTime } from '../events.ts'
+import { eventTime, threadSnapshot } from '../events.ts'
 import { toDate } from '../utils.ts'
 import { atUri } from './atproto.ts'
 
@@ -140,6 +140,12 @@ export interface ActivityRecord {
   rev?: string
 }
 
+/** An issue or pull record and the thread ref it resolves to. */
+export interface ThreadRead {
+  ref: ResolvedThreadRef
+  record: IssueRecord | PullRecord
+}
+
 export function toEventKind(collection: string, operation: ActivityRecord['operation']): EventKind {
   if (operation === 'delete') {
     return 'other'
@@ -224,9 +230,12 @@ function activityDetail(activity: ActivityRecord, kind: EventKind, thread: Resol
     const record = activity.record as FeedCommentRecord | LegacyCommentRecord | undefined
     return { type: 'comment', comment: thread && { forge: FORGE, instance: thread.instance, thread, id: activity.uri }, body: record?.body === undefined ? undefined : commentBody(record) }
   }
-  return kind === 'state_change' && (activity.collection === COLLECTIONS.issueState || activity.collection === COLLECTIONS.pullStatus)
+  if (kind !== 'state_change') {
+    return undefined
+  }
+  return activity.collection === COLLECTIONS.issueState || activity.collection === COLLECTIONS.pullStatus
     ? { type: 'state_change', state: toThreadState(stateToken(activity.record as StateRecord)) }
-    : undefined
+    : { type: 'state_change', state: 'open' }
 }
 
 export function toActivityEvent(
@@ -236,6 +245,7 @@ export function toActivityEvent(
   thread: ResolvedThreadRef | undefined,
   source: SourceKind,
   fallbackTime: Date,
+  threadRecord?: IssueRecord | PullRecord,
 ): ForgeEventInput {
   const kind = toEventKind(activity.collection, activity.operation)
   return {
@@ -252,6 +262,7 @@ export function toActivityEvent(
     actor,
     repo: thread?.repo,
     thread,
+    threadSnapshot: threadRecord && threadSnapshot({ title: threadRecord.title, body: threadRecord.body }),
     source,
     payload: activity.record ? { uri: activity.uri, ...activity.record } : { uri: activity.uri },
   }

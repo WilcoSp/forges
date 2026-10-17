@@ -11,19 +11,21 @@ interface FeedThreadOp {
   action: EventAction
   state?: ThreadState
   review?: ReviewState
+  /** The text after the number is the thread's title. */
+  titled?: boolean
 }
 
 /** Activity types about an issue or a pull request, whose `content` starts with its number. */
 const FEED_THREAD_OPS: Record<string, FeedThreadOp> = {
-  create_issue: { thread: 'issue', kind: 'state_change', action: 'opened', state: 'open' },
+  create_issue: { thread: 'issue', kind: 'state_change', action: 'opened', state: 'open', titled: true },
   close_issue: { thread: 'issue', kind: 'state_change', action: 'closed', state: 'closed' },
   reopen_issue: { thread: 'issue', kind: 'state_change', action: 'reopened', state: 'open' },
   comment_issue: { thread: 'issue', kind: 'comment', action: 'created' },
-  create_pull_request: { thread: 'pull_request', kind: 'state_change', action: 'opened', state: 'open' },
+  create_pull_request: { thread: 'pull_request', kind: 'state_change', action: 'opened', state: 'open', titled: true },
   close_pull_request: { thread: 'pull_request', kind: 'state_change', action: 'closed', state: 'closed' },
   reopen_pull_request: { thread: 'pull_request', kind: 'state_change', action: 'reopened', state: 'open' },
-  merge_pull_request: { thread: 'pull_request', kind: 'state_change', action: 'merged', state: 'merged' },
-  auto_merge_pull_request: { thread: 'pull_request', kind: 'state_change', action: 'merged', state: 'merged' },
+  merge_pull_request: { thread: 'pull_request', kind: 'state_change', action: 'merged', state: 'merged', titled: true },
+  auto_merge_pull_request: { thread: 'pull_request', kind: 'state_change', action: 'merged', state: 'merged', titled: true },
   pull_request_ready_for_review: { thread: 'pull_request', kind: 'state_change', action: 'ready_for_review', state: 'open' },
   comment_pull: { thread: 'pull_request', kind: 'comment', action: 'created' },
   approve_pull_request: { thread: 'pull_request', kind: 'review', action: 'submitted', review: 'approved' },
@@ -55,7 +57,7 @@ function pushContent(content: string | undefined): ForgejoPushContent {
   }
 }
 
-function feedLevel(origin: ForgeOrigin, raw: ForgejoActivity, repo: RepoRef | undefined, who: string): Pick<ForgeEventInput, 'kind' | 'action' | 'detail' | 'summary' | 'thread'> {
+function feedLevel(origin: ForgeOrigin, raw: ForgejoActivity, repo: RepoRef | undefined, who: string): Pick<ForgeEventInput, 'kind' | 'action' | 'detail' | 'summary' | 'thread' | 'threadSnapshot'> {
   const ref = raw.ref_name ?? ''
   const name = ref.replace(/^refs\/(?:heads|tags)\//, '')
   // Gitea before 1.14 stored the short name of a pushed tag, and those rows were never migrated
@@ -87,7 +89,9 @@ function feedLevel(origin: ForgeOrigin, raw: ForgejoActivity, repo: RepoRef | un
     case 'transfer_repo':
       return { kind: 'repo', action: 'transferred', detail: { type: 'repo_transferred', fromOwner: raw.content?.split('/')[0], toOwner: raw.repo?.owner?.login }, summary: `${who} transferred the repository` }
     case 'publish_release':
-      return { kind: 'release', action: 'published', summary: `${who} published ${raw.content || name || 'a release'}` }
+      return { kind: 'release', action: 'published', detail: { type: 'release', tag: name || undefined, name: raw.content || undefined }, summary: `${who} published ${raw.content || name || 'a release'}` }
+    case 'star_repo':
+      return { kind: 'star', action: 'created', summary: `${who} starred the repository` }
   }
   const op = FEED_THREAD_OPS[raw.op_type]
   if (!op) {
@@ -104,7 +108,7 @@ function feedLevel(origin: ForgeOrigin, raw: ForgejoActivity, repo: RepoRef | un
   const summary = op.kind === 'comment'
     ? `${who} commented on ${noun} ${number}`
     : op.review ? `${who} reviewed ${noun} ${number} (${op.review})` : `${who} ${op.action.replaceAll('_', ' ')} ${noun} ${number}`
-  return { kind: op.kind, action: op.action, thread, detail, summary: summary.trim() }
+  return { kind: op.kind, action: op.action, thread, ...thread && op.titled && text ? { threadSnapshot: { title: text } } : {}, detail, summary: summary.trim() }
 }
 
 /** Normalises an item of a repository's or a user's activity feed. */

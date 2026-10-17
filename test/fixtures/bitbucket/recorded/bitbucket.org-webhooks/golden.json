@@ -5,6 +5,12 @@
       "instance": "bitbucket.org",
       "id": "1cbf57a7-9e5d-4055-a2a0-2db57487d725",
       "kind": "state_change",
+      "action": "opened",
+      "detail": {
+        "type": "state_change",
+        "state": "open",
+        "draft": false
+      },
       "kindRaw": "pullrequest:created",
       "summary": "roebot created",
       "occurredAt": "<now>",
@@ -38,8 +44,42 @@
         "kind": "pull_request",
         "number": "10"
       },
-      "source": "webhook",
-      "action": "created"
+      "threadSnapshot": {
+        "title": "forges fixture 20261009201205: webhooks",
+        "body": "Opened by run 20261009201205.",
+        "state": "open",
+        "stateRaw": "OPEN",
+        "isDraft": false,
+        "author": {
+          "forge": "bitbucket",
+          "instance": "bitbucket.org",
+          "login": "roebot",
+          "id": "{6cfdba34-c97e-4f75-b163-0f801a227ce8}",
+          "name": "roebot",
+          "avatarUrl": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:9d3c7e45-eeca-4000-83c8-1687e1f37a88/fd4dd39c-24a8-4ef0-9d69-e68a0806b45f/128",
+          "typeRaw": "app_user",
+          "isBotHint": true
+        },
+        "url": "https://bitbucket.org/danielroe/forges-fixtures/pull-requests/10",
+        "branches": {
+          "head": {
+            "ref": "forges-fixtures/20261009201205-webhooks",
+            "sha": "4c211e80f93b",
+            "repo": {
+              "forge": "bitbucket",
+              "instance": "bitbucket.org",
+              "owner": "danielroe",
+              "name": "forges-fixtures",
+              "externalId": "{245afeb9-21de-4a8c-81c0-d45efbf52a8c}"
+            }
+          },
+          "base": {
+            "ref": "main",
+            "sha": "f33cda6b2d8f"
+          }
+        }
+      },
+      "source": "webhook"
     }
   ],
   "02-repo-push": [
@@ -117,6 +157,29 @@
       "instance": "bitbucket.org",
       "id": "ad167c84-fad6-4d4b-afa5-f789d43c0778",
       "kind": "comment",
+      "action": "created",
+      "detail": {
+        "type": "comment",
+        "comment": {
+          "forge": "bitbucket",
+          "instance": "bitbucket.org",
+          "thread": {
+            "forge": "bitbucket",
+            "instance": "bitbucket.org",
+            "repo": {
+              "forge": "bitbucket",
+              "instance": "bitbucket.org",
+              "owner": "danielroe",
+              "name": "forges-fixtures",
+              "externalId": "{245afeb9-21de-4a8c-81c0-d45efbf52a8c}"
+            },
+            "kind": "pull_request",
+            "number": "10"
+          },
+          "id": "880091483"
+        },
+        "body": "A comment from run 20261009201205."
+      },
       "kindRaw": "pullrequest:comment_created",
       "summary": "roebot comment created",
       "occurredAt": "<now>",
@@ -150,30 +213,42 @@
         "kind": "pull_request",
         "number": "10"
       },
-      "detail": {
-        "type": "comment",
-        "comment": {
+      "threadSnapshot": {
+        "title": "forges fixture 20261009201205: webhooks",
+        "body": "Opened by run 20261009201205.",
+        "state": "open",
+        "stateRaw": "OPEN",
+        "isDraft": false,
+        "author": {
           "forge": "bitbucket",
           "instance": "bitbucket.org",
-          "thread": {
-            "forge": "bitbucket",
-            "instance": "bitbucket.org",
+          "login": "roebot",
+          "id": "{6cfdba34-c97e-4f75-b163-0f801a227ce8}",
+          "name": "roebot",
+          "avatarUrl": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:9d3c7e45-eeca-4000-83c8-1687e1f37a88/fd4dd39c-24a8-4ef0-9d69-e68a0806b45f/128",
+          "typeRaw": "app_user",
+          "isBotHint": true
+        },
+        "url": "https://bitbucket.org/danielroe/forges-fixtures/pull-requests/10",
+        "branches": {
+          "head": {
+            "ref": "forges-fixtures/20261009201205-webhooks",
+            "sha": "4c211e80f93b",
             "repo": {
               "forge": "bitbucket",
               "instance": "bitbucket.org",
               "owner": "danielroe",
               "name": "forges-fixtures",
               "externalId": "{245afeb9-21de-4a8c-81c0-d45efbf52a8c}"
-            },
-            "kind": "pull_request",
-            "number": "10"
+            }
           },
-          "id": "880091483"
-        },
-        "body": "A comment from run 20261009201205."
+          "base": {
+            "ref": "main",
+            "sha": "f33cda6b2d8f"
+          }
+        }
       },
-      "source": "webhook",
-      "action": "created"
+      "source": "webhook"
     }
   ],
   "04-pullrequest-rejected": [
@@ -182,6 +257,12 @@
       "instance": "bitbucket.org",
       "id": "363b42aa-7f8b-4d13-9e27-e9845af07557",
       "kind": "state_change",
+      "action": "closed",
+      "detail": {
+        "type": "state_change",
+        "state": "closed",
+        "draft": false
+      },
       "kindRaw": "pullrequest:rejected",
       "summary": "roebot rejected",
       "occurredAt": "<now>",
@@ -215,8 +296,42 @@
         "kind": "pull_request",
         "number": "10"
       },
-      "source": "webhook",
-      "action": "other"
+      "threadSnapshot": {
+        "title": "forges fixture 20261009201205: webhooks",
+        "body": "Opened by run 20261009201205.",
+        "state": "closed",
+        "stateRaw": "DECLINED",
+        "isDraft": false,
+        "author": {
+          "forge": "bitbucket",
+          "instance": "bitbucket.org",
+          "login": "roebot",
+          "id": "{6cfdba34-c97e-4f75-b163-0f801a227ce8}",
+          "name": "roebot",
+          "avatarUrl": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:9d3c7e45-eeca-4000-83c8-1687e1f37a88/fd4dd39c-24a8-4ef0-9d69-e68a0806b45f/128",
+          "typeRaw": "app_user",
+          "isBotHint": true
+        },
+        "url": "https://bitbucket.org/danielroe/forges-fixtures/pull-requests/10",
+        "branches": {
+          "head": {
+            "ref": "forges-fixtures/20261009201205-webhooks",
+            "sha": "4c211e80f93b",
+            "repo": {
+              "forge": "bitbucket",
+              "instance": "bitbucket.org",
+              "owner": "danielroe",
+              "name": "forges-fixtures",
+              "externalId": "{245afeb9-21de-4a8c-81c0-d45efbf52a8c}"
+            }
+          },
+          "base": {
+            "ref": "main",
+            "sha": "f33cda6b2d8f"
+          }
+        }
+      },
+      "source": "webhook"
     }
   ]
 }

@@ -1,13 +1,13 @@
 import type { WebhookHandlers } from '../define.ts'
-import type { EventAction, EventKind, ForgeEventInput, RepoRef, WebhookEventType } from '../model.ts'
+import type { EventAction, EventKind, ForgeEventInput, RepoRef, ThreadState, WebhookEventType } from '../model.ts'
 import type { WebhookDelivery } from '../provider.ts'
 import type { TangledOptions } from './index.ts'
 import { bodyText, headerValue } from '../crypto.ts'
 import { WebhookVerificationError } from '../errors.ts'
-import { eventAction, eventTime } from '../events.ts'
+import { eventAction, eventTime, threadSnapshot } from '../events.ts'
 import { toDate } from '../utils.ts'
 import { refEvent, verifyHmacSignature } from '../webhooks.ts'
-import { FORGE } from './normalise.ts'
+import { FORGE, toActor } from './normalise.ts'
 
 export const SIGNATURE_HEADER = 'x-tangled-signature-256'
 export const EVENT_HEADER = 'x-tangled-event'
@@ -27,12 +27,24 @@ interface TangledWebhookPayload {
   pusher?: { did: string }
   sender?: { did: string }
   repository?: { name: string, full_name?: string, owner?: { did: string }, updated_at?: string }
-  pull_request?: { number: number, title?: string, state?: string, created_at?: string, html_url?: string }
+  pull_request?: {
+    number: number
+    title?: string
+    body?: string
+    state?: string
+    target_branch?: string
+    source?: { branch?: string, sha?: string }
+    owner?: { did: string }
+    created_at?: string
+    html_url?: string
+  }
   commits?: Array<{ sha?: string, id?: string, message?: string, author?: { did?: string, name?: string } }>
 }
 
 /** A ref that did not exist before the push, or no longer exists after it. */
 const ZERO_SHA = '0000000000000000000000000000000000000000'
+
+const PULL_STATES: Record<string, ThreadState> = { created: 'open', reopened: 'open', merged: 'merged', closed: 'closed' }
 
 const PULL_KINDS: Record<string, EventKind> = {
   created: 'state_change',
@@ -61,11 +73,14 @@ export function translateTangledWebhook(instance: string, delivery: WebhookDeliv
 
   if (event.startsWith('pull_request:') && payload.pull_request) {
     const action = payload.action ?? event.slice('pull_request:'.length)
+    const pull = payload.pull_request
+    const state = pull.state === 'open' || pull.state === 'closed' || pull.state === 'merged' ? pull.state : undefined
     return [{
       forge: FORGE,
       instance,
       id: deliveryId,
       kind: PULL_KINDS[action] ?? 'other',
+      ...PULL_STATES[action] ? { detail: { type: 'state_change', state: PULL_STATES[action] } } : {},
       kindRaw: event,
       action: PULL_ACTIONS[action] ?? eventAction(action),
       actionRaw: action,
@@ -83,6 +98,15 @@ export function translateTangledWebhook(instance: string, delivery: WebhookDeliv
             displayNumber: String(payload.pull_request.number),
           }
         : undefined,
+      threadSnapshot: threadSnapshot({
+        title: pull.title,
+        body: pull.body,
+        state,
+        stateRaw: pull.state,
+        author: pull.owner && toActor(instance, { did: pull.owner.did }, webUrl),
+        url: pull.html_url,
+        branches: pull.target_branch && pull.source?.branch ? { head: { ref: pull.source.branch, sha: pull.source.sha }, base: { ref: pull.target_branch } } : undefined,
+      }),
       source: 'webhook',
       payload,
     }]

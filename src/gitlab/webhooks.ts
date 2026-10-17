@@ -1,14 +1,14 @@
 import type { WebhookHandlers } from '../define.ts'
-import type { EventAction, EventDetail, EventKind, ForgeEventInput, RepoRef, ThreadRef } from '../model.ts'
+import type { EventAction, EventDetail, EventKind, ForgeEventInput, RepoRef, ThreadRef, ThreadSnapshot } from '../model.ts'
 import type { WebhookDelivery } from '../provider.ts'
 import type { GitLabOptions } from './index.ts'
 import type { GitLabUser } from './types.ts'
 import { bodyText, headerValue } from '../crypto.ts'
 import { WebhookVerificationError } from '../errors.ts'
-import { eventAction, eventTime } from '../events.ts'
+import { eventAction, eventTime, threadSnapshot } from '../events.ts'
 import { toDate } from '../utils.ts'
 import { refEvent, verifySharedToken } from '../webhooks.ts'
-import { approvalId, FORGE, toActor, toRepoRef } from './normalise.ts'
+import { approvalId, FORGE, toActor, toLabel, toRepoRef, toState } from './normalise.ts'
 import { GITLAB_WEBHOOK_EVENTS } from './webhook-events.ts'
 
 export const TOKEN_HEADER = 'x-gitlab-token'
@@ -29,7 +29,7 @@ interface GitLabWebhookPayload {
   user?: Partial<GitLabUser> & { username?: string }
   user_username?: string
   project?: { id?: number, path_with_namespace?: string }
-  object_attributes?: {
+  object_attributes?: GitLabHookThread & {
     id?: number
     iid?: number
     action?: string
@@ -41,10 +41,9 @@ interface GitLabWebhookPayload {
     closed_at?: string | null
     note?: string
     oldrev?: string
-    state?: string
   }
-  issue?: { iid: number }
-  merge_request?: { iid: number }
+  issue?: GitLabHookThread & { iid: number }
+  merge_request?: GitLabHookThread & { iid: number }
   changes?: Record<string, unknown>
   commits?: Array<{ id: string, message: string, timestamp?: string, url?: string, author?: { name?: string } }>
   ref?: string
@@ -58,6 +57,8 @@ interface GitLabWebhookPayload {
   id?: number
   tag?: string
   name?: string
+  description?: string | null
+  url?: string
   released_at?: string
   created_at?: string
   updated_at?: string
@@ -65,6 +66,42 @@ interface GitLabWebhookPayload {
   user_email?: string
   user_id?: number
   project_id?: number
+}
+
+/** An issue or merge request as a hook carries it. */
+interface GitLabHookThread {
+  title?: string
+  description?: string | null
+  state?: string
+  draft?: boolean | null
+  url?: string
+  labels?: Array<{ title: string, color?: string, description?: string | null }> | null
+  source_branch?: string | null
+  target_branch?: string | null
+  last_commit?: { id: string } | null
+  merge_commit_sha?: string | null
+  source?: { path_with_namespace?: string, id?: number } | null
+  target_project_id?: number
+  source_project_id?: number
+}
+
+function snapshotOf(instance: string, raw: GitLabHookThread | undefined): ThreadSnapshot | undefined {
+  return raw && threadSnapshot({
+    title: raw.title,
+    body: raw.description ?? undefined,
+    state: raw.state ? toState(raw.state) : undefined,
+    stateRaw: raw.state,
+    isDraft: raw.draft ?? undefined,
+    labels: raw.labels?.map(label => toLabel({ name: label.title, color: label.color, description: label.description })),
+    url: raw.url,
+    branches: raw.source_branch && raw.target_branch
+      ? {
+          head: { ref: raw.source_branch, sha: raw.last_commit?.id, repo: raw.source?.path_with_namespace ? toRepoRef(instance, raw.source.path_with_namespace, raw.source.id) : undefined },
+          base: { ref: raw.target_branch },
+          mergeCommitSha: raw.merge_commit_sha ?? undefined,
+        }
+      : undefined,
+  })
 }
 
 const ZERO_SHA = /^0+$/
@@ -82,16 +119,28 @@ function repoLevel(instance: string, payload: GitLabWebhookPayload, who: string,
         commits: (payload.commits ?? []).map(commit => ({ sha: commit.id, message: commit.message, author: commit.author?.name, url: commit.url })),
         commitCount: payload.total_commits_count,
       })
-    case 'release':
-      if (payload.action !== 'create' || !repo) {
+    case 'release': {
+      if (!repo) {
         return undefined
       }
+      const action = payload.action === 'create' ? 'published' : eventAction(payload.action) ?? 'other'
       return {
         kind: 'release',
-        action: 'published',
-        detail: { type: 'release', release: { forge: FORGE, instance, repo, id: payload.tag ?? String(payload.id), tag: payload.tag }, name: payload.name },
-        summary: `${who} published ${payload.name ?? payload.tag ?? 'a release'}`,
+        action,
+        detail: { type: 'release', release: { forge: FORGE, instance, repo, id: payload.tag ?? String(payload.id), tag: payload.tag }, tag: payload.tag, name: payload.name, body: payload.description ?? undefined, url: payload.url },
+        summary: `${who} ${action} ${payload.name ?? payload.tag ?? 'a release'}`,
       }
+    }
+    case 'wiki_page': {
+      const page = payload.object_attributes
+      const action = eventAction(page?.action) ?? 'other'
+      return {
+        kind: 'wiki',
+        action,
+        detail: { type: 'wiki', title: page?.title, url: page?.url },
+        summary: `${who} ${action} wiki page ${page?.title ?? ''}`.trim(),
+      }
+    }
     case 'project_rename':
       return {
         kind: 'repo',
@@ -137,7 +186,7 @@ function repoLevel(instance: string, payload: GitLabWebhookPayload, who: string,
 /** The time of the change a project-level delivery reports, else the time its subject last changed. */
 function repoLevelTime(payload: GitLabWebhookPayload): string | undefined {
   if (payload.object_kind === 'release') {
-    return payload.created_at ?? payload.released_at
+    return payload.action === 'create' ? payload.created_at ?? payload.released_at : undefined
   }
   if (payload.event_name?.startsWith('user_add_')) {
     return payload.created_at
@@ -280,6 +329,7 @@ export function translateGitLabWebhook(instance: string, delivery: WebhookDelive
   const thread: ThreadRef | undefined = repo && subject
     ? { forge: FORGE, instance, repo, kind: subject.kind, number: String(subject.iid) }
     : undefined
+  const snapshot = thread && snapshotOf(instance, payload.object_kind === 'note' ? payload.merge_request ?? payload.issue : attributes)
 
   const level = repoLevel(instance, payload, user?.login ?? payload.user_username ?? 'someone', repo)
   if (level) {
@@ -314,6 +364,7 @@ export function translateGitLabWebhook(instance: string, delivery: WebhookDelive
       actor: user,
       repo,
       thread,
+      threadSnapshot: snapshot,
       source: 'webhook',
       payload,
     }))
@@ -343,6 +394,7 @@ export function translateGitLabWebhook(instance: string, delivery: WebhookDelive
     actor: user,
     repo,
     thread,
+    threadSnapshot: snapshot,
     source: 'webhook',
     payload,
   }]

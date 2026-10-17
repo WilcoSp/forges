@@ -1,12 +1,12 @@
-import type { Actor, EventAction, EventDetail, EventKind, ForgeEventInput, RepoRef, SourceKind, ThreadKind, ThreadRef } from '../model.ts'
+import type { Actor, EventAction, EventDetail, EventKind, ForgeEventInput, RepoRef, SourceKind, ThreadKind, ThreadRef, ThreadSnapshot } from '../model.ts'
 import type { WebhookDelivery } from '../provider.ts'
-import type { GitHubFeedEvent, GitHubRepository, GitHubUser } from './types.ts'
+import type { GitHubFeedEvent, GitHubIssue, GitHubRepository, GitHubUser } from './types.ts'
 import { bodyText, headerValue } from '../crypto.ts'
 import { WebhookVerificationError } from '../errors.ts'
-import { eventAction, eventTime, reviewState } from '../events.ts'
-import { toDate } from '../utils.ts'
+import { eventAction, eventTime, reviewState, threadSnapshot } from '../events.ts'
+import { toDate, toPullStats } from '../utils.ts'
 import { refEvent } from '../webhooks.ts'
-import { FORGE, toActor, toRepoRef } from './normalise.ts'
+import { FORGE, toActor, toLabels, toRepoRef, toThreadState } from './normalise.ts'
 
 const EVENT_HEADER = 'x-github-event'
 const DELIVERY_HEADER = 'x-github-delivery'
@@ -25,10 +25,10 @@ export interface GitHubEventPayload {
   sender?: GitHubUser
   /** Push webhooks send `pushed_at` in seconds since the epoch. */
   repository?: GitHubRepository & { updated_at?: string | null, pushed_at?: string | number | null }
-  issue?: GitHubEventSubject & { pull_request?: unknown }
-  pull_request?: GitHubEventSubject & { merged?: boolean | null, merged_at?: string | null, draft?: boolean, state?: string }
-  discussion?: GitHubEventSubject
-  comment?: { id?: number, node_id?: string, body?: string, created_at?: string, updated_at?: string, user?: GitHubUser | null, path?: string, line?: number | null }
+  issue?: GitHubEventThread
+  pull_request?: GitHubEventThread
+  discussion?: GitHubEventThread
+  comment?: { id?: number, node_id?: string, body?: string, created_at?: string, updated_at?: string, user?: GitHubUser | null, path?: string, line?: number | null, commit_id?: string }
   review?: { id?: number, state?: string, body?: string | null, submitted_at?: string | null, user?: GitHubUser | null }
   assignee?: GitHubUser | null
   requested_reviewer?: GitHubUser | null
@@ -54,7 +54,22 @@ export interface GitHubEventPayload {
   member?: GitHubUser | null
   membership?: { user?: GitHubUser }
   changes?: { repository?: { name?: { from: string } }, owner?: { from?: { user?: GitHubUser, organization?: GitHubUser } }, [key: string]: unknown }
-  release?: { id: number, tag_name?: string, name?: string | null, published_at?: string | null }
+  forkee?: GitHubRepository & { created_at?: string | null }
+  pages?: Array<{ page_name?: string, title?: string, action?: string, html_url?: string }>
+  starred_at?: string | null
+  release?: { id: number, tag_name?: string, name?: string | null, body?: string | null, prerelease?: boolean, draft?: boolean, html_url?: string, published_at?: string | null }
+}
+
+/** An issue, pull request or discussion as an event carries it. Activity feeds trim pull requests to the number and branches. */
+interface GitHubEventThread extends GitHubEventSubject, Partial<Pick<GitHubIssue, 'state' | 'draft' | 'html_url' | 'base' | 'additions' | 'deletions' | 'changed_files' | 'commits' | 'merged_by' | 'pull_request'>> {
+  body?: string | null
+  state_reason?: string | null
+  merged?: boolean | null
+  merged_at?: string | null
+  merge_commit_sha?: string | null
+  user?: GitHubUser | null
+  labels?: GitHubIssue['labels']
+  head?: { ref: string, sha: string, repo?: (Partial<GitHubRepository> & { url?: string }) | null }
 }
 
 /** Where an event came from and what identifies it, beside what its payload says. */
@@ -73,6 +88,10 @@ interface GitHubEventContext {
 }
 
 type RepoLevel = Pick<ForgeEventInput, 'kind' | 'action' | 'detail' | 'summary'> & { occurredAt?: Date }
+
+function visibilityChange(isPublic: boolean, who: string, payload: GitHubEventPayload): RepoLevel {
+  return { kind: 'repo', action: 'edited', detail: { type: 'repo_visibility', isPublic }, summary: `${who} made the repository ${isPublic ? 'public' : 'private'}`, occurredAt: toDate(payload.repository?.updated_at) }
+}
 
 function repoLevel(instance: string, event: string, payload: GitHubEventPayload, who: string, repo: RepoRef | undefined): RepoLevel | undefined {
   switch (event) {
@@ -111,7 +130,37 @@ function repoLevel(instance: string, event: string, payload: GitHubEventPayload,
       if (payload.action === 'archived' || payload.action === 'unarchived') {
         return { kind: 'repo', action: payload.action, detail: { type: 'repo_archived', archived: payload.action === 'archived' }, summary: `${who} ${payload.action} the repository`, occurredAt: toDate(payload.repository?.updated_at) }
       }
+      if (payload.action === 'publicized' || payload.action === 'privatized') {
+        return visibilityChange(payload.action === 'publicized', who, payload)
+      }
       return undefined
+    case 'public':
+      return visibilityChange(true, who, payload)
+    case 'star':
+    case 'watch':
+      return {
+        kind: 'star',
+        action: payload.action === 'deleted' ? 'deleted' : 'created',
+        summary: `${who} ${payload.action === 'deleted' ? 'unstarred' : 'starred'} the repository`,
+        occurredAt: toDate(payload.starred_at),
+      }
+    case 'fork':
+      return {
+        kind: 'fork',
+        action: 'created',
+        detail: { type: 'fork', fork: payload.forkee ? toRepoRef(instance, payload.forkee) : undefined },
+        summary: `${who} forked the repository${payload.forkee ? ` to ${payload.forkee.full_name}` : ''}`,
+        occurredAt: toDate(payload.forkee?.created_at),
+      }
+    case 'gollum': {
+      const page = payload.pages?.[0]
+      return {
+        kind: 'wiki',
+        action: eventAction(page?.action) ?? 'edited',
+        detail: { type: 'wiki', title: page?.title ?? page?.page_name, url: page?.html_url },
+        summary: `${who} ${page?.action ?? 'edited'} wiki page ${page?.title ?? page?.page_name ?? ''}`.trim(),
+      }
+    }
     case 'installation':
     case 'installation_repositories':
       return {
@@ -133,19 +182,24 @@ function repoLevel(instance: string, event: string, payload: GitHubEventPayload,
         summary: `${who} ${payload.action ?? 'changed'} a member`,
       }
     case 'release':
-      if (payload.action !== 'published' || !payload.release || !repo) {
+      if (!payload.release || !repo) {
         return undefined
       }
       return {
         kind: 'release',
-        action: 'published',
+        action: eventAction(payload.action) ?? 'other',
         detail: {
           type: 'release',
           release: { forge: FORGE, instance, repo, id: String(payload.release.id), tag: payload.release.tag_name },
+          tag: payload.release.tag_name,
           name: payload.release.name ?? undefined,
+          body: payload.release.body ?? undefined,
+          isPrerelease: payload.release.prerelease,
+          isDraft: payload.release.draft,
+          url: payload.release.html_url,
         },
-        summary: `${who} published ${payload.release.name ?? payload.release.tag_name ?? 'a release'}`,
-        occurredAt: toDate(payload.release.published_at),
+        summary: `${who} ${payload.action ?? 'published'} ${payload.release.name || payload.release.tag_name || 'a release'}`,
+        occurredAt: payload.action === 'published' ? toDate(payload.release.published_at) : undefined,
       }
     default:
       return undefined
@@ -174,7 +228,40 @@ function threadOf(payload: GitHubEventPayload, repo: RepoRef | undefined, instan
       return { forge: FORGE, instance, repo, kind, number: String(subject.number), externalId: subject.node_id }
     }
   }
-  return undefined
+  return payload.comment?.commit_id ? { forge: FORGE, instance, repo, kind: 'commit', number: payload.comment.commit_id } : undefined
+}
+
+/** The repository a pull request's head is on. Activity feeds name it by an API `url` alone. */
+function headRepo(instance: string, repo: NonNullable<GitHubEventThread['head']>['repo']): RepoRef | undefined {
+  if (repo?.full_name) {
+    return toRepoRef(instance, repo as GitHubRepository)
+  }
+  const [, owner, name] = repo?.url?.match(/\/repos\/([^/]+)\/([^/]+)$/) ?? []
+  return owner && name ? { forge: FORGE, instance, owner, name, externalId: repo?.id === undefined ? undefined : String(repo.id) } : undefined
+}
+
+function snapshotOf(instance: string, payload: GitHubEventPayload): ThreadSnapshot | undefined {
+  const raw = payload.pull_request ?? payload.discussion ?? payload.issue
+  return raw && threadSnapshot({
+    title: raw.title,
+    body: raw.body ?? undefined,
+    state: raw.state === undefined ? undefined : toThreadState({ state: raw.state, merged: raw.merged ?? undefined, merged_at: raw.merged_at, pull_request: raw.pull_request }),
+    stateRaw: raw.state,
+    stateReason: raw.state_reason ?? undefined,
+    isDraft: raw.draft,
+    author: toActor(instance, raw.user),
+    labels: raw.labels && toLabels(raw.labels),
+    url: raw.html_url,
+    branches: raw.head && raw.base
+      ? {
+          head: { ref: raw.head.ref, sha: raw.head.sha, repo: headRepo(instance, raw.head.repo) },
+          base: { ref: raw.base.ref, sha: raw.base.sha },
+          mergeCommitSha: raw.merge_commit_sha ?? undefined,
+        }
+      : undefined,
+    stats: toPullStats({ additions: raw.additions, deletions: raw.deletions, changedFileCount: raw.changed_files, commitCount: raw.commits }),
+    mergedBy: toActor(instance, raw.merged_by),
+  })
 }
 
 function eventKindFor(event: string, payload: GitHubEventPayload): EventKind {
@@ -285,7 +372,8 @@ function detailOf(kind: EventKind, thread: ThreadRef | undefined, instance: stri
     case 'state_change': {
       const pull = payload.pull_request
       const state = pull?.merged || payload.action === 'merged' ? 'merged' : payload.action === 'closed' ? 'closed' : 'open'
-      return { type: 'state_change', state, draft: pull?.draft }
+      const reason = payload.action === 'closed' || payload.action === 'reopened' ? payload.issue?.state_reason ?? undefined : undefined
+      return { type: 'state_change', state, draft: pull?.draft, reason }
     }
     default:
       return undefined
@@ -304,6 +392,7 @@ function toGitHubEvent(instance: string, event: string, payload: GitHubEventPayl
       kind: level.kind,
       action: level.action,
       kindRaw: context.kindRaw,
+      actionRaw: context.actionRaw,
       summary: level.summary,
       ...eventTime(context.occurredAt ?? level.occurredAt),
       actor,
@@ -330,6 +419,7 @@ function toGitHubEvent(instance: string, event: string, payload: GitHubEventPayl
     actor,
     repo,
     thread,
+    threadSnapshot: snapshotOf(instance, payload),
     installationId: context.installationId,
     source: context.source,
     payload: context.payload ?? payload,
@@ -342,15 +432,27 @@ export function translateGitHubWebhook(instance: string, delivery: WebhookDelive
     throw new WebhookVerificationError(`Missing ${EVENT_HEADER} header`, { forge: FORGE, instance })
   }
   const payload = JSON.parse(bodyText(delivery.body)) as GitHubEventPayload
-  return [toGitHubEvent(instance, event, payload, {
-    id: headerValue(delivery.headers, DELIVERY_HEADER) ?? crypto.randomUUID(),
-    kindRaw: payload.action ? `${event}.${payload.action}` : event,
-    actionRaw: payload.action,
+  const id = headerValue(delivery.headers, DELIVERY_HEADER) ?? crypto.randomUUID()
+  return perPage(event, payload).map(([page, suffix]) => toGitHubEvent(instance, event, page, {
+    id: `${id}${suffix}`,
+    kindRaw: verbOf(page) ? `${event}.${verbOf(page)}` : event,
+    actionRaw: verbOf(page),
     source: 'webhook',
     actor: toActor(instance, payload.sender),
     repo: payload.repository ? toRepoRef(instance, payload.repository) : undefined,
     installationId: payload.installation ? String(payload.installation.id) : undefined,
-  })]
+  }))
+}
+
+/** The payload's verb; a wiki page's action is on the page. */
+function verbOf(payload: GitHubEventPayload): string | undefined {
+  return payload.action ?? payload.pages?.[0]?.action
+}
+
+/** A `gollum` event can cover several wiki pages; each page is an event of its own, with an id suffix when there are several. */
+function perPage(event: string, payload: GitHubEventPayload): Array<[GitHubEventPayload, string]> {
+  const pages = event === 'gollum' ? payload.pages ?? [] : []
+  return pages.length > 1 ? pages.map((page, index) => [{ ...payload, pages: [page] }, `:${index}`]) : [[payload, '']]
 }
 
 /** Activity feed event types and the webhook events they correspond to. */
@@ -367,15 +469,23 @@ const FEED_EVENTS: Record<string, string> = {
   PullRequestReviewEvent: 'pull_request_review',
   PushEvent: 'push',
   ReleaseEvent: 'release',
+  ForkEvent: 'fork',
+  GollumEvent: 'gollum',
+  PublicEvent: 'public',
+  WatchEvent: 'watch',
 }
 
 /** Summaries of the feed event types that have no shared kind. */
 const FEED_SUMMARIES: Record<string, string> = {
-  ForkEvent: 'forked the repository',
-  GollumEvent: 'edited the wiki',
-  PublicEvent: 'made the repository public',
   SponsorshipEvent: 'changed a sponsorship',
-  WatchEvent: 'starred the repository',
+}
+
+/** Normalises an item of an activity feed into one event per wiki page, and one event otherwise. */
+export function toFeedEvents(instance: string, raw: GitHubFeedEvent): ForgeEventInput[] {
+  const pages = raw.type === 'GollumEvent' ? perPage('gollum', (raw.payload ?? {}) as GitHubEventPayload) : []
+  return pages.length > 1
+    ? pages.map(([payload, suffix]) => ({ ...toFeedEvent(instance, { ...raw, payload: payload as Record<string, unknown> }), id: `${raw.id}${suffix}`, payload: raw }))
+    : [toFeedEvent(instance, raw)]
 }
 
 /** Normalises an item of a repository's or an account's activity feed. */
@@ -388,8 +498,8 @@ export function toFeedEvent(instance: string, raw: GitHubFeedEvent): ForgeEventI
   const visibility = typeof raw.public === 'boolean' ? { isPublic: raw.public } : {}
   const context: GitHubEventContext = {
     id: raw.id,
-    kindRaw: payload.action ? `${type}.${payload.action}` : type,
-    actionRaw: payload.action,
+    kindRaw: verbOf(payload) ? `${type}.${verbOf(payload)}` : type,
+    actionRaw: verbOf(payload),
     source: 'poll',
     actor,
     repo,
