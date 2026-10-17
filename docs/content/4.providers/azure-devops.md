@@ -182,6 +182,7 @@ for await (const team of provider.orgs.teams(project)) {
 | `writes.requestReview` | PR | ❌ |
 | `writes.merge` | ✅ | ❌ |
 | `writes.approveAndMerge` | ✅ | ❌ |
+| `writes.updateBranch` | ❌ | ❌ |
 | `writes.transfer` | ❌ | ❌ |
 | `writes.markDuplicate` | ❌ | ❌ |
 | `subscriptions.get` | ❌ | ❌ |

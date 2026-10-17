@@ -1,0 +1,15 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "PUT",
+    "url": "https://api.github.com/repos/acme/widgets/pulls/42/update-branch"
+  },
+  "response": {
+    "status": 202,
+    "headers": {},
+    "body": {
+      "message": "Updating pull request branch.",
+      "url": "https://github.com/repos/acme/widgets/pulls/42"
+    }
+  }
+}

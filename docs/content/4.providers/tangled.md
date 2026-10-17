@@ -240,6 +240,7 @@ A `push` delivery becomes a `push` or `ref` event. Tangled has no API to registe
 | `writes.requestReview` | ❌ | ❌ |
 | `writes.merge` | ✅ | ❌ |
 | `writes.approveAndMerge` | ❌ | ❌ |
+| `writes.updateBranch` | ❌ | ❌ |
 | `writes.transfer` | ❌ | ❌ |
 | `writes.markDuplicate` | ❌ | ❌ |
 | `subscriptions.get` | issue, PR | ❌ |

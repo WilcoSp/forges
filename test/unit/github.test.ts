@@ -4,7 +4,7 @@ import type { GitHubNotification } from '../../src/github/types.ts'
 import type { ThreadRef } from '../../src/model.ts'
 import { generateKeyPairSync } from 'node:crypto'
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
-import { ContentNotTextError, ForbiddenError, InsufficientScopeError, NotFoundError, ReadOnlyError, UnresolvedThreadError, UnsupportedOperationError } from '../../src/errors.ts'
+import { BranchMovedError, ContentNotTextError, ForbiddenError, InsufficientScopeError, NotFoundError, ReadOnlyError, UnresolvedThreadError, UnsupportedOperationError } from '../../src/errors.ts'
 import { abortable } from '../../src/fetch.ts'
 import { createAppCredentials } from '../../src/github/auth.ts'
 import { graphqlOperations, graphqlUrl } from '../../src/github/graphql-client.ts'
@@ -22,6 +22,7 @@ const { privateKey } = generateKeyPairSync('rsa', {
 const repo = { forge: 'github', instance: 'github.com', owner: 'acme', name: 'widgets' } as const
 const pull = { forge: 'github', instance: 'github.com', repo, kind: 'pull_request', number: '42' } as const
 const discussion: ThreadRef = { forge: 'github', instance: 'github.com', repo, kind: 'discussion', number: '31' }
+const HEAD = '6dcb09b5b57875f334f61aebed695e2e4193db5e'
 
 function tokenProvider(overrides = {}) {
   const { fetch, calls } = fixtureFetch('github', overrides)
@@ -1603,6 +1604,7 @@ describe('github webhook management', () => {
     expect(provider.scopesFor('webhooks.create')).toEqual({ token: ['admin:repo_hook', 'admin:org_hook'], permissions: { webhooks: 'admin' } })
     expect(provider.scopesFor('threads.close').permissions).toMatchObject({ issues: 'write' })
     expect(provider.scopesFor('threads.replyToReviewComment').permissions).toMatchObject({ pull_requests: 'write' })
+    expect(provider.scopesFor('threads.updateBranch').permissions).toEqual({ pull_requests: 'write', contents: 'write' })
   })
 })
 
@@ -1878,6 +1880,34 @@ describe('github merge', () => {
     await provider.threads.merge(pull, { method: 'squash', message: 'Ship it' })
 
     expect(bodies).toEqual([{ url: 'https://api.github.com/repos/acme/widgets/pulls/42/merge-async', body: '{"merge_method":"squash","commit_message":"Ship it","merge_action":"direct_merge"}' }])
+  })
+
+  it('updates a branch with a merge through REST, which checks the head sha', async () => {
+    const { provider, calls } = tokenProvider()
+
+    expect(await provider.threads.updateBranch(pull, { sha: HEAD })).toMatchObject({ status: 'queued' })
+    expect(calls.map(call => `${call.method} ${new URL(call.url).pathname}`)).toEqual(['PUT /repos/acme/widgets/pulls/42/update-branch'])
+    expect(JSON.parse(calls[0]!.body!)).toEqual({ expected_head_sha: HEAD })
+  })
+
+  it('rebases a branch through GraphQL, by the node id of the pull request', async () => {
+    const { provider, calls } = tokenProvider()
+
+    expect(await provider.threads.updateBranch(pull, { method: 'rebase', sha: HEAD })).toMatchObject({ status: 'queued' })
+    expect(calls[1]!.operationName).toBe('UpdatePullRequestBranch')
+    expect(JSON.parse(calls[1]!.body!).variables).toEqual({ id: 'PR_kwDOAAB5ac6abcdef', sha: HEAD, method: 'REBASE' })
+  })
+
+  it('rejects a branch update with BranchMovedError once the head has moved', async () => {
+    const moved = '0'.repeat(40)
+    const { provider } = tokenProvider({
+      'PUT https://api.github.com/repos/acme/widgets/pulls/42/update-branch': { status: 422, headers: {}, body: { message: 'expected head sha didn\'t match current head ref.' } },
+    })
+    const rebase = tokenProvider()
+
+    await expect(provider.threads.updateBranch(pull, { sha: moved })).rejects.toBeInstanceOf(BranchMovedError)
+    await expect(rebase.provider.threads.updateBranch(pull, { method: 'rebase', sha: moved })).rejects.toBeInstanceOf(BranchMovedError)
+    expect(rebase.calls).toHaveLength(1)
   })
 })
 

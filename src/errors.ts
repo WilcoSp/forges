@@ -168,7 +168,7 @@ export class MergeConflictError extends ForgeApiError {
   override name = 'MergeConflictError'
 }
 
-/** `contents.commitFiles()` was given an `expectedHead`, and the branch no longer points at it. */
+/** `contents.commitFiles()` was given an `expectedHead`, or `threads.updateBranch()` a `sha`, and the branch no longer points at it. */
 export class BranchMovedError extends ForgeApiError {
   override name = 'BranchMovedError'
 }

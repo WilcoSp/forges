@@ -91,6 +91,8 @@ import type {
   ThreadUpdateInput,
   TreeEntry,
   TreeOptions,
+  UpdateBranchOptions,
+  UpdateBranchResult,
   UpsertCommentInput,
   UpsertCommentResult,
   User,
@@ -288,7 +290,7 @@ export interface ForgeCapabilities {
     /** Support for `notifications.unreadCount()`. */
     unreadCount: Support
   }
-  /** Write verbs, per thread kind except `merge`, `approveAndMerge`, `transfer` and `markDuplicate`. */
+  /** Write verbs, per thread kind except `merge`, `approveAndMerge`, `updateBranch`, `transfer` and `markDuplicate`. */
   writes: {
     /** Support for `threads.comment()`, per thread kind. */
     comment: PerKind
@@ -320,6 +322,8 @@ export interface ForgeCapabilities {
     merge: Support
     /** Composed from `merge` and `reviews.approve`. */
     approveAndMerge: Support
+    /** Support for `threads.updateBranch()`. */
+    updateBranch: Support
     /** Support for `threads.transfer()`. */
     transfer: Support
     /** Support for `threads.markDuplicate()`. */
@@ -694,6 +698,20 @@ export interface ThreadsApi {
    * A repeat approves again, as `approve()` does, so once the approval is in, retry with `merge()`.
    */
   approveAndMerge: (ref: ThreadRef, options?: ApproveAndMergeOptions) => Promise<MergeResult>
+  /**
+   * Brings the base branch into a pull request's head branch, by a merge commit or a rebase. A repeat once the branch
+   * is up to date rejects on GitHub, Forgejo and Gitea, and leaves the branch as it is on GitLab.
+   * @param ref The pull request to update.
+   * @param options The update `method`, and the head `sha` to expect. GitHub checks `sha` as it updates; Forgejo, Gitea
+   * and GitLab read the pull request first and compare.
+   * @returns Whether the branch was updated or the forge queued the update. GitHub and GitLab update in the background,
+   * so read the pull request later to see the new head.
+   * @example
+   * ```ts
+   * await provider.threads.updateBranch(ref, { method: 'rebase', sha: pull.branches?.head.sha })
+   * ```
+   */
+  updateBranch: (ref: ThreadRef, options?: UpdateBranchOptions) => Promise<UpdateBranchResult>
   /** The authenticated account's subscription to the thread. */
   subscription: (ref: ThreadRef, options?: BaseOptions) => Promise<SubscriptionState>
   /** Subscribes the account to the notifications of a thread. */

@@ -84,6 +84,7 @@ const TABLE = [
   { capability: 'writes.requestReview', write: true, perKind: true },
   { capability: 'writes.merge', write: true },
   { capability: 'writes.approveAndMerge', write: true, derived: 'approveAndMerge', verbs: ['threads.approveAndMerge'] },
+  { capability: 'writes.updateBranch', write: true },
   { capability: 'writes.transfer', write: true },
   { capability: 'writes.markDuplicate', write: true },
   { capability: 'subscriptions.get', account: true, spec: 'threads.subscriptions', perKind: true, verbs: ['threads.subscription'] },

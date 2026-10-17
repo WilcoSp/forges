@@ -183,6 +183,7 @@ export interface ProviderSpec<TExtensions extends object = Record<never, never>>
     merge?: Verb<(ref: ThreadRef, options?: MergeOptions, hooks?: MergeHooks) => Promise<MergeResult>>
     /** Optional support override; approval and merging must also be supported. */
     approveAndMerge?: { support: SupportInput }
+    updateBranch?: Verb<ThreadsApi['updateBranch']>
     /** One capability covers reading and changing the subscription. */
     subscriptions?: KindVerb<{ [K in 'subscription' | 'subscribe' | 'unsubscribe']: NonNullable<ThreadsApi[K]> }>
     checks?: KindVerb<(ref: ThreadRef, options?: BaseOptions) => Promise<Page<Check>>>

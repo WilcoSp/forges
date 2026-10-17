@@ -2224,6 +2224,25 @@ export interface MergeResult {
   raw?: unknown
 }
 
+/** How `threads.updateBranch()` brings the base branch into a pull request's head branch. */
+export type UpdateBranchMethod = 'merge' | 'rebase'
+
+/** Options for `threads.updateBranch()`. */
+export interface UpdateBranchOptions extends BaseOptions {
+  /** Defaults to `'merge'`, or `'rebase'` where the forge can only rebase (GitLab). */
+  method?: UpdateBranchMethod
+  /** Expected head sha; the update is refused with `BranchMovedError` if the branch has moved. */
+  sha?: string
+}
+
+/** What `threads.updateBranch()` resolves with. */
+export interface UpdateBranchResult {
+  /** `'updated'` once the head branch has the base in it. `'queued'` when the forge updates it in the background (GitHub, GitLab). */
+  status: 'updated' | 'queued'
+  /** Unnormalised forge payload, retained for fidelity. Absent where the response has no body. */
+  raw?: unknown
+}
+
 /** An app installation on an account, with its own credential scope. */
 export interface Installation extends ForgeOrigin {
   id: string

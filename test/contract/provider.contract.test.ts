@@ -742,6 +742,7 @@ describe.each(contracts)('contract: $name', (contract) => {
       ['threads.unreact', (forge: ForgeProvider) => forge.threads.unreact(threadRef(), '+1')],
       ['threads.transfer', (forge: ForgeProvider) => forge.threads.transfer(threadRef(), repoRef())],
       ['threads.markDuplicate', (forge: ForgeProvider) => forge.threads.markDuplicate(threadRef(), threadRef())],
+      ['threads.updateBranch', (forge: ForgeProvider) => forge.threads.updateBranch(threadRef())],
       ['threads.upsertComment', (forge: ForgeProvider) => forge.threads.upsertComment(threadRef(), { key: 'k', body: 'b' })],
       ['threads.reviewsPage', (forge: ForgeProvider) => forge.threads.reviewsPage(threadRef())],
       ['threads.createReview', (forge: ForgeProvider) => forge.threads.createReview(threadRef(), { event: 'approve' })],

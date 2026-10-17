@@ -129,6 +129,10 @@ When the pull request is part of a stack, GitHub also merges every open pull req
 
 Two options aren't available, and they reject with `UnsupportedOperationError`. One is `whenChecksPass`, because the REST API doesn't enable auto-merge. The other is the `rebase_merge` and `fast_forward_only` methods, which GitHub doesn't have.
 
+## Updating a branch
+
+`updateBranch()` merges the base branch into the head branch through the REST API, which takes no method, and rebases through GraphQL with `method: 'rebase'`. GitHub checks `sha` against the head as it updates, and rejects with `BranchMovedError` when the head has moved. GitHub updates the branch in the background, so `updateBranch()` resolves with `status: 'queued'`. Read the pull request later to see the new head.
+
 ## Review replies
 
 GitHub doesn't support replies to replies, so when you pass a reply to `replyToReviewComment()`, it posts to the comment in its `inReplyTo` instead. The new comment carries the `thread` of the comment you pass, so you can call `resolveReviewThread()` with it.
@@ -341,6 +345,7 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `writes.requestReview` | PR | PR | PR | ❌ | ❌ |
 | `writes.merge` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `writes.approveAndMerge` | ✅ | ✅ | ✅ | ❌ | ❌ |
+| `writes.updateBranch` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `writes.transfer` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `writes.markDuplicate` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `subscriptions.get` | issue, PR, discussion | issue, PR, discussion | issue, PR, discussion | ❌ | ❌ |

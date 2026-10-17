@@ -827,6 +827,17 @@ describe('fake write results', () => {
     expect(thread.branches?.mergeCommitSha).toBeUndefined()
   })
 
+  it('moves the head of a pull request on updateBranch, and refuses an update from a head that has moved', async () => {
+    const forge = fake({ seed: { ...seed, threads: seed.threads.map(thread => thread.kind === 'pull_request' ? { ...thread, head: { sha: 'a'.repeat(40) } } : thread) } }).create()
+
+    await expect(forge.threads.updateBranch(pull, { sha: 'a'.repeat(40) })).resolves.toEqual({ status: 'updated' })
+    const head = (await forge.threads.get(pull)).branches?.head.sha
+    expect(head).toMatch(/^[0-9a-f]{40}$/)
+    expect(head).not.toBe('a'.repeat(40))
+    await expect(forge.threads.updateBranch(pull, { method: 'rebase', sha: 'a'.repeat(40) })).rejects.toBeInstanceOf(BranchMovedError)
+    await expect(forge.threads.updateBranch(issue)).rejects.toBeInstanceOf(NotFoundError)
+  })
+
   it('queues a merge with whenChecksPass while the pull request is blocked', async () => {
     const forge = fake({ seed: { ...seed, threads: seed.threads.map(thread => thread.kind === 'pull_request' ? { ...thread, mergeable: 'blocked' as const } : thread) } }).create()
 

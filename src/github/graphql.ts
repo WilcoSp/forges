@@ -573,3 +573,7 @@ export const RESOLVE_REVIEW_THREAD = `mutation ResolveReviewThread($id: ID!) {
 export const UNRESOLVE_REVIEW_THREAD = `mutation UnresolveReviewThread($id: ID!) {
   unresolveReviewThread(input: { threadId: $id }) { thread { isResolved } }
 }`
+
+export const UPDATE_PULL_REQUEST_BRANCH = `mutation UpdatePullRequestBranch($id: ID!, $sha: GitObjectID, $method: PullRequestBranchUpdateMethod) {
+  updatePullRequestBranch(input: { pullRequestId: $id, expectedHeadOid: $sha, updateMethod: $method }) { pullRequest { headRefOid } }
+}`

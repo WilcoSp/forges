@@ -79,6 +79,10 @@ Comments on a merge request are read by discussion, so a comment in a resolvable
 
 When the user isn't allowed to approve, GitLab responds with `401`. The provider raises this response as `InsufficientScopeError`.
 
+## Updating a branch
+
+GitLab can only rebase a merge request onto its target branch, so `updateBranch()` rejects with `UnsupportedOperationError` for `method: 'merge'`. GitLab rebases in the background, so it resolves with `status: 'queued'`. The endpoint takes no expected head, so with `sha`, the provider reads the merge request first and rejects with `BranchMovedError` when the source branch has moved.
+
 ## Merge request stats
 
 GitLab reports the number of changed files on a single merge request, but not the lines added or removed or the number of commits, so `thread.stats` holds only `changedFileCount`. Past the diff limit of the instance, GitLab reports a capped count such as `1000+` instead of the number, and `thread.stats` is absent.
@@ -201,6 +205,7 @@ GitLab has no teams, so a subgroup stands in for one. `orgs.teams()` reads `GET 
 | `writes.requestReview` | PR | ❌ |
 | `writes.merge` | ✅ | ❌ |
 | `writes.approveAndMerge` | ✅ | ❌ |
+| `writes.updateBranch` | ✅ | ❌ |
 | `writes.transfer` | ✅ | ❌ |
 | `writes.markDuplicate` | emulated | ❌ |
 | `subscriptions.get` | issue, PR | ❌ |

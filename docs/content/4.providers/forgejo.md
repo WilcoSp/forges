@@ -53,6 +53,8 @@ The merge response has no body, so `merge()` resolves without a `sha`. Its `stat
 
 The head branch stays after `merge()`, even when `deleteBranchOnMerge` is `true`, because Forgejo applies that setting only in its web interface. Gitea did the same before 1.25.
 
+`updateBranch()` merges or rebases the base branch into the head branch, and resolves once Forgejo has updated it. The endpoint takes no expected head, so with `sha`, the provider reads the pull request first and rejects with `BranchMovedError` when the head has moved. A push that lands between the two requests isn't caught. When the head branch is already up to date, Forgejo responds with an error.
+
 ## Reviews
 
 Forgejo supports reviews natively. `createReview()` without an `event` creates a pending review, and `submitReview()` submits it. The API doesn't expose whether a review conversation is resolved, so `resolveReviewThread()` isn't available. The API has no endpoint to reply to a review comment either, so `replyToReviewComment()` isn't available.
@@ -193,6 +195,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `writes.requestReview` | PR | ❌ |
 | `writes.merge` | ✅ | ❌ |
 | `writes.approveAndMerge` | ✅ | ❌ |
+| `writes.updateBranch` | ✅ | ❌ |
 | `writes.transfer` | ❌ | ❌ |
 | `writes.markDuplicate` | ❌ | ❌ |
 | `subscriptions.get` | issue, PR | ❌ |

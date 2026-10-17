@@ -120,7 +120,7 @@ export interface FakeThreadSeed {
 
 /**
  * Whether a pull request can merge: `blocked` rejects a merge with
- * `MergeBlockedError`, and `conflict` with `MergeConflictError`.
+ * `MergeBlockedError`, and `conflict` rejects a merge or a branch update with `MergeConflictError`.
  */
 export type FakeMergeability = 'clean' | 'blocked' | 'conflict'
 
@@ -1061,6 +1061,7 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
   }
 
   let merges = 0
+  let updates = 0
 
   function setState(by: string, ref: ThreadRef, state: ThreadState, action: EventAction): void {
     const current = threadState(ref).thread
@@ -1465,6 +1466,26 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
           }
           setState(by, ref, 'merged', 'merged')
           return { status: 'merged', sha, raw: { sha } }
+        }),
+        updateBranch: verb(support('threads.updateBranch', true), async (ref, updateOptions = {}) => {
+          const state = threadState(ref)
+          if (state.thread.kind !== 'pull_request') {
+            throw notFound(`No pull request ${slugOf(ref.repo)}#${ref.number}`)
+          }
+          if (state.thread.state !== 'open') {
+            throw new MergeBlockedError(`Pull request ${slugOf(ref.repo)}#${ref.number} is not open`, 422, '', origin)
+          }
+          if (state.mergeable === 'conflict') {
+            throw new MergeConflictError(`Pull request ${slugOf(ref.repo)}#${ref.number} conflicts with its base`, 409, '', origin)
+          }
+          const branches = state.thread.branches
+          if (updateOptions.sha !== undefined && updateOptions.sha !== branches?.head.sha) {
+            throw new BranchMovedError(`Head branch of ${slugOf(ref.repo)}#${ref.number} is at ${branches?.head.sha}, not ${updateOptions.sha}`, 409, '', origin)
+          }
+          if (branches) {
+            state.thread.branches = { ...branches, head: { ...branches.head, sha: (++updates).toString(16).padStart(40, 'e') } }
+          }
+          return { status: 'updated' }
         }),
         subscriptions: perKind(kinds('threads.subscription', WRITABLE), {
           subscription: async ref => threadState(ref).subscription,

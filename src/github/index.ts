@@ -64,6 +64,8 @@ import type {
   ThreadRef,
   TreeEntry,
   TreeOptions,
+  UpdateBranchOptions,
+  UpdateBranchResult,
 } from '../model.ts'
 import type {
   BulkNotificationOptions,
@@ -131,7 +133,7 @@ import type {
 import { WRITE_VERBS } from '../capabilities.ts'
 import { changeBase64, existingFiles, fromBase64, inDirectories, isSha, splitMessage, toFileContent } from '../contents.ts'
 import { defineForgeProvider, perKind, supportOnly, verb } from '../define.ts'
-import { BranchMovedError, ForbiddenError, ForgeApiError, ForgeError, ForgeTimeoutError, InsufficientScopeError, MergeBlockedError, NotFoundError, RateLimitedError, ReadOnlyError, soleMergeMethod, toMergeError, UnsupportedOperationError } from '../errors.ts'
+import { BranchMovedError, ForbiddenError, ForgeApiError, ForgeError, ForgeTimeoutError, InsufficientScopeError, MergeBlockedError, MergeConflictError, NotFoundError, RateLimitedError, ReadOnlyError, soleMergeMethod, toMergeError, UnsupportedOperationError } from '../errors.ts'
 import { anySignal, sleep } from '../fetch.ts'
 import { isNamespaceRef, isResolvedThread, reactionContent } from '../model.ts'
 import { actorLogin, createListing, degradesToWarning, forgeIterable, getManyConcurrently, hostOf, isFirstPage, iteratePages, memo, milestoneId, phased, rateLimitPart, requireIssueOrPull, requireThread, resolveToken, summariseChecks, teamOrg, toDate, toPage, toWarning, versionAtLeast } from '../utils.ts'
@@ -270,6 +272,21 @@ function commitError(error: unknown): unknown {
   }
   if (/requested for deletion which does not exist/i.test(text)) {
     return new NotFoundError('A file to delete does not exist', 404, error.body, context, { cause: error })
+  }
+  return error
+}
+
+/** GitHub's `422` for a head that moved since `expected_head_sha`, as `BranchMovedError`, and for a conflict, as `MergeConflictError`. */
+function updateBranchError(error: unknown): unknown {
+  if (!(error instanceof ForgeApiError) || error.constructor !== ForgeApiError || error.status !== 422) {
+    return error
+  }
+  const context = { forge: error.forge, instance: error.instance, url: error.url, method: error.method }
+  if (/expected head sha/i.test(error.body)) {
+    return new BranchMovedError('The head branch no longer points at the expected sha', error.status, error.body, context, { cause: error })
+  }
+  if (/conflict/i.test(error.body)) {
+    return new MergeConflictError('The head branch conflicts with its base', error.status, error.body, context, { cause: error })
   }
   return error
 }
@@ -893,6 +910,27 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
 
   function isPlainApiError(error: unknown, status: number): boolean {
     return error instanceof ForgeApiError && error.constructor === ForgeApiError && error.status === status
+  }
+
+  /** A merge goes through REST, which takes no method; a rebase goes through GraphQL, after a read for the pull request's node id. */
+  async function updateBranch(thread: ThreadRef, updateOptions: UpdateBranchOptions = {}): Promise<UpdateBranchResult> {
+    const ref = requirePull(thread, 'updated')
+    const { sha, signal } = updateOptions
+    if (updateOptions.method === 'rebase') {
+      const { data: pull } = await fetcher.json<GitHubIssue>(threadPath(ref), { signal })
+      if (sha !== undefined && pull.head?.sha !== sha) {
+        throw new BranchMovedError(`Head branch of pull request ${ref.number} is at ${pull.head?.sha}, not ${sha}`, 409, '', context)
+      }
+      const data = await graphql<{ updatePullRequestBranch: unknown }>('UPDATE_PULL_REQUEST_BRANCH', { id: pull.node_id, sha: sha ?? null, method: 'REBASE' }, updateOptions)
+      return { status: 'queued', raw: data.updatePullRequestBranch }
+    }
+    const { data } = await fetcher.json<{ message?: string, url?: string }>(`${threadPath(ref)}/update-branch`, {
+      method: 'PUT',
+      json: sha === undefined ? {} : { expected_head_sha: sha },
+      mapError: updateBranchError,
+      signal,
+    })
+    return { status: 'queued', raw: data }
   }
 
   const REVIEW_EVENTS: Record<ReviewEvent, string> = { approve: 'APPROVE', request_changes: 'REQUEST_CHANGES', comment: 'COMMENT' }
@@ -2158,6 +2196,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       close: perKind(ISSUE_LIKE, (ref, options_) => setState(ref, 'closed', options_)),
       reopen: perKind({ issue: true, pull_request: true, discussion: true }, (ref, options) => setState(ref, 'open', options)),
       merge: verb(true, merge),
+      updateBranch: verb(true, updateBranch),
       subscriptions: perKind(ISSUE_LIKE, {
         subscription: async (thread, options): Promise<SubscriptionState> => {
           const { state } = await subscriptionNode(thread, options)
@@ -2223,6 +2262,9 @@ export function githubScopesFor(verb: ForgeVerb): VerbScopes {
   }
   if (verb === 'checks.report') {
     return { token: ['repo:status'], permissions: { checks: 'write', statuses: 'write' } }
+  }
+  if (verb === 'threads.updateBranch') {
+    return { token: ['repo', 'public_repo'], permissions: { pull_requests: 'write', contents: 'write' }, note: 'A GitHub App needs `contents: write` on the head repository' }
   }
   const write = WRITE_VERBS.has(verb)
   if (group === 'threads') {

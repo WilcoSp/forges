@@ -3,6 +3,7 @@ import type { FixtureFetch } from '../utils/fixtures.ts'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
+  BranchMovedError,
   InsufficientScopeError,
   MergeMethodRequiredError,
   NotFoundError,
@@ -143,6 +144,19 @@ describe('gitlab provider', () => {
     expect(note('Added 20 commits:\n\n* 0089698f...9bfc23c3 - 17 commits from branch')).toBe('commit')
     expect(note('Status changed to merged')).toBe('state_change')
     expect(note('Mentioned in commit c0c5081dc665d64b56fcee63df5429b013bb69b6')).toBe('referenced')
+  })
+
+  it('updates a merge request by rebasing it, and refuses a merge', async () => {
+    const { instance, calls } = provider()
+
+    await expect(instance.threads.updateBranch(mr, { sha: '9f1c2e3d4b5a' })).resolves.toEqual({ status: 'queued', raw: { rebase_in_progress: true } })
+    await expect(instance.threads.updateBranch(mr, { sha: '0'.repeat(40) })).rejects.toBeInstanceOf(BranchMovedError)
+    await expect(instance.threads.updateBranch(mr, { method: 'merge' })).rejects.toThrow(UnsupportedOperationError)
+    expect(calls.map(call => `${call.method} ${call.url}`)).toEqual([
+      `GET ${P}/merge_requests/23`,
+      `PUT ${P}/merge_requests/23/rebase`,
+      `GET ${P}/merge_requests/23`,
+    ])
   })
 
   it('approves a merge request natively and refuses an approval body', async () => {

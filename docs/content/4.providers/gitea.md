@@ -163,6 +163,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `writes.requestReview` | PR | ❌ |
 | `writes.merge` | ✅ | ❌ |
 | `writes.approveAndMerge` | ✅ | ❌ |
+| `writes.updateBranch` | ✅ | ❌ |
 | `writes.transfer` | ❌ | ❌ |
 | `writes.markDuplicate` | ❌ | ❌ |
 | `subscriptions.get` | issue, PR | ❌ |

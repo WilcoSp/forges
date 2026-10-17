@@ -155,6 +155,7 @@ Deliveries of `installation.*` events become `installation` events. You register
 | `writes.requestReview` | PR (unverified) | PR (unverified) | ❌ | ❌ |
 | `writes.merge` | experimental | experimental | ❌ | ❌ |
 | `writes.approveAndMerge` | unverified | unverified | ❌ | ❌ |
+| `writes.updateBranch` | ❌ | ❌ | ❌ | ❌ |
 | `writes.transfer` | ❌ | ❌ | ❌ | ❌ |
 | `writes.markDuplicate` | ❌ | ❌ | ❌ | ❌ |
 | `subscriptions.get` | ❌ | ❌ | ❌ | ❌ |

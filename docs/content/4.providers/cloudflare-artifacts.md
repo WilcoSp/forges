@@ -133,6 +133,7 @@ Artifacts sends no webhooks. It publishes [events](https://developers.cloudflare
 | `writes.requestReview` | ❌ | ❌ |
 | `writes.merge` | ❌ | ❌ |
 | `writes.approveAndMerge` | ❌ | ❌ |
+| `writes.updateBranch` | ❌ | ❌ |
 | `writes.transfer` | ❌ | ❌ |
 | `writes.markDuplicate` | ❌ | ❌ |
 | `subscriptions.get` | ❌ | ❌ |

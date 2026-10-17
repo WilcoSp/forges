@@ -1786,6 +1786,10 @@
             "$ref": "#/components/schemas/Support",
             "description": "Composed from `merge` and `reviews.approve`."
           },
+          "updateBranch": {
+            "$ref": "#/components/schemas/Support",
+            "description": "Support for `threads.updateBranch()`."
+          },
           "transfer": {
             "$ref": "#/components/schemas/Support",
             "description": "Support for `threads.transfer()`."
@@ -1811,10 +1815,11 @@
           "requestReview",
           "merge",
           "approveAndMerge",
+          "updateBranch",
           "transfer",
           "markDuplicate"
         ],
-        "description": "Write verbs, per thread kind except `merge`, `approveAndMerge`, `transfer` and `markDuplicate`."
+        "description": "Write verbs, per thread kind except `merge`, `approveAndMerge`, `updateBranch`, `transfer` and `markDuplicate`."
       },
       "subscriptions": {
         "type": "object",
@@ -4419,6 +4424,27 @@
     ],
     "description": "What a tree entry is.",
     "x-forges-type": "TreeEntryType"
+  },
+  "UpdateBranchResult": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "updated",
+          "queued"
+        ],
+        "description": "`'updated'` once the head branch has the base in it. `'queued'` when the forge updates it in the background (GitHub, GitLab)."
+      },
+      "raw": {
+        "description": "Unnormalised forge payload, retained for fidelity. Absent where the response has no body."
+      }
+    },
+    "required": [
+      "status"
+    ],
+    "description": "What `threads.updateBranch()` resolves with.",
+    "x-forges-type": "UpdateBranchResult"
   },
   "UpsertCommentResult": {
     "type": "object",

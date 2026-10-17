@@ -43,6 +43,8 @@ import type {
   Thread,
   ThreadQuery,
   ThreadRef,
+  UpdateBranchOptions,
+  UpdateBranchResult,
   User,
 } from '../model.ts'
 import type {
@@ -418,6 +420,20 @@ function setupForgejo({ options, origin, fetcher: baseFetcher, baseUrl }: Provid
       signal: mergeOptions.signal,
     })
     return { status: mergeOptions.whenChecksPass && response.status === 201 ? 'queued' : 'merged' }
+  }
+
+  /** The update takes no expected head, so `sha` is compared against a read of the pull request first. */
+  async function updateBranch(thread: ThreadRef, updateOptions: UpdateBranchOptions = {}): Promise<UpdateBranchResult> {
+    const ref = requirePull(thread, 'updated')
+    const { sha, signal } = updateOptions
+    if (sha !== undefined) {
+      const { data } = await fetcher.json<ForgejoIssue>(pullPath(ref), { signal })
+      if (data.head?.sha !== sha) {
+        throw new BranchMovedError(`Head branch of pull request ${ref.number} is at ${data.head?.sha}, not ${sha}`, 409, '', context)
+      }
+    }
+    await fetcher.raw(`${pullPath(ref)}/update`, { method: 'POST', query: { style: updateOptions.method ?? 'merge' }, mapError: toMergeError, signal })
+    return { status: 'updated' }
   }
 
   const REVIEW_EVENTS: Record<ReviewEvent, string> = { approve: 'APPROVED', request_changes: 'REQUEST_CHANGES', comment: 'COMMENT' }
@@ -1051,6 +1067,7 @@ function setupForgejo({ options, origin, fetcher: baseFetcher, baseUrl }: Provid
       close: perKind({ issue: true, pull_request: true }, (ref, options) => setState(ref, 'closed', options)),
       reopen: perKind({ issue: true, pull_request: true }, (ref, options) => setState(ref, 'open', options)),
       merge: verb(true, merge),
+      updateBranch: verb(true, updateBranch),
       subscriptions: perKind(ISSUE_AND_PULL, {
         async subscription(thread, options): Promise<SubscriptionState> {
           const ref = requireIssueOrPull(thread, context, 'read the subscription of')

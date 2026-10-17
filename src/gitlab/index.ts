@@ -42,6 +42,8 @@ import type {
   Thread,
   ThreadQuery,
   ThreadRef,
+  UpdateBranchOptions,
+  UpdateBranchResult,
   User,
 } from '../model.ts'
 import type {
@@ -761,6 +763,26 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
         : { status: 'queued', raw: data }
     }
 
+    /** GitLab rebases only, in the background, and takes no expected head, so `sha` is compared against a read of the merge request first. */
+    async function updateBranch(thread: ThreadRef, updateOptions: UpdateBranchOptions = {}): Promise<UpdateBranchResult> {
+      const ref = requireThread(thread, context)
+      if (ref.kind !== 'pull_request') {
+        throw new UnsupportedOperationError('Only merge requests can be updated', context)
+      }
+      if (updateOptions.method === 'merge') {
+        throw new UnsupportedOperationError('GitLab updates a merge request by rebasing it only', context)
+      }
+      const { sha, signal } = updateOptions
+      if (sha !== undefined) {
+        const { data } = await fetcher.json<GitLabIssue>(threadPath(ref), { signal })
+        if (data.sha !== sha) {
+          throw new BranchMovedError(`Source branch of merge request ${ref.number} is at ${data.sha}, not ${sha}`, 409, '', context)
+        }
+      }
+      const { data } = await fetcher.json<{ rebase_in_progress?: boolean }>(`${threadPath(ref)}/rebase`, { method: 'PUT', signal })
+      return { status: 'queued', raw: data }
+    }
+
     return {
       traits: { eventKinds: 'heuristic', authKinds: ['token', 'anonymous'], limits: { bodyLength: 1_048_576, commentLength: 1_000_000, labelLength: 255 } },
       probeVersion: async () => (await fetcher.json<{ version?: string }>('/version')).data.version,
@@ -1252,6 +1274,7 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
         close: perKind({ issue: true, pull_request: true }, (ref, options) => setState(ref, 'close', options)),
         reopen: perKind({ issue: true, pull_request: true }, (ref, options) => setState(ref, 'reopen', options)),
         merge: verb(true, merge),
+        updateBranch: verb(true, updateBranch),
         subscriptions: perKind(ISSUE_LIKE, {
           subscription: async (thread, options): Promise<SubscriptionState> => {
             const ref = requireIssueOrPull(thread, context, 'read the subscription of')

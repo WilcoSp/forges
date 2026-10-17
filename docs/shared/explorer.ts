@@ -8,6 +8,7 @@ export type ExplorerField
     | 'reviewEvent' | 'reviewId' | 'reviewThread' | 'closeReason' | 'milestone' | 'canonical' | 'targetOwner'
     | 'targetName' | 'labelName' | 'colour' | 'role' | 'team' | 'key' | 'commentId' | 'notificationId' | 'webhookId'
     | 'deliveryId' | 'webhookUrl' | 'secret' | 'checkName' | 'checkState' | 'checkId' | 'branch' | 'message' | 'content'
+    | 'updateMethod'
 
 /** The values a form holds. Lists are comma-separated. */
 export type ExplorerInput = Record<ExplorerField, string>
@@ -78,6 +79,7 @@ export const EXPLORER_FIELDS: Record<ExplorerField, ExplorerFieldConfig> = {
   branch: { label: 'Branch', default: 'docs/readme' },
   message: { label: 'Commit message', default: 'docs: update readme' },
   content: { label: 'File contents', default: '# widgets' },
+  updateMethod: { label: 'Update method', items: options('merge', 'rebase'), default: 'merge' },
 }
 
 /** Values for the fields that samples leave out. Writes never run, so these only fill the code. */
@@ -306,6 +308,7 @@ export const EXPLORER_OPERATIONS: ExplorerOperation[] = [
   threadWrite('threads.close', 'Thread', ['closeReason'], ({ value }) => `thread, { reason: ${value('closeReason')} }`),
   threadWrite('threads.reopen', 'Thread', [], () => 'thread'),
   threadWrite('threads.merge', 'MergeResult', ['method'], ({ value }) => `thread, { method: ${value('method')} }`),
+  threadWrite('threads.updateBranch', 'UpdateBranchResult', ['updateMethod'], ({ value }) => `thread, { method: ${value('updateMethod')} }`),
   threadWrite('threads.approve', 'Review', ['body'], ({ value }) => `thread, ${value('body')}`),
   threadWrite('threads.approveAndMerge', 'MergeResult', ['method'], ({ value }) => `thread, { method: ${value('method')} }`),
   threadWrite('threads.createReview', 'Review', ['reviewEvent', 'body'], ({ value }) => `thread, { event: ${value('reviewEvent')}, body: ${value('body')} }`),

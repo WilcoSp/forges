@@ -1,0 +1,12 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "PUT",
+    "url": "https://gitlab.com/api/v4/projects/acme%2Fplatform%2Fwidgets/merge_requests/23/rebase"
+  },
+  "response": {
+    "status": 202,
+    "headers": {},
+    "body": { "rebase_in_progress": true }
+  }
+}

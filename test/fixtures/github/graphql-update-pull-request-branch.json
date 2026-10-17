@@ -1,0 +1,21 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "POST",
+    "url": "https://api.github.com/graphql",
+    "operationName": "UpdatePullRequestBranch"
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": {
+      "data": {
+        "updatePullRequestBranch": {
+          "pullRequest": {
+            "headRefOid": "6dcb09b5b57875f334f61aebed695e2e4193db5e"
+          }
+        }
+      }
+    }
+  }
+}

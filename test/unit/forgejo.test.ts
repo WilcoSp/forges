@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { NotFoundError, TokenRevokedError, UnsupportedOperationError } from '../../src/errors.ts'
+import { BranchMovedError, NotFoundError, TokenRevokedError, UnsupportedOperationError } from '../../src/errors.ts'
 import { forgejo } from '../../src/forgejo/index.ts'
 import { gitea } from '../../src/gitea/index.ts'
 import { contentsFile, contentsListing, fixtureFetch, hangingFetch } from '../utils/fixtures.ts'
@@ -72,6 +72,22 @@ describe('forgejo provider', () => {
       number: 'adbc9741',
     }, 'hi')).rejects.toThrow('forgejo does not support threads.comment for a commit')
     expect(instance.capabilities.writes.comment.commit).toBe(false)
+  })
+
+  it('updates a branch by the style it is given, and compares the head sha with a read first', async () => {
+    const { instance, calls } = provider()
+    const pull = { forge: 'forgejo', instance: 'codeberg.org', repo: { forge: 'forgejo', instance: 'codeberg.org', owner: 'acme', name: 'widgets' }, kind: 'pull_request', number: '7' } as const
+
+    await expect(instance.threads.updateBranch(pull)).resolves.toEqual({ status: 'updated' })
+    await expect(instance.threads.updateBranch(pull, { method: 'rebase', sha: '7b320e5cbee2734071e4310c1d9ae401d8f6cab5' })).resolves.toEqual({ status: 'updated' })
+    await expect(instance.threads.updateBranch(pull, { sha: '0'.repeat(40) })).rejects.toBeInstanceOf(BranchMovedError)
+
+    expect(calls.map(call => `${call.method} ${call.url}`)).toEqual([
+      'POST https://codeberg.org/api/v1/repos/acme/widgets/pulls/7/update?style=merge',
+      'GET https://codeberg.org/api/v1/repos/acme/widgets/pulls/7',
+      'POST https://codeberg.org/api/v1/repos/acme/widgets/pulls/7/update?style=rebase',
+      'GET https://codeberg.org/api/v1/repos/acme/widgets/pulls/7',
+    ])
   })
 
   it('sends the merge commit title and message as separate fields', async () => {

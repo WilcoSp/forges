@@ -130,6 +130,7 @@ Since `pushin()` contains no webhook code, there is no `pushinLite()` factory fo
 | `writes.requestReview` | ❌ | ❌ |
 | `writes.merge` | ❌ | ❌ |
 | `writes.approveAndMerge` | ❌ | ❌ |
+| `writes.updateBranch` | ❌ | ❌ |
 | `writes.transfer` | ❌ | ❌ |
 | `writes.markDuplicate` | ❌ | ❌ |
 | `subscriptions.get` | ❌ | ❌ |
