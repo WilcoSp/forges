@@ -119,6 +119,7 @@ You can manage webhooks on repositories only. Gitee doesn't keep a delivery log,
 | `users.me` | ✅ | ❌ |
 | `users.sponsorable` | ❌ | ❌ |
 | `users.events` | unverified | ❌ |
+| `users.block` | ❌ | ❌ |
 | `repos.list` | ✅ | ❌ |
 | `repos.byOwner` | ✅ | ✅ |
 | `repos.labels` | ✅ | ✅ |
@@ -135,6 +136,7 @@ You can manage webhooks on repositories only. Gitee doesn't keep a delivery log,
 | `repos.events` | ✅ | ✅ |
 | `orgs.teams` | ❌ | ❌ |
 | `orgs.teamMembers` | ❌ | ❌ |
+| `orgs.block` | ❌ | ❌ |
 | `threads.get` | issue, PR | issue, PR |
 | `threads.list` | issue, PR | issue, PR |
 | `threads.getMany` | ✅ | ✅ |
@@ -145,6 +147,7 @@ You can manage webhooks on repositories only. Gitee doesn't keep a delivery log,
 | `comments.get` | issue (emulated), PR (emulated) | issue (emulated), PR (emulated) |
 | `comments.edit` | issue (unverified), PR (unverified) | ❌ |
 | `comments.delete` | issue (unverified), PR (unverified) | ❌ |
+| `comments.hide` | ❌ | ❌ |
 | `reactions.list` | ❌ | ❌ |
 | `notifications.list` | ✅ | ❌ |
 | `notifications.markRead` | ✅ | ❌ |
@@ -157,6 +160,7 @@ You can manage webhooks on repositories only. Gitee doesn't keep a delivery log,
 | `writes.upsertComment` | issue (unverified), PR (unverified) | ❌ |
 | `writes.close` | issue (unverified), PR | ❌ |
 | `writes.reopen` | issue (unverified), PR | ❌ |
+| `writes.lock` | ❌ | ❌ |
 | `writes.create` | issue (unverified), PR (unverified) | ❌ |
 | `writes.update` | issue (unverified), PR | ❌ |
 | `writes.setLabels` | issue (unverified), PR (unverified) | ❌ |

@@ -83,6 +83,7 @@ Since `pushin()` contains no webhook code, there is no `pushinLite()` factory fo
 | `users.me` | ✅ | ❌ |
 | `users.sponsorable` | ❌ | ❌ |
 | `users.events` | ❌ | ❌ |
+| `users.block` | ❌ | ❌ |
 | `repos.list` | ✅ | ❌ |
 | `repos.byOwner` | ❌ | ❌ |
 | `repos.labels` | ✅ | ✅ |
@@ -99,6 +100,7 @@ Since `pushin()` contains no webhook code, there is no `pushinLite()` factory fo
 | `repos.events` | ❌ | ❌ |
 | `orgs.teams` | ❌ | ❌ |
 | `orgs.teamMembers` | ❌ | ❌ |
+| `orgs.block` | ❌ | ❌ |
 | `threads.get` | issue, PR | issue, PR |
 | `threads.list` | issue, PR | issue, PR |
 | `threads.getMany` | ✅ | ✅ |
@@ -109,6 +111,7 @@ Since `pushin()` contains no webhook code, there is no `pushinLite()` factory fo
 | `comments.get` | issue (emulated), PR (emulated) | issue (emulated), PR (emulated) |
 | `comments.edit` | ❌ | ❌ |
 | `comments.delete` | ❌ | ❌ |
+| `comments.hide` | ❌ | ❌ |
 | `reactions.list` | ❌ | ❌ |
 | `notifications.list` | ✅ | ❌ |
 | `notifications.markRead` | ❌ | ❌ |
@@ -121,6 +124,7 @@ Since `pushin()` contains no webhook code, there is no `pushinLite()` factory fo
 | `writes.upsertComment` | ❌ | ❌ |
 | `writes.close` | ❌ | ❌ |
 | `writes.reopen` | ❌ | ❌ |
+| `writes.lock` | ❌ | ❌ |
 | `writes.create` | ❌ | ❌ |
 | `writes.update` | ❌ | ❌ |
 | `writes.setLabels` | ❌ | ❌ |

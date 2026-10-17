@@ -1587,13 +1587,18 @@
           "events": {
             "$ref": "#/components/schemas/Support",
             "description": "Support for `users.events()` and `users.eventsPage()`."
+          },
+          "block": {
+            "$ref": "#/components/schemas/Support",
+            "description": "Support for `users.block()` and `users.unblock()`."
           }
         },
         "required": [
           "get",
           "me",
           "sponsorable",
-          "events"
+          "events",
+          "block"
         ]
       },
       "orgs": {
@@ -1606,13 +1611,18 @@
           "teamMembers": {
             "$ref": "#/components/schemas/Support",
             "description": "Support for `orgs.teamMembers()` and `orgs.teamMembersPage()`."
+          },
+          "block": {
+            "$ref": "#/components/schemas/Support",
+            "description": "Support for `orgs.block()` and `orgs.unblock()`."
           }
         },
         "required": [
           "teams",
-          "teamMembers"
+          "teamMembers",
+          "block"
         ],
-        "description": "An organisation's teams and their members, where the forge has teams."
+        "description": "An organisation's teams and their members, where the forge has teams, and the accounts it blocks."
       },
       "threads": {
         "type": "object",
@@ -1669,13 +1679,18 @@
           "delete": {
             "$ref": "#/components/schemas/PerKind",
             "description": "Support for `threads.deleteComment()`, per thread kind."
+          },
+          "hide": {
+            "$ref": "#/components/schemas/PerKind",
+            "description": "Support for `threads.hideComment()` and `threads.unhideComment()`, per thread kind."
           }
         },
         "required": [
           "list",
           "get",
           "edit",
-          "delete"
+          "delete",
+          "hide"
         ]
       },
       "reactions": {
@@ -1752,6 +1767,10 @@
             "$ref": "#/components/schemas/PerKind",
             "description": "Support for `threads.reopen()`, per thread kind."
           },
+          "lock": {
+            "$ref": "#/components/schemas/PerKind",
+            "description": "Support for `threads.lock()` and `threads.unlock()`, per thread kind."
+          },
           "create": {
             "$ref": "#/components/schemas/PerKind",
             "description": "Support for `threads.create()`, per thread kind."
@@ -1814,6 +1833,7 @@
           "upsertComment",
           "close",
           "reopen",
+          "lock",
           "create",
           "update",
           "setLabels",

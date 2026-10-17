@@ -128,6 +128,10 @@ A label delivery doesn't say which labels were added or removed. When the set of
 
 `webhooks.deliveries()` and `webhooks.redeliver()` aren't available.
 
+## Blocking accounts
+
+`orgs.block()` and `users.block()` need Forgejo 1.20 or later, and a token with the `write:organization` or `write:user` scope. A repeat can reject with a `ForgeApiError` with `status` 422. Forgejo has no API to lock a conversation or hide a comment.
+
 ## Organisation teams
 
 `orgs.teams()` reads `GET /orgs/{org}/teams`, and `orgs.teamMembers()` reads the members of one team. Forgejo addresses a team's members by id, so the provider reads `GET /teams/{id}/members` with the ref's `id`. For a ref with only a `slug`, it first resolves the slug (a team's name) to its id with the teams listing. Both need a token with the `read:organization` scope, and Forgejo responds with a 403 when the account isn't a member of the organisation. A slug that names no team rejects with `NotFoundError`.
@@ -148,6 +152,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `users.me` | ✅ | ❌ |
 | `users.sponsorable` | ❌ | ❌ |
 | `users.events` | ✅ | ✅ |
+| `users.block` | ✅ | ❌ |
 | `repos.list` | ✅ | ❌ |
 | `repos.byOwner` | ✅ | ✅ |
 | `repos.labels` | ✅ | ✅ |
@@ -164,6 +169,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `repos.events` | ✅ | ✅ |
 | `orgs.teams` | ✅ | ❌ |
 | `orgs.teamMembers` | ✅ | ❌ |
+| `orgs.block` | ✅ | ❌ |
 | `threads.get` | issue, PR, commit | issue, PR, commit |
 | `threads.list` | issue, PR | issue, PR |
 | `threads.getMany` | ✅ | ✅ |
@@ -174,6 +180,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `comments.get` | issue, PR | issue, PR |
 | `comments.edit` | issue, PR | ❌ |
 | `comments.delete` | issue, PR | ❌ |
+| `comments.hide` | ❌ | ❌ |
 | `reactions.list` | issue, PR | issue, PR |
 | `notifications.list` | ✅ | ❌ |
 | `notifications.markRead` | ✅ | ❌ |
@@ -186,6 +193,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `writes.upsertComment` | issue (emulated), PR (emulated) | ❌ |
 | `writes.close` | issue, PR | ❌ |
 | `writes.reopen` | issue, PR | ❌ |
+| `writes.lock` | ❌ | ❌ |
 | `writes.create` | issue, PR | ❌ |
 | `writes.update` | issue, PR | ❌ |
 | `writes.setLabels` | issue, PR | ❌ |

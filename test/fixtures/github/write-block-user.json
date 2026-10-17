@@ -1,0 +1,11 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "PUT",
+    "url": "https://api.github.com/user/blocks/spammer"
+  },
+  "response": {
+    "status": 204,
+    "headers": {}
+  }
+}

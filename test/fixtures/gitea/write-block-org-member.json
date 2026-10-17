@@ -1,0 +1,11 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "PUT",
+    "url": "https://gitea.com/api/v1/orgs/acme/blocks/spammer"
+  },
+  "response": {
+    "status": 204,
+    "headers": {}
+  }
+}

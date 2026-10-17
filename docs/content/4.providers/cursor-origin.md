@@ -108,6 +108,7 @@ Deliveries of `installation.*` events become `installation` events. You register
 | `users.me` | ❌ | ❌ | ❌ | ❌ |
 | `users.sponsorable` | ❌ | ❌ | ❌ | ❌ |
 | `users.events` | ❌ | ❌ | ❌ | ❌ |
+| `users.block` | ❌ | ❌ | ❌ | ❌ |
 | `repos.list` | unverified | unverified | ❌ | ❌ |
 | `repos.byOwner` | ❌ | ❌ | ❌ | ❌ |
 | `repos.labels` | ❌ | ❌ | ❌ | ❌ |
@@ -124,6 +125,7 @@ Deliveries of `installation.*` events become `installation` events. You register
 | `repos.events` | ❌ | ❌ | ❌ | ❌ |
 | `orgs.teams` | ❌ | ❌ | ❌ | ❌ |
 | `orgs.teamMembers` | ❌ | ❌ | ❌ | ❌ |
+| `orgs.block` | ❌ | ❌ | ❌ | ❌ |
 | `threads.get` | PR (experimental) | PR (experimental) | ❌ | ❌ |
 | `threads.list` | PR (experimental) | PR (experimental) | ❌ | ❌ |
 | `threads.getMany` | experimental | experimental | ❌ | ❌ |
@@ -134,6 +136,7 @@ Deliveries of `installation.*` events become `installation` events. You register
 | `comments.get` | PR (unverified) | PR (unverified) | ❌ | ❌ |
 | `comments.edit` | PR (unverified) | PR (unverified) | ❌ | ❌ |
 | `comments.delete` | PR (unverified) | PR (unverified) | ❌ | ❌ |
+| `comments.hide` | ❌ | ❌ | ❌ | ❌ |
 | `reactions.list` | ❌ | ❌ | ❌ | ❌ |
 | `notifications.list` | ❌ | ❌ | ❌ | ❌ |
 | `notifications.markRead` | ❌ | ❌ | ❌ | ❌ |
@@ -146,6 +149,7 @@ Deliveries of `installation.*` events become `installation` events. You register
 | `writes.upsertComment` | PR (unverified) | PR (unverified) | ❌ | ❌ |
 | `writes.close` | PR (experimental) | PR (experimental) | ❌ | ❌ |
 | `writes.reopen` | PR (experimental) | PR (experimental) | ❌ | ❌ |
+| `writes.lock` | ❌ | ❌ | ❌ | ❌ |
 | `writes.create` | PR (unverified) | PR (unverified) | ❌ | ❌ |
 | `writes.update` | PR (unverified) | PR (unverified) | ❌ | ❌ |
 | `writes.setLabels` | PR (unverified) | PR (unverified) | ❌ | ❌ |

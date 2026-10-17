@@ -837,6 +837,32 @@ describe('fake write results', () => {
     await expect(forge.threads.closingIssuesPage(issue)).rejects.toBeInstanceOf(NotFoundError)
   })
 
+  it('locks a conversation, hides a comment and blocks an account in the store', async () => {
+    const factory = fake({ seed })
+    const forge = factory.create()
+    const org = { forge: 'fake', instance: 'fake.test', owner: 'acme', name: '', kind: 'namespace' } as const
+    const comment = await forge.threads.comment(issue, 'Buy cheap watches')
+
+    await forge.threads.lock(issue, { reason: 'spam' })
+    expect((await forge.threads.get(issue)).locked).toBe(true)
+    await forge.threads.unlock(issue)
+    expect((await forge.threads.get(issue)).locked).toBe(false)
+
+    await forge.threads.hideComment(comment.ref, 'spam')
+    expect(factory.store.repos.get('acme/widgets')!.threads.get('1')!.hidden.get(comment.ref.id)).toBe('spam')
+    await forge.threads.unhideComment(comment.ref)
+    expect(factory.store.repos.get('acme/widgets')!.threads.get('1')!.hidden.size).toBe(0)
+    await expect(forge.threads.hideComment({ ...comment.ref, id: '999' }, 'spam')).rejects.toBeInstanceOf(NotFoundError)
+
+    await forge.orgs.block(org, 'spammer')
+    await forge.users.block('troll')
+    expect([...factory.store.blocks].map(([blocker, logins]) => [blocker, [...logins]])).toEqual([['acme', ['spammer']], ['fake-user', ['troll']]])
+    await expect(forge.orgs.block(org, 'spammer')).rejects.toMatchObject({ status: 422 })
+    await forge.orgs.unblock(org, 'spammer')
+    await forge.users.unblock('troll')
+    await expect(forge.users.unblock('troll')).rejects.toMatchObject({ status: 422 })
+  })
+
   it('moves the head of a pull request on updateBranch, and refuses an update from a head that has moved', async () => {
     const forge = fake({ seed: { ...seed, threads: seed.threads.map(thread => thread.kind === 'pull_request' ? { ...thread, head: { sha: 'a'.repeat(40) } } : thread) } }).create()
 

@@ -87,6 +87,10 @@ GitLab can only rebase a merge request onto its target branch, so `updateBranch(
 
 `closingIssues()` lists the issues that GitLab closes when the merge request merges, and `closingPullRequests()` the merge requests that close an issue. With an external issue tracker, GitLab lists issues that have no project, and `closingIssues()` leaves them out.
 
+## Locking discussions
+
+`threads.lock()` sets `discussion_locked` on an issue or merge request. GitLab records no reason, so the provider leaves `reason` out. GitLab has no API to hide a comment, and its blocking of an account is an administrator action on the instance, so `threads.hideComment()`, `orgs.block()` and `users.block()` aren't available.
+
 ## Merge request stats
 
 GitLab reports the number of changed files on a single merge request, but not the lines added or removed or the number of commits, so `thread.stats` holds only `changedFileCount`. Past the diff limit of the instance, GitLab reports a capped count such as `1000+` instead of the number, and `thread.stats` is absent.
@@ -162,6 +166,7 @@ GitLab has no teams, so a subgroup stands in for one. `orgs.teams()` reads `GET 
 | `users.me` | ✅ | ❌ |
 | `users.sponsorable` | ❌ | ❌ |
 | `users.events` | ✅ | ✅ |
+| `users.block` | ❌ | ❌ |
 | `repos.list` | ✅ | ❌ |
 | `repos.byOwner` | ✅ | ✅ |
 | `repos.labels` | ✅ | ❌ |
@@ -178,6 +183,7 @@ GitLab has no teams, so a subgroup stands in for one. `orgs.teams()` reads `GET 
 | `repos.events` | ✅ | ✅ |
 | `orgs.teams` | ✅ | ✅ |
 | `orgs.teamMembers` | ✅ | ❌ |
+| `orgs.block` | ❌ | ❌ |
 | `threads.get` | issue, PR, commit | issue, PR, commit |
 | `threads.list` | issue, PR | issue, PR |
 | `threads.getMany` | ✅ | ✅ |
@@ -188,6 +194,7 @@ GitLab has no teams, so a subgroup stands in for one. `orgs.teams()` reads `GET 
 | `comments.get` | issue, PR, commit (emulated) | commit (unverified) |
 | `comments.edit` | issue, PR | ❌ |
 | `comments.delete` | issue, PR | ❌ |
+| `comments.hide` | ❌ | ❌ |
 | `reactions.list` | issue, PR | issue, PR |
 | `notifications.list` | ✅ | ❌ |
 | `notifications.markRead` | ❌ | ❌ |
@@ -200,6 +207,7 @@ GitLab has no teams, so a subgroup stands in for one. `orgs.teams()` reads `GET 
 | `writes.upsertComment` | issue (emulated), PR (emulated) | ❌ |
 | `writes.close` | issue, PR | ❌ |
 | `writes.reopen` | issue, PR | ❌ |
+| `writes.lock` | issue, PR | ❌ |
 | `writes.create` | issue, PR | ❌ |
 | `writes.update` | issue, PR | ❌ |
 | `writes.setLabels` | issue, PR | ❌ |

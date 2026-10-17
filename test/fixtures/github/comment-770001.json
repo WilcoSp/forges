@@ -1,0 +1,25 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "GET",
+    "url": "https://api.github.com/repos/acme/widgets/issues/comments/770001"
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": {
+      "id": 770001,
+      "node_id": "IC_kwDOAAB5ac5abc001",
+      "body": "Buy cheap watches at https://spam.example",
+      "user": {
+        "login": "octocat",
+        "id": 583231,
+        "type": "User",
+        "avatar_url": "https://avatars.example/u/583231"
+      },
+      "created_at": "2025-09-16T09:00:00Z",
+      "updated_at": "2025-09-19T00:00:00Z",
+      "html_url": "https://github.com/acme/widgets/pull/42#issuecomment-770001"
+    }
+  }
+}

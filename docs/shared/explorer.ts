@@ -8,7 +8,7 @@ export type ExplorerField
     | 'reviewEvent' | 'reviewId' | 'reviewThread' | 'closeReason' | 'milestone' | 'canonical' | 'targetOwner'
     | 'targetName' | 'labelName' | 'colour' | 'role' | 'team' | 'key' | 'commentId' | 'notificationId' | 'webhookId'
     | 'deliveryId' | 'webhookUrl' | 'secret' | 'checkName' | 'checkState' | 'checkId' | 'branch' | 'message' | 'content'
-    | 'updateMethod'
+    | 'updateMethod' | 'lockReason' | 'hideReason'
 
 /** The values a form holds. Lists are comma-separated. */
 export type ExplorerInput = Record<ExplorerField, string>
@@ -80,6 +80,8 @@ export const EXPLORER_FIELDS: Record<ExplorerField, ExplorerFieldConfig> = {
   message: { label: 'Commit message', default: 'docs: update readme' },
   content: { label: 'File contents', default: '# widgets' },
   updateMethod: { label: 'Update method', items: options('merge', 'rebase'), default: 'merge' },
+  lockReason: { label: 'Reason', items: options('off_topic', 'too_heated', 'resolved', 'spam'), default: 'too_heated' },
+  hideReason: { label: 'Reason', items: options('abuse', 'duplicate', 'low_quality', 'off_topic', 'outdated', 'resolved', 'spam'), default: 'spam' },
 }
 
 /** Values for the fields that samples leave out. Writes never run, so these only fill the code. */
@@ -280,6 +282,8 @@ export const EXPLORER_OPERATIONS: ExplorerOperation[] = [
 
   // Organisation teams
   operation('orgs.teams', { method: 'orgs.teamsPage', returns: 'Page<Team>', uses: 'none', fields: fields('owner'), args: ({ origin, value }) => `{ ${origin}, owner: ${value('owner')}, name: '', kind: 'namespace' }, { perPage: 5 }`, run: (p, input, { origin }) => p.orgs.teamsPage({ ...origin, owner: input.owner, name: '', kind: 'namespace' }, perPage) }),
+  operation('orgs.block', { uses: 'none', fields: fields('owner', 'login'), args: ({ origin, value }) => `{ ${origin}, owner: ${value('owner')}, name: '', kind: 'namespace' }, ${value('login')}` }),
+  operation('orgs.unblock', { uses: 'none', fields: fields('owner', 'login'), args: ({ origin, value }) => `{ ${origin}, owner: ${value('owner')}, name: '', kind: 'namespace' }, ${value('login')}` }),
   operation('orgs.teamMembers', { method: 'orgs.teamMembersPage', returns: 'Page<Actor>', uses: 'none', fields: fields('owner', 'team'), args: ({ origin, value }) => `{ ${origin}, org: { ${origin}, owner: ${value('owner')}, name: '', kind: 'namespace' }, slug: ${value('team')} }, { perPage: 5 }` }),
 
   // Threads
@@ -307,8 +311,12 @@ export const EXPLORER_OPERATIONS: ExplorerOperation[] = [
   threadWrite('threads.upsertComment', 'UpsertCommentResult', ['key', 'body'], ({ value }) => `thread, { key: ${value('key')}, body: ${value('body')} }`),
   threadWrite('threads.editComment', 'Comment', ['commentId', 'body'], ({ origin, value }) => `{ ${origin}, thread, id: ${value('commentId')} }, ${value('body')}`),
   threadWrite('threads.deleteComment', 'void', ['commentId'], ({ origin, value }) => `{ ${origin}, thread, id: ${value('commentId')} }`),
+  threadWrite('threads.hideComment', 'void', ['commentId', 'hideReason'], ({ origin, value }) => `{ ${origin}, thread, id: ${value('commentId')} }, ${value('hideReason')}`),
+  threadWrite('threads.unhideComment', 'void', ['commentId'], ({ origin, value }) => `{ ${origin}, thread, id: ${value('commentId')} }`),
   threadWrite('threads.close', 'Thread', ['closeReason'], ({ value }) => `thread, { reason: ${value('closeReason')} }`),
   threadWrite('threads.reopen', 'Thread', [], () => 'thread'),
+  threadWrite('threads.lock', 'void', ['lockReason'], ({ value }) => `thread, { reason: ${value('lockReason')} }`),
+  threadWrite('threads.unlock', 'void', [], () => 'thread'),
   threadWrite('threads.merge', 'MergeResult', ['method'], ({ value }) => `thread, { method: ${value('method')} }`),
   threadWrite('threads.updateBranch', 'UpdateBranchResult', ['updateMethod'], ({ value }) => `thread, { method: ${value('updateMethod')} }`),
   threadWrite('threads.approve', 'Review', ['body'], ({ value }) => `thread, ${value('body')}`),
@@ -380,6 +388,8 @@ export const EXPLORER_OPERATIONS: ExplorerOperation[] = [
   // Accounts and search
   operation('users.get', { returns: 'User', uses: 'none', fields: fields('login'), args: ({ value }) => value('login'), run: (p, input) => p.users.get(input.login) }),
   operation('users.me', { returns: 'User', uses: 'none', args: () => '' }),
+  operation('users.block', { uses: 'none', fields: fields('login'), args: ({ value }) => value('login') }),
+  operation('users.unblock', { uses: 'none', fields: fields('login'), args: ({ value }) => value('login') }),
   operation('users.sponsorable', { returns: 'boolean', uses: 'none', fields: fields('login'), args: ({ value }) => value('login') }),
   operation('users.events', { method: 'users.eventsPage', returns: 'Page<ForgeEvent>', uses: 'none', fields: fields('login'), args: ({ value }) => `${value('login')}, { perPage: 5 }`, run: (p, input) => p.users.eventsPage(input.login, perPage) }),
   operation('search.threads', { method: 'search.threadsPage', returns: 'Page<Thread>', fields: fields('query'), args: ({ value }) => `{ repo, text: ${value('query')}, perPage: 5 }`, run: (p, input, { repo }) => p.search.threadsPage({ repo, text: input.query, perPage: 5 }) }),

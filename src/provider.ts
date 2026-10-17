@@ -241,13 +241,17 @@ export interface ForgeCapabilities {
     sponsorable: Support
     /** Support for `users.events()` and `users.eventsPage()`. */
     events: Support
+    /** Support for `users.block()` and `users.unblock()`. */
+    block: Support
   }
-  /** An organisation's teams and their members, where the forge has teams. */
+  /** An organisation's teams and their members, where the forge has teams, and the accounts it blocks. */
   orgs: {
     /** Support for `orgs.teams()` and `orgs.teamsPage()`. */
     teams: Support
     /** Support for `orgs.teamMembers()` and `orgs.teamMembersPage()`. */
     teamMembers: Support
+    /** Support for `orgs.block()` and `orgs.unblock()`. */
+    block: Support
   }
   threads: {
     /** Support for `threads.get()`, per thread kind. */
@@ -272,6 +276,8 @@ export interface ForgeCapabilities {
     edit: PerKind
     /** Support for `threads.deleteComment()`, per thread kind. */
     delete: PerKind
+    /** Support for `threads.hideComment()` and `threads.unhideComment()`, per thread kind. */
+    hide: PerKind
   }
   /** Listing the reactions on a thread or one of its comments, per thread kind. */
   reactions: {
@@ -304,6 +310,8 @@ export interface ForgeCapabilities {
     close: PerKind
     /** Support for `threads.reopen()`, per thread kind. */
     reopen: PerKind
+    /** Support for `threads.lock()` and `threads.unlock()`, per thread kind. */
+    lock: PerKind
     /** Support for `threads.create()`, per thread kind. */
     create: PerKind
     /** Support for `threads.update()`, per thread kind. */
@@ -549,6 +557,18 @@ export interface CloseOptions extends BaseOptions {
   reasonRaw?: string
 }
 
+/** Why a conversation was locked. */
+export type LockReason = 'off_topic' | 'too_heated' | 'resolved' | 'spam'
+
+/** Options for `threads.lock()`. */
+export interface LockOptions extends BaseOptions {
+  /** Forges without lock reasons lock the conversation without one. */
+  reason?: LockReason
+}
+
+/** Why a comment was hidden. */
+export type HideCommentReason = 'abuse' | 'duplicate' | 'low_quality' | 'off_topic' | 'outdated' | 'resolved' | 'spam'
+
 /** Options for `threads.comment()`. */
 export interface CommentOptions extends BaseOptions {
   /**
@@ -633,6 +653,16 @@ export interface ThreadsApi {
   /** Deletes a comment. A repeat can reject with `NotFoundError` once the comment is gone. */
   deleteComment: (ref: CommentRef, options?: BaseOptions) => Promise<void>
   /**
+   * Hides a comment behind a note of the reason, as GitHub does when it minimises a comment. A repeat leaves it hidden.
+   * @example
+   * ```ts
+   * await provider.threads.hideComment(comment.ref, 'spam')
+   * ```
+   */
+  hideComment: (ref: CommentRef, reason: HideCommentReason, options?: BaseOptions) => Promise<void>
+  /** Shows a hidden comment again. A repeat leaves it shown. */
+  unhideComment: (ref: CommentRef, options?: BaseOptions) => Promise<void>
+  /**
    * Creates an issue, pull request or discussion. A pull request needs `head` and `base`. A repeat creates a second
    * thread, though most forges reject a second open pull request from the same `head` to the same `base`.
    */
@@ -701,6 +731,16 @@ export interface ThreadsApi {
    * @returns The thread, open. Tangled reads the thread after writing the state record.
    */
   reopen: (ref: ThreadRef, options?: BaseOptions) => Promise<Thread>
+  /**
+   * Locks the conversation on a thread, so that only collaborators can comment. A repeat leaves it locked.
+   * @example
+   * ```ts
+   * await provider.threads.lock(ref, { reason: 'too_heated' })
+   * ```
+   */
+  lock: (ref: ThreadRef, options?: LockOptions) => Promise<void>
+  /** Unlocks the conversation on a thread. A repeat leaves it unlocked. */
+  unlock: (ref: ThreadRef, options?: BaseOptions) => Promise<void>
   /**
    * Merges a pull request. Without a merge method, the repository must allow exactly one. A repeat rejects once the
    * pull request has merged, so after a failure read the pull request to see whether it did.
@@ -1088,6 +1128,19 @@ export interface OrgsApi {
   teamMembers: (team: TeamRef, options?: PageOptions) => ForgeIterable<Actor>
   /** One page of `teamMembers()`. */
   teamMembersPage: (team: TeamRef, options?: PageOptions) => Promise<Page<Actor>>
+  /**
+   * Blocks an account from the repositories of an organisation. A repeat can reject with a `ForgeApiError` with
+   * `status` 422.
+   * @param org A namespace ref, as for `teams()`.
+   * @param login The account to block.
+   * @example
+   * ```ts
+   * await provider.orgs.block({ forge, instance, owner: 'acme', name: '', kind: 'namespace' }, 'spammer')
+   * ```
+   */
+  block: (org: RepoRef, login: string, options?: BaseOptions) => Promise<void>
+  /** Unblocks an account that `block()` blocked. A repeat can reject with a `ForgeApiError` with `status` 422. */
+  unblock: (org: RepoRef, login: string, options?: BaseOptions) => Promise<void>
 }
 
 /** The installations of the app that the provider authenticates as. */
@@ -1208,6 +1261,14 @@ export interface UsersApi {
   events: (login: string, options?: EventFeedOptions) => ForgeIterable<ForgeEvent>
   /** One page of `events()`. Conditional requests and throttling work as for {@link ReposApi.eventsPage}. */
   eventsPage: (login: string, options?: EventFeedOptions) => Promise<Page<ForgeEvent>>
+  /**
+   * Blocks an account on behalf of the account the credential belongs to. A repeat can reject with a
+   * `ForgeApiError` with `status` 422.
+   * @param login The account to block.
+   */
+  block: (login: string, options?: BaseOptions) => Promise<void>
+  /** Unblocks an account that `block()` blocked. A repeat can reject with a `ForgeApiError` with `status` 422. */
+  unblock: (login: string, options?: BaseOptions) => Promise<void>
 }
 
 /** Ways to receive events: polling, webhooks and push subscriptions. */

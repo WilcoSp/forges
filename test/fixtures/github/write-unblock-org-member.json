@@ -1,0 +1,11 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "DELETE",
+    "url": "https://api.github.com/orgs/acme/blocks/spammer"
+  },
+  "response": {
+    "status": 204,
+    "headers": {}
+  }
+}

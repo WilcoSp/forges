@@ -604,6 +604,22 @@ export const UNRESOLVE_REVIEW_THREAD = `mutation UnresolveReviewThread($id: ID!)
   unresolveReviewThread(input: { threadId: $id }) { thread { isResolved } }
 }`
 
+export const LOCK_LOCKABLE = `mutation LockLockable($id: ID!) {
+  lockLockable(input: { lockableId: $id }) { lockedRecord { locked } }
+}`
+
+export const UNLOCK_LOCKABLE = `mutation UnlockLockable($id: ID!) {
+  unlockLockable(input: { lockableId: $id }) { unlockedRecord { locked } }
+}`
+
+export const MINIMIZE_COMMENT = `mutation MinimizeComment($id: ID!, $classifier: ReportedContentClassifiers!) {
+  minimizeComment(input: { subjectId: $id, classifier: $classifier }) { minimizedComment { isMinimized } }
+}`
+
+export const UNMINIMIZE_COMMENT = `mutation UnminimizeComment($id: ID!) {
+  unminimizeComment(input: { subjectId: $id }) { unminimizedComment { isMinimized } }
+}`
+
 export const UPDATE_PULL_REQUEST_BRANCH = `mutation UpdatePullRequestBranch($id: ID!, $sha: GitObjectID, $method: PullRequestBranchUpdateMethod) {
   updatePullRequestBranch(input: { pullRequestId: $id, expectedHeadOid: $sha, updateMethod: $method }) { pullRequest { headRefOid } }
 }`

@@ -1,0 +1,11 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "DELETE",
+    "url": "https://gitea.com/api/v1/repos/acme/widgets/issues/7/lock"
+  },
+  "response": {
+    "status": 204,
+    "headers": {}
+  }
+}

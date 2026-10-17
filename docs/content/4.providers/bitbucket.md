@@ -116,6 +116,7 @@ Bitbucket doesn't keep a delivery log, so `webhooks.deliveries()` and `webhooks.
 | `users.me` | ✅ | ❌ |
 | `users.sponsorable` | ❌ | ❌ |
 | `users.events` | ❌ | ❌ |
+| `users.block` | ❌ | ❌ |
 | `repos.list` | ✅ | ❌ |
 | `repos.byOwner` | ✅ | ✅ |
 | `repos.labels` | ❌ | ❌ |
@@ -132,6 +133,7 @@ Bitbucket doesn't keep a delivery log, so `webhooks.deliveries()` and `webhooks.
 | `repos.events` | ❌ | ❌ |
 | `orgs.teams` | ❌ | ❌ |
 | `orgs.teamMembers` | ❌ | ❌ |
+| `orgs.block` | ❌ | ❌ |
 | `threads.get` | PR, commit | PR, commit |
 | `threads.list` | PR | PR |
 | `threads.getMany` | ✅ | ✅ |
@@ -142,6 +144,7 @@ Bitbucket doesn't keep a delivery log, so `webhooks.deliveries()` and `webhooks.
 | `comments.get` | PR (emulated), commit (emulated) | PR (unverified), commit (unverified) |
 | `comments.edit` | PR, commit | ❌ |
 | `comments.delete` | PR, commit | ❌ |
+| `comments.hide` | ❌ | ❌ |
 | `reactions.list` | ❌ | ❌ |
 | `notifications.list` | ❌ | ❌ |
 | `notifications.markRead` | ❌ | ❌ |
@@ -154,6 +157,7 @@ Bitbucket doesn't keep a delivery log, so `webhooks.deliveries()` and `webhooks.
 | `writes.upsertComment` | PR (emulated), commit (emulated) | ❌ |
 | `writes.close` | PR | ❌ |
 | `writes.reopen` | ❌ | ❌ |
+| `writes.lock` | ❌ | ❌ |
 | `writes.create` | PR | ❌ |
 | `writes.update` | PR | ❌ |
 | `writes.setLabels` | ❌ | ❌ |

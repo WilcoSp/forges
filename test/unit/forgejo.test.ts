@@ -766,3 +766,62 @@ describe('forgejo getMany', () => {
     expect(results.map(result => result.ok ? 'ok' : result.warning.code)).toEqual(['thread_unreadable', 'thread_unreadable'])
   })
 })
+
+describe('forgejo and gitea moderation', () => {
+  const auth = { type: 'token', token: 't' } as const
+
+  it('blocks and unblocks an account on Forgejo, for an organisation and for the viewer', async () => {
+    const { fetch, calls } = fixtureFetch('forgejo')
+    const instance = forgejo({ auth, fetch }).create()
+    const org = { forge: 'forgejo', instance: 'codeberg.org', owner: 'acme', name: '', kind: 'namespace' } as const
+
+    await instance.orgs.block(org, 'spammer')
+    await instance.orgs.unblock(org, 'spammer')
+    await instance.users.block('spammer')
+    await instance.users.unblock('spammer')
+
+    expect(calls.map(call => `${call.method} ${call.url}`)).toEqual([
+      'PUT https://codeberg.org/api/v1/orgs/acme/block/spammer',
+      'PUT https://codeberg.org/api/v1/orgs/acme/unblock/spammer',
+      'PUT https://codeberg.org/api/v1/user/block/spammer',
+      'PUT https://codeberg.org/api/v1/user/unblock/spammer',
+    ])
+    expect(instance.scopesFor('orgs.block')).toEqual({ token: ['write:organization'] })
+    expect(instance.scopesFor('users.block')).toEqual({ token: ['write:user'] })
+    expect(instance.capabilities.writes.lock).toEqual({ issue: false, pull_request: false, discussion: false, commit: false })
+  })
+
+  it('blocks and unblocks an account on Gitea, and locks an issue or pull request with the reason Gitea names', async () => {
+    const { fetch, calls } = fixtureFetch('gitea')
+    const instance = gitea({ auth, fetch }).create()
+    const org = { forge: 'gitea', instance: 'gitea.com', owner: 'acme', name: '', kind: 'namespace' } as const
+    const repo = { forge: 'gitea', instance: 'gitea.com', owner: 'acme', name: 'widgets' } as const
+
+    await instance.orgs.block(org, 'spammer')
+    await instance.orgs.unblock(org, 'spammer')
+    await instance.users.block('spammer')
+    await instance.users.unblock('spammer')
+    await instance.threads.lock({ forge: 'gitea', instance: 'gitea.com', repo, kind: 'issue', number: '3' }, { reason: 'too_heated' })
+    await instance.threads.unlock({ forge: 'gitea', instance: 'gitea.com', repo, kind: 'issue', number: '3' })
+    await instance.threads.lock({ forge: 'gitea', instance: 'gitea.com', repo, kind: 'pull_request', number: '7' })
+    await instance.threads.unlock({ forge: 'gitea', instance: 'gitea.com', repo, kind: 'pull_request', number: '7' })
+
+    expect(calls.map(call => `${call.method} ${call.url} ${call.body ?? ''}`.trim())).toEqual([
+      'PUT https://gitea.com/api/v1/orgs/acme/blocks/spammer',
+      'DELETE https://gitea.com/api/v1/orgs/acme/blocks/spammer',
+      'PUT https://gitea.com/api/v1/user/blocks/spammer',
+      'DELETE https://gitea.com/api/v1/user/blocks/spammer',
+      'PUT https://gitea.com/api/v1/repos/acme/widgets/issues/3/lock {"lock_reason":"Too heated"}',
+      'DELETE https://gitea.com/api/v1/repos/acme/widgets/issues/3/lock',
+      'PUT https://gitea.com/api/v1/repos/acme/widgets/issues/7/lock {}',
+      'DELETE https://gitea.com/api/v1/repos/acme/widgets/issues/7/lock',
+    ])
+  })
+
+  it('waits for Gitea 1.22 to block and 1.24 to lock on a self-hosted instance', () => {
+    const at = (instanceVersion: string) => gitea({ auth, baseUrl: 'https://git.example.org', instanceVersion }).create().capabilities
+    expect(at('1.21.11')).toMatchObject({ users: { block: false }, orgs: { block: false }, writes: { lock: { issue: false } } })
+    expect(at('1.23.8')).toMatchObject({ users: { block: true }, orgs: { block: true }, writes: { lock: { issue: false } } })
+    expect(at('1.24.0')).toMatchObject({ writes: { lock: { issue: true, pull_request: true } } })
+  })
+})

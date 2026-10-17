@@ -1,0 +1,11 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "PUT",
+    "url": "https://codeberg.org/api/v1/user/block/spammer"
+  },
+  "response": {
+    "status": 204,
+    "headers": {}
+  }
+}

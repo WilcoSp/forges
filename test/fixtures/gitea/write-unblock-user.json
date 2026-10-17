@@ -1,0 +1,11 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "DELETE",
+    "url": "https://gitea.com/api/v1/user/blocks/spammer"
+  },
+  "response": {
+    "status": 204,
+    "headers": {}
+  }
+}

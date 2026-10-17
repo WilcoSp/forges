@@ -59,6 +59,10 @@ Because Gitea and Forgejo share an implementation, the following sections of the
 
 `replyToReviewComment()` needs Gitea 1.27 or later. It replies by the comment's `ref`, and the reply joins the same review. gitea.com runs a recent build, so it works there out of the box. For a self-hosted instance, pass `instanceVersion` or call `refreshCapabilities()` first.
 
+## Moderation
+
+`threads.lock()` needs Gitea 1.24 or later, and sends the reason as one of the defaults of Gitea's `LOCK_REASONS` setting, such as `Too heated`. `orgs.block()` and `users.block()` need Gitea 1.22 or later. gitea.com runs a recent build; for a self-hosted instance, pass `instanceVersion` or call `refreshCapabilities()` first. Gitea has no API to hide a comment.
+
 ## Checks and CI
 
 `checks.list()` reads commit statuses, and `checks.report()` writes them.
@@ -116,6 +120,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `users.me` | ✅ | ❌ |
 | `users.sponsorable` | ❌ | ❌ |
 | `users.events` | ✅ | ✅ |
+| `users.block` | ✅ | ❌ |
 | `repos.list` | ✅ | ❌ |
 | `repos.byOwner` | ✅ | ✅ |
 | `repos.labels` | ✅ | ✅ |
@@ -132,6 +137,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `repos.events` | ✅ | ✅ |
 | `orgs.teams` | ✅ | ❌ |
 | `orgs.teamMembers` | ✅ | ❌ |
+| `orgs.block` | ✅ | ❌ |
 | `threads.get` | issue, PR, commit | issue, PR, commit |
 | `threads.list` | issue, PR | issue, PR |
 | `threads.getMany` | ✅ | ✅ |
@@ -142,6 +148,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `comments.get` | issue, PR | issue, PR |
 | `comments.edit` | issue, PR | ❌ |
 | `comments.delete` | issue, PR | ❌ |
+| `comments.hide` | ❌ | ❌ |
 | `reactions.list` | issue, PR | issue, PR |
 | `notifications.list` | ✅ | ❌ |
 | `notifications.markRead` | ✅ | ❌ |
@@ -154,6 +161,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `writes.upsertComment` | issue (emulated), PR (emulated) | ❌ |
 | `writes.close` | issue, PR | ❌ |
 | `writes.reopen` | issue, PR | ❌ |
+| `writes.lock` | issue, PR | ❌ |
 | `writes.create` | issue, PR | ❌ |
 | `writes.update` | issue, PR | ❌ |
 | `writes.setLabels` | issue, PR | ❌ |

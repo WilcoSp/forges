@@ -73,7 +73,10 @@ import type {
   CloseReason,
   ForgeOptionsBase,
   ForgeProvider,
+  HideCommentReason,
   InstallationsApi,
+  LockOptions,
+  LockReason,
   MilestoneListOptions,
   VerbScopes,
 } from '../provider.ts'
@@ -241,6 +244,7 @@ const GHES_MARK_DONE = '3.13'
 /** GitHub Enterprise Server versions with the Dependabot alerts REST API. */
 const GHES_DEPENDABOT_ALERTS = '3.8'
 const GRAPHQL_BATCH = 20
+const LOCK_REASONS: Record<LockReason, string> = { off_topic: 'off-topic', too_heated: 'too heated', resolved: 'resolved', spam: 'spam' }
 const REVIEW_CONTEXT_TTL = 5 * 60_000
 const POLL_DELAYS = [500, 1000, 2000]
 const CONTRIBUTOR_STATS_DELAYS = [500, 1000, 2000, 4000, 8000]
@@ -755,6 +759,18 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       return list(`${repoPath(ref.repo)}/commits/${encodeURIComponent(ref.number)}/comments`, listOptions, (raw: GitHubComment) => toComment(ref, raw))
     }
     return list(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/comments`, listOptions, (raw: GitHubComment) => toComment(ref, raw), { query: { since: listOptions.since?.toISOString() } })
+  }
+
+  /** Discussion comment ids are node ids already; other comments are read for theirs. */
+  async function commentNodeId(ref: CommentRef, options?: BaseOptions): Promise<string> {
+    if (ref.thread.kind === 'discussion') {
+      return ref.id
+    }
+    const { data } = await fetcher.json<GitHubComment>(commentPath(ref), { signal: options?.signal })
+    if (!data.node_id) {
+      throw new NotFoundError(`Comment ${ref.id} has no node id`, 404, '', context)
+    }
+    return data.node_id
   }
 
   function commentPath(ref: CommentRef): string {
@@ -1945,6 +1961,14 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         return data.repositoryOwner.hasSponsorsListing
       }),
       eventsPage: verb(true, (login, listOptions) => feedPage(`/users/${encodeURIComponent(login)}/events`, listOptions)),
+      blocking: verb(auth.type === 'token' && !installation && (enterprise ? 'unverified' : true), {
+        block: async (login, options) => {
+          await fetcher.raw(`/user/blocks/${encodeURIComponent(login)}`, { method: 'PUT', signal: options?.signal })
+        },
+        unblock: async (login, options) => {
+          await fetcher.raw(`/user/blocks/${encodeURIComponent(login)}`, { method: 'DELETE', signal: options?.signal })
+        },
+      }),
     },
     repos: {
       get: verb(true, async (ref, options) => {
@@ -2000,6 +2024,14 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         listOptions,
         (raw: GitHubUserDetail) => toActor(instance, raw)!,
       )),
+      blocking: verb(enterprise ? 'unverified' : true, {
+        block: async (org, login, options) => {
+          await fetcher.raw(`/orgs/${encodeURIComponent(org.owner)}/blocks/${encodeURIComponent(login)}`, { method: 'PUT', signal: options?.signal })
+        },
+        unblock: async (org, login, options) => {
+          await fetcher.raw(`/orgs/${encodeURIComponent(org.owner)}/blocks/${encodeURIComponent(login)}`, { method: 'DELETE', signal: options?.signal })
+        },
+      }),
     },
     notifications: {
       listPage: verb(notificationsAuth, notificationPage),
@@ -2189,6 +2221,36 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         options?.signal,
       )).milestone)),
       reactions: perKind({ issue: true, pull_request: true, discussion: true }, { react, unreact }),
+      locking: perKind({ issue: true, pull_request: true, discussion: true }, {
+        lock: async (thread: ThreadRef, options: LockOptions = {}) => {
+          const ref = requireThread(thread, context)
+          if (ref.kind === 'discussion') {
+            await graphql('LOCK_LOCKABLE', { id: await nodeId(ref, options) }, options)
+            return
+          }
+          await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/lock`, {
+            method: 'PUT',
+            json: options.reason ? { lock_reason: LOCK_REASONS[options.reason] } : {},
+            signal: options.signal,
+          })
+        },
+        unlock: async (thread: ThreadRef, options?: BaseOptions) => {
+          const ref = requireThread(thread, context)
+          if (ref.kind === 'discussion') {
+            await graphql('UNLOCK_LOCKABLE', { id: await nodeId(ref, options) }, options)
+            return
+          }
+          await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/lock`, { method: 'DELETE', signal: options?.signal })
+        },
+      }),
+      hiding: perKind({ issue: true, pull_request: true, discussion: true, commit: true }, {
+        hideComment: async (ref: CommentRef, reason: HideCommentReason, options?: BaseOptions) => {
+          await graphql('MINIMIZE_COMMENT', { id: await commentNodeId(ref, options), classifier: reason.toUpperCase() }, options)
+        },
+        unhideComment: async (ref: CommentRef, options?: BaseOptions) => {
+          await graphql('UNMINIMIZE_COMMENT', { id: await commentNodeId(ref, options) }, options)
+        },
+      }),
       reactionsPage: perKind({ issue: true, pull_request: true, discussion: !anonymous }, reactionsPage),
       transfer: verb(true, async (thread, repo, options) => {
         const ref = requireThread(thread, context)
@@ -2295,6 +2357,12 @@ export function githubScopesFor(verb: ForgeVerb): VerbScopes {
   }
   if (group === 'installations') {
     return { note: 'App credentials: an app JWT signed with the app private key' }
+  }
+  if (verb === 'users.block' || verb === 'users.unblock') {
+    return { token: ['user'], permissions: { blocking: 'write' }, note: 'Needs a user token: a GitHub App installation cannot block for an account' }
+  }
+  if (verb === 'orgs.block' || verb === 'orgs.unblock') {
+    return { token: ['admin:org'], permissions: { organization_user_blocking: 'write' } }
   }
   if (group === 'users' || group === 'search') {
     return { token: ['read:user'], permissions: {} }

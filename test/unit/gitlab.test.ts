@@ -146,6 +146,25 @@ describe('gitlab provider', () => {
     expect(note('Mentioned in commit c0c5081dc665d64b56fcee63df5429b013bb69b6')).toBe('referenced')
   })
 
+  it('locks and unlocks the discussion on an issue or merge request, without a reason', async () => {
+    const { instance, calls } = provider()
+    const issue = { ...mr, kind: 'issue', number: '11' } as const
+
+    await instance.threads.lock(issue, { reason: 'spam' })
+    await instance.threads.unlock(issue)
+    await instance.threads.lock(mr)
+    await instance.threads.unlock(mr)
+
+    expect(calls.map(call => `${call.method} ${call.url} ${call.body}`)).toEqual([
+      `PUT ${P}/issues/11 {"discussion_locked":true}`,
+      `PUT ${P}/issues/11 {"discussion_locked":false}`,
+      `PUT ${P}/merge_requests/23 {"discussion_locked":true}`,
+      `PUT ${P}/merge_requests/23 {"discussion_locked":false}`,
+    ])
+    expect(instance.can('threads.hideComment', 'issue')).toBe(false)
+    expect(instance.can('orgs.block')).toBe(false)
+  })
+
   it('lists the issues a merge request closes, and the merge requests that close an issue, across projects', async () => {
     const { fetch, calls } = fixtureFetch('gitlab')
     const issue = { ...mr, kind: 'issue', number: '11' } as const

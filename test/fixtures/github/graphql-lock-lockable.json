@@ -1,0 +1,21 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "POST",
+    "url": "https://api.github.com/graphql",
+    "operationName": "LockLockable"
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": {
+      "data": {
+        "lockLockable": {
+          "lockedRecord": {
+            "locked": true
+          }
+        }
+      }
+    }
+  }
+}

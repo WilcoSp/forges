@@ -86,6 +86,7 @@ Artifacts sends no webhooks. It publishes [events](https://developers.cloudflare
 | `users.me` | ❌ | ❌ |
 | `users.sponsorable` | ❌ | ❌ |
 | `users.events` | ❌ | ❌ |
+| `users.block` | ❌ | ❌ |
 | `repos.list` | ✅ | ❌ |
 | `repos.byOwner` | ✅ | ❌ |
 | `repos.labels` | ❌ | ❌ |
@@ -102,6 +103,7 @@ Artifacts sends no webhooks. It publishes [events](https://developers.cloudflare
 | `repos.events` | ❌ | ❌ |
 | `orgs.teams` | ❌ | ❌ |
 | `orgs.teamMembers` | ❌ | ❌ |
+| `orgs.block` | ❌ | ❌ |
 | `threads.get` | ❌ | ❌ |
 | `threads.list` | ❌ | ❌ |
 | `threads.getMany` | ❌ | ❌ |
@@ -112,6 +114,7 @@ Artifacts sends no webhooks. It publishes [events](https://developers.cloudflare
 | `comments.get` | ❌ | ❌ |
 | `comments.edit` | ❌ | ❌ |
 | `comments.delete` | ❌ | ❌ |
+| `comments.hide` | ❌ | ❌ |
 | `reactions.list` | ❌ | ❌ |
 | `notifications.list` | ❌ | ❌ |
 | `notifications.markRead` | ❌ | ❌ |
@@ -124,6 +127,7 @@ Artifacts sends no webhooks. It publishes [events](https://developers.cloudflare
 | `writes.upsertComment` | ❌ | ❌ |
 | `writes.close` | ❌ | ❌ |
 | `writes.reopen` | ❌ | ❌ |
+| `writes.lock` | ❌ | ❌ |
 | `writes.create` | ❌ | ❌ |
 | `writes.update` | ❌ | ❌ |
 | `writes.setLabels` | ❌ | ❌ |

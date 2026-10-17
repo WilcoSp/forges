@@ -235,10 +235,12 @@ const TASKS: CredentialTask[] = [
   { id: 'push', group: 'Write', label: 'Commit files', capabilities: ['contents.commitFiles'] },
   { id: 'publish', group: 'Write', label: 'Publish releases', capabilities: ['releases.create', 'releases.update'] },
   { id: 'inbox', group: 'Write', label: 'Triage notifications', capabilities: ['notifications.markRead', 'notifications.markDone', 'notifications.unsubscribe', 'notifications.markAllRead', 'notifications.markAllDone', 'subscriptions.set'] },
+  { id: 'moderate', group: 'Write', label: 'Lock conversations and hide comments', capabilities: ['writes.lock', 'comments.hide'] },
   { id: 'receive', group: 'Events', label: 'Receive webhooks', capabilities: ['sources.webhook'], fields: ['WEBHOOK_SECRET'] },
   { id: 'events', group: 'Events', label: 'Poll or stream events', capabilities: ['sources.poll', 'sources.subscribe', 'repos.events', 'users.events'] },
   { id: 'webhooks', group: 'Administer', label: 'Manage webhooks', capabilities: ['webhooks.list', 'webhooks.create', 'webhooks.update', 'webhooks.delete', 'webhooks.rotateSecret', 'webhooks.deliveries', 'webhooks.redeliver'] },
   { id: 'collaborators', group: 'Administer', label: 'Add collaborators', capabilities: ['repos.addCollaborator'] },
+  { id: 'block', group: 'Administer', label: 'Block accounts', capabilities: ['orgs.block', 'users.block'] },
   { id: 'installations', group: 'Administer', label: 'App installations', capabilities: ['installations'] },
 ]
 

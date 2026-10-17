@@ -51,6 +51,8 @@ import type {
   AnonymousAuth,
   BulkNotificationOptions,
   ForgeOptionsBase,
+  LockOptions,
+  LockReason,
   MilestoneListOptions,
   NotificationWriteOptions,
   TokenAuth,
@@ -150,6 +152,15 @@ const GITEA_REVIEW_REPLIES = '1.27'
 
 /** The Forgejo and Gitea version with activity feeds. */
 const ACTIVITY_FEEDS = '1.20'
+
+/** Forgejo and Gitea versions with blocking an account. */
+const FORGEJO_BLOCKS = '1.20'
+const GITEA_BLOCKS = '1.22'
+
+/** Gitea version with locking an issue or pull request. */
+const GITEA_LOCKS = '1.24'
+
+const GITEA_LOCK_REASONS: Record<LockReason, string> = { off_topic: 'Off-topic', too_heated: 'Too heated', resolved: 'Resolved', spam: 'Spam' }
 
 /** Timelines send no usable count, so only a full page of an explicit size shows that another follows. */
 const TIMELINE_PAGE_SIZE = 50
@@ -602,6 +613,20 @@ function setupForgejo({ options, origin, fetcher: baseFetcher, baseUrl }: Provid
     return list(path, listOptions, (raw: ForgejoActivity) => toFeedEvent(origin, raw), { query })
   }
 
+  async function setBlocked(scope: string, login: string, blocked: boolean, options?: BaseOptions): Promise<void> {
+    const path = isGitea ? `${scope}/blocks/${encodeURIComponent(login)}` : `${scope}/${blocked ? 'block' : 'unblock'}/${encodeURIComponent(login)}`
+    await fetcher.raw(path, { method: isGitea && !blocked ? 'DELETE' : 'PUT', signal: options?.signal })
+  }
+
+  async function setLocked(thread: ThreadRef, locked: boolean, options: LockOptions = {}): Promise<void> {
+    const ref = requireThread(thread, context)
+    await fetcher.raw(`${repoPath(ref.repo)}/issues/${encodeURIComponent(ref.number)}/lock`, {
+      method: locked ? 'PUT' : 'DELETE',
+      ...locked ? { json: options.reason ? { lock_reason: GITEA_LOCK_REASONS[options.reason] } : {} } : {},
+      signal: options.signal,
+    })
+  }
+
   /** Gitea lists runs and serves job logs only with a token. */
   const giteaAnonymous = isGitea && anonymous
 
@@ -748,6 +773,10 @@ function setupForgejo({ options, origin, fetcher: baseFetcher, baseUrl }: Provid
       get: verb(true, (login, options) => readUser(`/users/${encodeURIComponent(login)}`, options?.signal)),
       me: verb(true, options => readUser('/user', options?.signal)),
       eventsPage: verb(released(ACTIVITY_FEEDS), (login, listOptions = {}) => feedPage(`/users/${encodeURIComponent(login)}/activities/feeds`, listOptions, { 'only-performed-by': true })),
+      blocking: verb(released(isGitea ? GITEA_BLOCKS : FORGEJO_BLOCKS), {
+        block: (login, options) => setBlocked('/user', login, true, options),
+        unblock: (login, options) => setBlocked('/user', login, false, options),
+      }),
     },
     repos: {
       get: verb(true, async (ref, options) => toRepo(origin, (await fetcher.json<ForgejoRepositoryDetail>(repoPath(ref), { signal: options?.signal })).data)),
@@ -790,6 +819,10 @@ function setupForgejo({ options, origin, fetcher: baseFetcher, baseUrl }: Provid
           throw new NotFoundError(`${team.org.owner} has no team named ${team.slug}`, 404, '', context)
         }
         return list(`/teams/${encodeURIComponent(id)}/members`, listOptions, (raw: ForgejoUser) => toActor(origin, raw)!)
+      }),
+      blocking: verb(released(isGitea ? GITEA_BLOCKS : FORGEJO_BLOCKS), {
+        block: (org, login, options) => setBlocked(`/orgs/${encodeURIComponent(org.owner)}`, login, true, options),
+        unblock: (org, login, options) => setBlocked(`/orgs/${encodeURIComponent(org.owner)}`, login, false, options),
       }),
     },
     notifications: {
@@ -1066,6 +1099,14 @@ function setupForgejo({ options, origin, fetcher: baseFetcher, baseUrl }: Provid
       }),
       close: perKind({ issue: true, pull_request: true }, (ref, options) => setState(ref, 'closed', options)),
       reopen: perKind({ issue: true, pull_request: true }, (ref, options) => setState(ref, 'open', options)),
+      ...isGitea
+        ? {
+            locking: perKind({ issue: released(GITEA_LOCKS), pull_request: released(GITEA_LOCKS) }, {
+              lock: (thread: ThreadRef, options?: LockOptions) => setLocked(thread, true, options),
+              unlock: (thread: ThreadRef, options?: BaseOptions) => setLocked(thread, false, options),
+            }),
+          }
+        : {},
       merge: verb(true, merge),
       updateBranch: verb(true, updateBranch),
       subscriptions: perKind(ISSUE_AND_PULL, {
@@ -1166,10 +1207,10 @@ export function forgejoScopesFor(verb: ForgeVerb): VerbScopes {
     return { token: [name === 'list' || name === 'page' || name === 'unreadCount' ? 'read:notification' : 'write:notification'] }
   }
   if (group === 'users' || group === 'search') {
-    return { token: ['read:user'] }
+    return { token: [write ? 'write:user' : 'read:user'] }
   }
   if (group === 'orgs') {
-    return { token: ['read:organization'] }
+    return { token: [write ? 'write:organization' : 'read:organization'] }
   }
   if (group === 'threads' || group === 'repos' || group === 'contents' || group === 'releases' || group === 'checks' || group === 'ci') {
     return { token: [write ? 'write:issue' : 'read:issue', write ? 'write:repository' : 'read:repository'] }

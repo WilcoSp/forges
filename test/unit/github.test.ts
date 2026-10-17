@@ -798,6 +798,92 @@ describe('github repository and thread metadata', () => {
   })
 })
 
+describe('github moderation', () => {
+  const issue = { forge: 'github', instance: 'github.com', repo, kind: 'issue', number: '17' } as const
+  const org = { forge: 'github', instance: 'github.com', owner: 'acme', name: '', kind: 'namespace' } as const
+  const commit = { forge: 'github', instance: 'github.com', repo, kind: 'commit', number: HEAD } as const
+
+  it('locks and unlocks an issue or pull request through REST, with the reason GitHub names', async () => {
+    const { provider, calls } = tokenProvider()
+
+    await provider.threads.lock(issue, { reason: 'too_heated' })
+    await provider.threads.unlock(issue)
+    await provider.threads.lock(pull)
+    await provider.threads.unlock(pull)
+
+    expect(calls.map(call => `${call.method} ${call.url} ${call.body ?? ''}`)).toEqual([
+      'PUT https://api.github.com/repos/acme/widgets/issues/17/lock {"lock_reason":"too heated"}',
+      'DELETE https://api.github.com/repos/acme/widgets/issues/17/lock ',
+      'PUT https://api.github.com/repos/acme/widgets/issues/42/lock {}',
+      'DELETE https://api.github.com/repos/acme/widgets/issues/42/lock ',
+    ])
+  })
+
+  it('locks and unlocks a discussion through GraphQL, without a reason', async () => {
+    const { provider, calls } = tokenProvider()
+    const ref = { ...discussion, externalId: 'D_kwDOAAB5ac4AAQ1f' }
+
+    await provider.threads.lock(ref, { reason: 'off_topic' })
+    await provider.threads.unlock(ref)
+
+    expect(calls.map(call => [call.operationName, JSON.parse(call.body!).variables])).toEqual([
+      ['LockLockable', { id: 'D_kwDOAAB5ac4AAQ1f' }],
+      ['UnlockLockable', { id: 'D_kwDOAAB5ac4AAQ1f' }],
+    ])
+    await expect(provider.threads.lock(commit)).rejects.toThrow(UnsupportedOperationError)
+  })
+
+  it('hides and unhides a comment by its node id, with the classifier GitHub names', async () => {
+    const { provider, calls } = tokenProvider()
+
+    await provider.threads.hideComment({ forge: 'github', instance: 'github.com', thread: issue, id: '770001' }, 'low_quality')
+    await provider.threads.unhideComment({ forge: 'github', instance: 'github.com', thread: pull, id: '770001' })
+    await provider.threads.hideComment({ forge: 'github', instance: 'github.com', thread: commit, id: '770005' }, 'spam')
+    await provider.threads.unhideComment({ forge: 'github', instance: 'github.com', thread: commit, id: '770005' })
+    await provider.threads.hideComment({ forge: 'github', instance: 'github.com', thread: discussion, id: 'DC_kwDOAAB5ac4AAQ2a' }, 'outdated')
+    await provider.threads.unhideComment({ forge: 'github', instance: 'github.com', thread: discussion, id: 'DC_kwDOAAB5ac4AAQ2a' })
+
+    expect(calls.map(call => call.operationName ? `${call.operationName} ${JSON.stringify(JSON.parse(call.body!).variables)}` : `${call.method} ${call.url}`)).toEqual([
+      'GET https://api.github.com/repos/acme/widgets/issues/comments/770001',
+      'MinimizeComment {"id":"IC_kwDOAAB5ac5abc001","classifier":"LOW_QUALITY"}',
+      'GET https://api.github.com/repos/acme/widgets/issues/comments/770001',
+      'UnminimizeComment {"id":"IC_kwDOAAB5ac5abc001"}',
+      'GET https://api.github.com/repos/acme/widgets/comments/770005',
+      'MinimizeComment {"id":"CC_kwDOAAB5ac4ABcd5","classifier":"SPAM"}',
+      'GET https://api.github.com/repos/acme/widgets/comments/770005',
+      'UnminimizeComment {"id":"CC_kwDOAAB5ac4ABcd5"}',
+      'MinimizeComment {"id":"DC_kwDOAAB5ac4AAQ2a","classifier":"OUTDATED"}',
+      'UnminimizeComment {"id":"DC_kwDOAAB5ac4AAQ2a"}',
+    ])
+  })
+
+  it('blocks and unblocks an account for an organisation and for the viewer', async () => {
+    const { provider, calls } = tokenProvider()
+
+    await provider.orgs.block(org, 'spammer')
+    await provider.orgs.unblock(org, 'spammer')
+    await provider.users.block('spammer')
+    await provider.users.unblock('spammer')
+
+    expect(calls.map(call => `${call.method} ${call.url}`)).toEqual([
+      'PUT https://api.github.com/orgs/acme/blocks/spammer',
+      'DELETE https://api.github.com/orgs/acme/blocks/spammer',
+      'PUT https://api.github.com/user/blocks/spammer',
+      'DELETE https://api.github.com/user/blocks/spammer',
+    ])
+    expect(provider.scopesFor('orgs.block')).toEqual({ token: ['admin:org'], permissions: { organization_user_blocking: 'write' } })
+    expect(provider.scopesFor('users.unblock').permissions).toEqual({ blocking: 'write' })
+  })
+
+  it('blocks for the viewer only with a user token', () => {
+    const app = github({ auth: { type: 'app', appId: 1, privateKey, installationId: 1 } }).create()
+
+    expect(app.can('users.block')).toBe(false)
+    expect(app.can('orgs.block')).toBe(true)
+    expect(github({ baseUrl: 'https://ghe.example.com/api/v3', auth: { type: 'token', token: 't' } }).create().capabilities.orgs.block).toBe('unverified')
+  })
+})
+
 describe('github closing references', () => {
   const issue = { forge: 'github', instance: 'github.com', repo, kind: 'issue', number: '17' } as const
 

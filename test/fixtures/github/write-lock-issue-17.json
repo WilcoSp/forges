@@ -1,0 +1,11 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "PUT",
+    "url": "https://api.github.com/repos/acme/widgets/issues/17/lock"
+  },
+  "response": {
+    "status": 204,
+    "headers": {}
+  }
+}

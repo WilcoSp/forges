@@ -135,6 +135,7 @@ for await (const team of provider.orgs.teams(project)) {
 | `users.me` | ❌ | ❌ |
 | `users.sponsorable` | ❌ | ❌ |
 | `users.events` | ❌ | ❌ |
+| `users.block` | ❌ | ❌ |
 | `repos.list` | ✅ | ❌ |
 | `repos.byOwner` | ✅ | ✅ |
 | `repos.labels` | ❌ | ❌ |
@@ -151,6 +152,7 @@ for await (const team of provider.orgs.teams(project)) {
 | `repos.events` | ❌ | ❌ |
 | `orgs.teams` | ✅ | ❌ |
 | `orgs.teamMembers` | ✅ | ❌ |
+| `orgs.block` | ❌ | ❌ |
 | `threads.get` | issue, PR | issue (unverified), PR |
 | `threads.list` | issue, PR | PR |
 | `threads.getMany` | ✅ | ✅ |
@@ -161,6 +163,7 @@ for await (const team of provider.orgs.teams(project)) {
 | `comments.get` | issue (experimental), PR | issue (unverified), PR |
 | `comments.edit` | issue (experimental), PR | ❌ |
 | `comments.delete` | issue (experimental), PR | ❌ |
+| `comments.hide` | ❌ | ❌ |
 | `reactions.list` | ❌ | ❌ |
 | `notifications.list` | ❌ | ❌ |
 | `notifications.markRead` | ❌ | ❌ |
@@ -173,6 +176,7 @@ for await (const team of provider.orgs.teams(project)) {
 | `writes.upsertComment` | issue (emulated), PR (emulated) | ❌ |
 | `writes.close` | issue, PR | ❌ |
 | `writes.reopen` | issue, PR | ❌ |
+| `writes.lock` | ❌ | ❌ |
 | `writes.create` | issue, PR | ❌ |
 | `writes.update` | issue, PR | ❌ |
 | `writes.setLabels` | issue, PR | ❌ |

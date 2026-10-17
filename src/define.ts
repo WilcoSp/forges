@@ -140,6 +140,8 @@ export interface ProviderSpec<TExtensions extends object = Record<never, never>>
     sponsorable?: Verb<UsersApi['sponsorable']>
     /** The implementation of `provider.users.events()` and `provider.users.eventsPage()`. */
     eventsPage?: Verb<(login: string, options?: EventFeedOptions) => Promise<Page<ForgeEventInput>>>
+    /** One capability covers blocking and unblocking. */
+    blocking?: Verb<Pick<UsersApi, 'block' | 'unblock'>>
   }
   /** An organisation's teams and their members. Listings are declared as pages; core derives the iterables. */
   orgs?: {
@@ -147,6 +149,8 @@ export interface ProviderSpec<TExtensions extends object = Record<never, never>>
     teamsPage?: Verb<OrgsApi['teamsPage']>
     /** The implementation of `provider.orgs.teamMembers()` and `provider.orgs.teamMembersPage()`. */
     teamMembersPage?: Verb<OrgsApi['teamMembersPage']>
+    /** One capability covers blocking and unblocking. */
+    blocking?: Verb<Pick<OrgsApi, 'block' | 'unblock'>>
   }
   threads: {
     get: ThreadVerb<'get'>
@@ -165,8 +169,12 @@ export interface ProviderSpec<TExtensions extends object = Record<never, never>>
     comment?: ThreadVerb<'comment'>
     editComment?: ThreadVerb<'editComment'>
     deleteComment?: ThreadVerb<'deleteComment'>
+    /** One capability covers hiding and unhiding a comment. */
+    hiding?: KindVerb<Pick<ThreadsApi, 'hideComment' | 'unhideComment'>>
     close?: ThreadVerb<'close'>
     reopen?: ThreadVerb<'reopen'>
+    /** One capability covers locking and unlocking. */
+    locking?: KindVerb<Pick<ThreadsApi, 'lock' | 'unlock'>>
     create?: ThreadVerb<'create'>
     update?: ThreadVerb<'update'>
     setLabels?: ThreadVerb<'setLabels'>

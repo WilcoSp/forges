@@ -1,0 +1,21 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "POST",
+    "url": "https://api.github.com/graphql",
+    "operationName": "UnminimizeComment"
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": {
+      "data": {
+        "unminimizeComment": {
+          "unminimizedComment": {
+            "isMinimized": false
+          }
+        }
+      }
+    }
+  }
+}

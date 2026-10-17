@@ -689,6 +689,11 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
       return toThread(ref, data)
     }
 
+    async function setLocked(thread: ThreadRef, locked: boolean, options?: BaseOptions): Promise<void> {
+      const ref = requireIssueOrPull(thread, context, locked ? 'lock' : 'unlock')
+      await fetcher.raw(threadPath(ref), { method: 'PUT', json: { discussion_locked: locked }, signal: options?.signal })
+    }
+
     async function resolveMergeMethod(ref: ResolvedThreadRef, requested?: MergeMethod, signal?: AbortSignal): Promise<MergeMethod> {
       if (requested === 'squash') {
         return requested
@@ -1295,6 +1300,10 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
         }),
         close: perKind({ issue: true, pull_request: true }, (ref, options) => setState(ref, 'close', options)),
         reopen: perKind({ issue: true, pull_request: true }, (ref, options) => setState(ref, 'reopen', options)),
+        locking: perKind({ issue: true, pull_request: true }, {
+          lock: (thread: ThreadRef, options?: BaseOptions) => setLocked(thread, true, options),
+          unlock: (thread: ThreadRef, options?: BaseOptions) => setLocked(thread, false, options),
+        }),
         merge: verb(true, merge),
         updateBranch: verb(true, updateBranch),
         subscriptions: perKind(ISSUE_LIKE, {

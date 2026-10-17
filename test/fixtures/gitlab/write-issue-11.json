@@ -1,0 +1,42 @@
+{
+  "handAuthored": true,
+  "request": {
+    "method": "PUT",
+    "url": "https://gitlab.com/api/v4/projects/acme%2Fplatform%2Fwidgets/issues/11"
+  },
+  "response": {
+    "status": 200,
+    "headers": {},
+    "body": {
+      "id": 9800011,
+      "iid": 11,
+      "project_id": 278964,
+      "title": "Templates compile on every request",
+      "description": "Compiling templates on every request is slow.",
+      "state": "opened",
+      "author": {
+        "id": 4101,
+        "username": "ada",
+        "name": "Ada",
+        "avatar_url": "https://gitlab.example/avatar/4101",
+        "web_url": "https://gitlab.com/ada",
+        "state": "active"
+      },
+      "labels": [
+        "performance"
+      ],
+      "web_url": "https://gitlab.com/acme/platform/widgets/-/issues/11",
+      "created_at": "2025-09-10T08:00:00.000Z",
+      "updated_at": "2025-09-12T10:00:00.000Z",
+      "closed_at": null,
+      "discussion_locked": true,
+      "user_notes_count": 1,
+      "assignees": [],
+      "references": {
+        "short": "#11",
+        "relative": "#11",
+        "full": "acme/platform/widgets#11"
+      }
+    }
+  }
+}

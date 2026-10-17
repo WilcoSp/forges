@@ -286,6 +286,12 @@ With each delivery, GitHub sends these headers:
 
 Deliveries of the `installation` and `installation_repositories` events become `installation` events.
 
+## Moderation
+
+`threads.lock()` locks an issue or pull request through REST, with the reason GitHub shows on the thread, and a discussion through GraphQL. GitHub refuses a reason for a discussion, so the provider leaves `reason` out. `threads.hideComment()` minimises a comment through GraphQL, with the reason as its classifier. It works on comments on issues, pull requests, discussions and commits, but not on inline review comments.
+
+`orgs.block()` blocks an account from the organisation and needs the `admin:org` scope, or the `organization_user_blocking` write permission. `users.block()` blocks it for the account the token belongs to, so it needs a user token with the `user` scope, or the `blocking` write permission; `can('users.block')` is `false` for a GitHub App installation. A repeat can reject with a `ForgeApiError` with `status` 422.
+
 ## Organisation teams
 
 `orgs.teams()` reads the teams of an organisation with `GET /orgs/{org}/teams`, and `orgs.teamMembers()` reads `GET /orgs/{org}/teams/{slug}/members`. Both need a token with the `read:org` scope, or the `members` read permission on a fine-grained token, so `can('orgs.teams')` is `false` without a credential. A team's members include the members of its child teams.
@@ -306,6 +312,7 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `users.me` | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `users.sponsorable` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `users.events` | ✅ | ✅ | ✅ | ❌ | ✅ |
+| `users.block` | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `repos.list` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `repos.byOwner` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `repos.labels` | ✅ | ✅ | ✅ | ❌ | ✅ |
@@ -322,6 +329,7 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `repos.events` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `orgs.teams` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `orgs.teamMembers` | ✅ | ✅ | ✅ | ❌ | ❌ |
+| `orgs.block` | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `threads.get` | issue, PR, discussion, commit | issue, PR, discussion, commit | issue, PR, discussion, commit | ❌ | issue, PR, commit |
 | `threads.list` | issue, PR, discussion | issue, PR, discussion | issue, PR, discussion | ❌ | issue, PR |
 | `threads.getMany` | ✅ | ✅ | ✅ | ❌ | ✅ |
@@ -332,6 +340,7 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `comments.get` | issue, PR, discussion, commit | issue, PR, discussion, commit | issue, PR, discussion, commit | ❌ | issue (unverified), PR, commit (unverified) |
 | `comments.edit` | issue, PR, discussion, commit | issue, PR, discussion, commit | issue, PR, discussion, commit | ❌ | ❌ |
 | `comments.delete` | issue, PR, discussion, commit | issue, PR, discussion, commit | issue, PR, discussion, commit | ❌ | ❌ |
+| `comments.hide` | issue, PR, discussion, commit | issue, PR, discussion, commit | issue, PR, discussion, commit | ❌ | ❌ |
 | `reactions.list` | issue, PR, discussion | issue, PR, discussion | issue, PR, discussion | ❌ | issue, PR |
 | `notifications.list` | ✅ | ❌ | ❌ | ❌ | ❌ |
 | `notifications.markRead` | ✅ | ❌ | ❌ | ❌ | ❌ |
@@ -344,6 +353,7 @@ Deliveries of the `installation` and `installation_repositories` events become `
 | `writes.upsertComment` | issue (emulated), PR (emulated), discussion (emulated), commit (emulated) | issue (emulated), PR (emulated), discussion (emulated), commit (emulated) | issue (emulated), PR (emulated), discussion (emulated), commit (emulated) | ❌ | ❌ |
 | `writes.close` | issue, PR, discussion | issue, PR, discussion | issue, PR, discussion | ❌ | ❌ |
 | `writes.reopen` | issue, PR, discussion | issue, PR, discussion | issue, PR, discussion | ❌ | ❌ |
+| `writes.lock` | issue, PR, discussion | issue, PR, discussion | issue, PR, discussion | ❌ | ❌ |
 | `writes.create` | issue, PR | issue, PR | issue, PR | ❌ | ❌ |
 | `writes.update` | issue, PR, discussion | issue, PR, discussion | issue, PR, discussion | ❌ | ❌ |
 | `writes.setLabels` | issue, PR | issue, PR | issue, PR | ❌ | ❌ |

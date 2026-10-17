@@ -53,7 +53,7 @@ import type {
   WebhookEventType,
   WebhookRef,
 } from '../model.ts'
-import type { BulkNotificationOptions, ForgeCapabilities, ForgeOptionsBase, ForgeProvider, ForgeProviderFactory, ForgeVerb, SubscribeOptions } from '../provider.ts'
+import type { BulkNotificationOptions, ForgeCapabilities, ForgeOptionsBase, ForgeProvider, ForgeProviderFactory, ForgeVerb, HideCommentReason, SubscribeOptions } from '../provider.ts'
 import { toFileContent } from '../contents.ts'
 import { bodyText, headerValue } from '../crypto.ts'
 import { defineForgeProvider, perKind, verb } from '../define.ts'
@@ -294,6 +294,8 @@ interface FakeThreadState {
   subscription: SubscriptionState
   /** Whether `threads.merge()` can merge the pull request. */
   mergeable: FakeMergeability
+  /** The reasons that `threads.hideComment()` gave, keyed by comment id. */
+  hidden: Map<string, HideCommentReason>
 }
 
 /** The in-memory state behind a fake forge. Mutate it to set up a test, read it to assert. */
@@ -320,6 +322,8 @@ export interface FakeStore {
   events: ForgeEvent[]
   /** Registered webhooks. Secrets are held separately and never readable. */
   webhooks: Webhook[]
+  /** The logins each organisation blocks, keyed by its login, and those each viewer blocks, keyed by theirs. */
+  blocks: Map<string, Set<string>>
 }
 
 /** Every normalised kind the fake forge records, so a test can subscribe to any of them. */
@@ -476,7 +480,7 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
   const instance = options.instance ?? 'fake.test'
   const origin = { forge, instance }
   const viewerLogin = options.viewer ?? 'fake-user'
-  const store: FakeStore = { repos: new Map(), notifications: [], events: [], webhooks: [] }
+  const store: FakeStore = { repos: new Map(), notifications: [], events: [], webhooks: [], blocks: new Map() }
   const secrets = new Map<string, string | undefined>()
   const listeners = new Set<(event: ForgeEvent) => void>()
   const now = () => new Date(options.now?.() ?? Date.now())
@@ -659,6 +663,21 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
     return hook
   }
 
+  /** A repeat rejects with status 422, as the forges that block accounts do. */
+  function setBlocked(blocker: string, login: string, blocked: boolean): void {
+    const logins = store.blocks.get(blocker) ?? new Set()
+    if (logins.has(login) === blocked) {
+      throw new ForgeApiError(`${login} is ${blocked ? 'already' : 'not'} blocked by ${blocker}`, 422, '', origin)
+    }
+    if (blocked) {
+      logins.add(login)
+    }
+    else {
+      logins.delete(login)
+    }
+    store.blocks.set(blocker, logins)
+  }
+
   function threadsOf(repo: RepoRef, kind: ThreadKind): Thread[] {
     return [...repoState(repo).threads.values()].map(state => state.thread).filter(thread => thread.kind === kind)
   }
@@ -723,7 +742,7 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
       deletions: file.deletions ?? 0,
       patch: file.patch,
     }))
-    const state: FakeThreadState = { thread, files, commits: seed.commits ?? [], comments, reactions: new Map(), checks, reviews: [], subscription: 'subscribed', mergeable: seed.mergeable ?? 'clean' }
+    const state: FakeThreadState = { thread, files, commits: seed.commits ?? [], comments, reactions: new Map(), checks, reviews: [], subscription: 'subscribed', mergeable: seed.mergeable ?? 'clean', hidden: new Map() }
     repo.threads.set(number, state)
     commentCounts.set(state, comments.length)
     return thread
@@ -1230,6 +1249,16 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
       users: {
         me: verb(support('users.me', true), async () => ({ ...actor(by), raw: undefined })),
         eventsPage: verb(support('users.events', true), async (login, listOptions = {}) => conditional(pageOf(feed(event => event.actor?.login === login), listOptions), listOptions)),
+        blocking: verb(support('users.block', true), {
+          block: async login => setBlocked(by, login, true),
+          unblock: async login => setBlocked(by, login, false),
+        }),
+      },
+      orgs: {
+        blocking: verb(support('orgs.block', true), {
+          block: async (org, login) => setBlocked(org.owner, login, true),
+          unblock: async (org, login) => setBlocked(org.owner, login, false),
+        }),
       },
       repos: {
         get: verb(support('repos.get', true), async repo => repoState(repo).repo),
@@ -1388,6 +1417,22 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
           record(by, ref.thread, 'comment', 'edited', 'edited a comment', { type: 'comment', comment: comment.ref, body })
           return comment
         }),
+        hiding: perKind(kinds('threads.hideComment', WRITABLE), {
+          hideComment: async (ref: CommentRef, reason: HideCommentReason) => {
+            const state = threadState(ref.thread)
+            if (!state.comments.some(item => item.ref.id === ref.id)) {
+              throw notFound(`No comment ${ref.id}`)
+            }
+            state.hidden.set(ref.id, reason)
+          },
+          unhideComment: async (ref: CommentRef) => {
+            const state = threadState(ref.thread)
+            if (!state.comments.some(item => item.ref.id === ref.id)) {
+              throw notFound(`No comment ${ref.id}`)
+            }
+            state.hidden.delete(ref.id)
+          },
+        }),
         deleteComment: perKind(kinds('threads.deleteComment', WRITABLE), async (ref: CommentRef) => {
           const state = threadState(ref.thread)
           const index = state.comments.findIndex(item => item.ref.id === ref.id)
@@ -1440,6 +1485,14 @@ export function fake(options: FakeOptions = {}): FakeForgeFactory {
         reopen: perKind(kinds('threads.reopen', WRITABLE), async (ref) => {
           setState(by, ref, 'open', 'reopened')
           return threadState(ref).thread
+        }),
+        locking: perKind(kinds('threads.lock', WRITABLE), {
+          lock: async (ref) => {
+            threadState(ref).thread.locked = true
+          },
+          unlock: async (ref) => {
+            threadState(ref).thread.locked = false
+          },
         }),
         addLabels: perKind(kinds('threads.addLabels', WRITABLE), async (ref, labels) => {
           const thread = threadState(ref).thread
