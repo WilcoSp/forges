@@ -634,6 +634,11 @@ export interface Reviewer {
   stateRaw?: string
   /** True when the reviewer is a team rather than an account. */
   isTeam?: boolean
+  /**
+   * When the pending review was last requested. Absent where the forge doesn't report it; on GitHub,
+   * `threads.getMany()` reports it.
+   */
+  requestedAt?: Date
 }
 
 /** The branches of a pull request. */
@@ -1459,6 +1464,11 @@ export interface Page<T> {
    * page has no items and a `feed_throttled` warning; read it again later, or pass `force: true`.
    */
   throttled?: boolean
+  /**
+   * The earliest time the forge allows the first page to be read again, as GitHub sets with `X-Poll-Interval`.
+   * Until then, a read of the first page returns a `throttled` page unless it passes `force: true`.
+   */
+  nextPollAt?: Date
   /** The non-fatal problems that came up while reading the page. */
   warnings?: ForgeWarning[]
 }
@@ -1486,6 +1496,12 @@ export interface NotificationListOptions extends ListOptions {
    * @default false
    */
   all?: boolean
+  /**
+   * Read the first page even when the forge asked to wait longer between reads, as GitHub does with
+   * `X-Poll-Interval`. Without it, such a read returns a `throttled` page.
+   * @default false
+   */
+  force?: boolean
 }
 
 /** Filters for `threads.list()`. */
@@ -1504,7 +1520,10 @@ export interface ThreadQuery extends PageOptions {
   author?: string
   /** Assignee login. */
   assignee?: string
-  /** Threads the login authored, is assigned, commented on or was mentioned in. */
+  /**
+   * Threads the login authored, is assigned, commented on or was mentioned in.
+   * A listing without this filter ignores it and warns with `filter_unsupported`, as for `mentions` and `milestone`.
+   */
   involves?: string
   /** Threads the login was mentioned in. */
   mentions?: string
@@ -2151,7 +2170,7 @@ export interface Installation extends ForgeOrigin {
 }
 
 /** Every `Date` field in the model, by name. */
-export const DATE_FIELDS: ReadonlySet<string> = new Set(['closedAt', 'completedAt', 'createdAt', 'date', 'deliveredAt', 'dismissedAt', 'dueOn', 'expiresAt', 'lastActivityAt', 'lastReadAt', 'mergedAt', 'occurredAt', 'publishedAt', 'pushedAt', 'resetAt', 'startedAt', 'submittedAt', 'updatedAt', 'week'])
+export const DATE_FIELDS: ReadonlySet<string> = new Set(['closedAt', 'completedAt', 'createdAt', 'date', 'deliveredAt', 'dismissedAt', 'dueOn', 'expiresAt', 'lastActivityAt', 'lastReadAt', 'mergedAt', 'nextPollAt', 'occurredAt', 'publishedAt', 'pushedAt', 'requestedAt', 'resetAt', 'startedAt', 'submittedAt', 'updatedAt', 'week'])
 
 const UNNORMALISED_FIELDS: ReadonlySet<string> = new Set(['payload', 'raw'])
 
