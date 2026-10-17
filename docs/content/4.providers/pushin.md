@@ -177,7 +177,7 @@ The API has no endpoints for hooks and no documented signature scheme. For this 
 | `releases.get` | experimental | experimental |
 | `releases.latest` | experimental | experimental |
 | `releases.getByTag` | experimental | experimental |
-| `releases.downloadAsset` | unverified | unverified |
+| `releases.downloadAsset` | experimental | experimental |
 | `releases.create` | unverified | ❌ |
 | `releases.update` | unverified | ❌ |
 | `webhooks.ingest` | ∅ | ∅ |
