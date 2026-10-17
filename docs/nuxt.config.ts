@@ -35,18 +35,19 @@ export default defineNuxtConfig({
     config: {
       // The color mode script adds `.dark` to `<html>` before first paint, so the dark theme stays inlined.
       allowRules: [/\.dark\b/],
+      inlineFonts: true,
     },
   },
   fonts: {
     families: [
       {
         name: 'Fraenkisch',
-        src: '/fonts/Fraenkisch-400.woff2',
-        weight: 400,
-        style: 'normal',
+        provider: 'local',
+        weights: [400],
+        styles: ['normal'],
         display: 'swap',
         global: true,
-        fallbacks: ['Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', 'P052', 'Georgia', 'serif'],
+        fallbacks: ['Georgia', 'Noto Serif', 'Times New Roman'],
       },
       {
         name: 'JetBrains Mono',
@@ -91,7 +92,6 @@ export default defineNuxtConfig({
     head: {
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
-        { rel: 'preload', href: '/fonts/Fraenkisch-400.woff2', as: 'font', type: 'font/woff2', crossorigin: 'anonymous' },
       ],
     },
   },

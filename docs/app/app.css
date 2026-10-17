@@ -1,5 +1,4 @@
 @theme {
-  --font-display: 'Fraenkisch', 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, Georgia, serif;
   --font-sans: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, Georgia, serif;
   --font-serif: 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, Georgia, serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -49,10 +48,11 @@ body {
   font-weight: var(--shiki-dark-font-weight, inherit);
 }
 
+/* Family names rather than a variable, so the critical CSS includes the `@font-face` rules. */
 h1,
 h2,
 .font-display {
-  font-family: var(--font-display);
+  font-family: 'Fraenkisch', 'Iowan Old Style', 'Palatino Linotype', 'URW Palladio L', P052, Georgia, serif;
   font-weight: 400;
   letter-spacing: -0.01em;
 }

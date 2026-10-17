@@ -8,6 +8,9 @@ const MAX_ATTEMPTS = 30
  * The sidebar may not be laid out yet (layout switch, page transition), so retry for a few frames.
  */
 function revealActiveLink(attempt = 0) {
+  if (!window.matchMedia('(min-width: 64rem)').matches)
+    return
+
   const link = document.querySelector<HTMLElement>(`aside a[href="${CSS.escape(route.path)}"]`)
   const container = link?.closest<HTMLElement>('aside')
   const linkRect = link?.getBoundingClientRect()
