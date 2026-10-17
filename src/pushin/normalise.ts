@@ -196,7 +196,7 @@ export function toRelease(repo: RepoRef, raw: PushinRelease): Release {
     assets: raw.assets?.map(asset => ({
       ref: { forge: FORGE, instance: repo.instance, repo, release: ref, id: String(asset.id) },
       name: asset.name,
-      url: asset.browser_download_url!,
+      url: asset.browser_download_url,
       contentType: asset.content_type,
       downloadCount: asset.download_count,
       size: asset.size,
