@@ -451,8 +451,9 @@ export interface GitHubCommit {
     author?: { name?: string, email?: string, date?: string } | null
     committer?: { name?: string, email?: string, date?: string } | null
   }
-  author?: GitHubUser | null
-  committer?: GitHubUser | null
+  /** An empty object when the commit has an empty git email; null when the email matches no account. */
+  author?: GitHubUser | Record<string, never> | null
+  committer?: GitHubUser | Record<string, never> | null
   parents?: Array<{ sha: string }>
   stats?: { additions?: number, deletions?: number, total?: number }
   files?: GitHubCommitFile[]
