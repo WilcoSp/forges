@@ -1,0 +1,10 @@
+{
+  "request": {
+    "method": "DELETE",
+    "url": "https://gitea.com/api/v1/orgs/forges-fixtures/blocks/trueberryless"
+  },
+  "response": {
+    "status": 204,
+    "headers": {}
+  }
+}

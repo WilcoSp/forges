@@ -12,10 +12,10 @@
         "name": "forges-fixtures"
       },
       "kind": "pull_request",
-      "number": "80",
-      "externalId": "3389005"
+      "number": "92",
+      "externalId": "3401287"
     },
-    "id": "2110690"
+    "id": "2115469"
   },
   "author": {
     "forge": "forgejo",
@@ -27,8 +27,8 @@
       "name": "forges-fixtures"
     },
     "kind": "pull_request",
-    "number": "80",
-    "externalId": "3389005",
+    "number": "92",
+    "externalId": "3401287",
     "login": "danielroe",
     "id": "86052",
     "name": "Daniel Roe",
@@ -40,5 +40,5 @@
   "stateRaw": "APPROVED",
   "submittedAt": "<now>",
   "comments": [],
-  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/pulls/80#issuecomment-25405969"
+  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/pulls/92#issuecomment-25515487"
 }

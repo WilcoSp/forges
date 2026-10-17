@@ -15,10 +15,10 @@
               "name": "forges-fixtures"
             },
             "kind": "pull_request",
-            "number": "93",
-            "externalId": "PR_kwDOVCTdtM8AAAABH9Hj-Q"
+            "number": "136",
+            "externalId": "PR_kwDOVCTdtM8AAAABJCMFHg"
           },
-          "id": "5490176614"
+          "id": "5558423517"
         },
         "author": {
           "forge": "github",
@@ -32,7 +32,7 @@
         },
         "state": "commented",
         "stateRaw": "COMMENTED",
-        "body": "A submitted review from run 20261012113502.",
+        "body": "A submitted review from run 20261017151345.",
         "submittedAt": "<now>",
         "comments": [
           {
@@ -49,12 +49,12 @@
                   "name": "forges-fixtures"
                 },
                 "kind": "pull_request",
-                "number": "93",
-                "externalId": "PR_kwDOVCTdtM8AAAABH9Hj-Q"
+                "number": "136",
+                "externalId": "PR_kwDOVCTdtM8AAAABJCMFHg"
               },
-              "id": "4247562567"
+              "id": "4303196077"
             },
-            "body": "A line comment from run 20261012113502.",
+            "body": "A line comment from run 20261017151345.",
             "author": {
               "forge": "github",
               "instance": "github.com",
@@ -65,25 +65,103 @@
               "typeRaw": "User",
               "isBotHint": false
             },
-            "path": "forges-fixtures/20261012113502-1.md",
+            "path": "forges-fixtures/20261017151345-1.md",
             "line": 1,
             "side": "right",
             "thread": {
-              "id": "PRRT_kwDOVCTdtM6rcK3H",
+              "id": "PRRT_kwDOVCTdtM6thYOE",
               "resolved": false
             },
             "createdAt": "<now>",
-            "url": "https://github.com/forges-fixtures/forges-fixtures/pull/93#discussion_r4247562567"
+            "url": "https://github.com/forges-fixtures/forges-fixtures/pull/136#discussion_r4303196077"
           }
         ],
-        "url": "https://github.com/forges-fixtures/forges-fixtures/pull/93#pullrequestreview-5490176614"
+        "url": "https://github.com/forges-fixtures/forges-fixtures/pull/136#pullrequestreview-5558423517"
+      },
+      {
+        "ref": {
+          "forge": "github",
+          "instance": "github.com",
+          "thread": {
+            "forge": "github",
+            "instance": "github.com",
+            "repo": {
+              "forge": "github",
+              "instance": "github.com",
+              "owner": "forges-fixtures",
+              "name": "forges-fixtures"
+            },
+            "kind": "pull_request",
+            "number": "136",
+            "externalId": "PR_kwDOVCTdtM8AAAABJCMFHg"
+          },
+          "id": "5558423881"
+        },
+        "author": {
+          "forge": "github",
+          "instance": "github.com",
+          "login": "danielroe-bot",
+          "id": "57801166",
+          "avatarUrl": "https://avatars.githubusercontent.com/u/57801166?v=4",
+          "url": "https://github.com/danielroe-bot",
+          "typeRaw": "User",
+          "isBotHint": false
+        },
+        "state": "commented",
+        "stateRaw": "COMMENTED",
+        "submittedAt": "<now>",
+        "comments": [
+          {
+            "ref": {
+              "forge": "github",
+              "instance": "github.com",
+              "thread": {
+                "forge": "github",
+                "instance": "github.com",
+                "repo": {
+                  "forge": "github",
+                  "instance": "github.com",
+                  "owner": "forges-fixtures",
+                  "name": "forges-fixtures"
+                },
+                "kind": "pull_request",
+                "number": "136",
+                "externalId": "PR_kwDOVCTdtM8AAAABJCMFHg"
+              },
+              "id": "4303196436"
+            },
+            "body": "A reply from run 20261017151345.",
+            "author": {
+              "forge": "github",
+              "instance": "github.com",
+              "login": "danielroe-bot",
+              "id": "57801166",
+              "avatarUrl": "https://avatars.githubusercontent.com/u/57801166?v=4",
+              "url": "https://github.com/danielroe-bot",
+              "typeRaw": "User",
+              "isBotHint": false
+            },
+            "path": "forges-fixtures/20261017151345-1.md",
+            "line": 1,
+            "side": "right",
+            "inReplyTo": "4303196077",
+            "thread": {
+              "id": "PRRT_kwDOVCTdtM6thYOE",
+              "resolved": false
+            },
+            "createdAt": "<now>",
+            "url": "https://github.com/forges-fixtures/forges-fixtures/pull/136#discussion_r4303196436"
+          }
+        ],
+        "url": "https://github.com/forges-fixtures/forges-fixtures/pull/136#pullrequestreview-5558423881"
       }
     ],
     "rateLimit": {
       "limit": 5000,
-      "remaining": 4991,
-      "resetAt": "<now>"
+      "remaining": 4744,
+      "resetAt": "<now>",
+      "resource": "core"
     }
   },
-  "id": "PRRT_kwDOVCTdtM6rcK3H"
+  "id": "PRRT_kwDOVCTdtM6thYOE"
 }

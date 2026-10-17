@@ -1,0 +1,7 @@
+{
+  "name": "pull lock",
+  "recordedAt": "2026-10-17T15:18:17.055Z",
+  "needs": [
+    "create pull"
+  ]
+}

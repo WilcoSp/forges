@@ -5,7 +5,7 @@
     "body": {
       "branch": "forges-fixtures/20261012113957-files",
       "commit_message": "test: recreate a branch from run 20261012113957",
-      "start_sha": "5cafa2fc236c691776306f6b4e62d5d2747154cb",
+      "start_sha": "a366006c9d4e7f7e6697d30cecf4c61391b22149",
       "actions": [
         {
           "action": "create",
@@ -19,8 +19,9 @@
     "status": 400,
     "headers": {
       "ratelimit-limit": "2000",
-      "ratelimit-remaining": "1965",
-      "ratelimit-reset": "1791921480"
+      "ratelimit-remaining": "1964",
+      "ratelimit-reset": "1792250280",
+      "ratelimit-name": "throttle_authenticated_api"
     },
     "body": {
       "message": "A branch called 'forges-fixtures/20261012113957-files' already exists. Switch to that branch in order to make changes"

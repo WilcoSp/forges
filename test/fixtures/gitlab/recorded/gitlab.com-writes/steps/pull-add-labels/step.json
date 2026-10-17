@@ -1,4 +1,7 @@
 {
   "name": "pull add labels",
-  "recordedAt": "2026-10-12T11:40:27.566Z"
+  "recordedAt": "2026-10-17T15:18:07.003Z",
+  "needs": [
+    "create pull"
+  ]
 }

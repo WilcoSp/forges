@@ -73,7 +73,8 @@
   "notModified": false,
   "rateLimit": {
     "limit": 2000,
-    "remaining": 1907,
-    "resetAt": "<now>"
+    "remaining": 1963,
+    "resetAt": "<now>",
+    "resource": "throttle_authenticated_api"
   }
 }

@@ -1,4 +1,7 @@
 {
   "name": "issue delete comment",
-  "recordedAt": "2026-10-12T11:35:15.017Z"
+  "recordedAt": "2026-10-17T15:14:18.688Z",
+  "needs": [
+    "issue comment"
+  ]
 }

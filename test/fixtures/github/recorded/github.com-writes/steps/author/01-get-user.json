@@ -6,10 +6,11 @@
   "response": {
     "status": 200,
     "headers": {
-      "etag": "W/\"194ba6de4b01b10f56adc0970753c63c8c6c395f147db352eeffb4a17cc280e9\"",
+      "etag": "W/\"79dcf6c2357ed498bf621a3e9d81d480c12ad649603792424dc6e0b507cf312d\"",
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4980",
-      "x-ratelimit-reset": "1791738363"
+      "x-ratelimit-remaining": "4957",
+      "x-ratelimit-reset": "1792253105",
+      "x-ratelimit-resource": "core"
     },
     "body": {
       "login": "danielroe-bot",
@@ -29,7 +30,7 @@
       "events_url": "https://api.github.com/users/danielroe-bot/events{/privacy}",
       "received_events_url": "https://api.github.com/users/danielroe-bot/received_events",
       "type": "User",
-      "user_view_type": "public",
+      "user_view_type": "private",
       "site_admin": false,
       "name": null,
       "company": "@parentscheme ",

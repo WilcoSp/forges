@@ -1,0 +1,204 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/issues/8622/closed_by?per_page=3"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "link": "<https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/issues/8622/closed_by?id=gitlab-org%2Fcli&issue_iid=8622&page=1&per_page=3>; rel=\"first\", <https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/issues/8622/closed_by?id=gitlab-org%2Fcli&issue_iid=8622&page=1&per_page=3>; rel=\"last\"",
+      "etag": "W/\"3fa75a057e9a66bac283d87765ff97a0\"",
+      "ratelimit-limit": "2000",
+      "ratelimit-remaining": "1951",
+      "ratelimit-reset": "1792247700",
+      "ratelimit-name": "throttle_authenticated_api",
+      "x-total": "1",
+      "x-total-pages": "1",
+      "x-next-page": "",
+      "x-page": "1",
+      "x-per-page": "3"
+    },
+    "body": [
+      {
+        "id": 549234440,
+        "iid": 4122,
+        "project_id": 34675721,
+        "title": "feat: support setting work item iteration id",
+        "description": "## Description\n\nAdd an `--iteration <id>` flag to `glab work-items create` and `glab work-items update`, so you can schedule a work item in an iteration without using the UI or GraphQL.\n\n- The flag takes the numeric iteration ID, which `glab iteration list -F json` shows. It doesn't look up iterations by title, because iterations from automatic cadences have no title.\n- The value goes to `IterationID` on `gitlab.CreateWorkItemOptions` and `gitlab.UpdateWorkItemOptions`. Both already exist in the pinned `client-go` v3.23.0, so no dependency bump is needed.\n- Both commands use `Flags().Changed(\"iteration\")` to tell whether the flag was set, so leaving it out never sends an iteration.\n- `docs/source/work-items/` is regenerated with `make gen-docs`.\n\nRemoving an iteration is out of scope. `client-go` omits a nil `IterationID`, so it can't send the `null` that GraphQL needs to clear the field.\n\n## Related Issues\n\nResolves #8622\n\n## How has this been tested?\n\n- New unit tests in `create_test.go` and `update_test.go`, using the `client-go` mocks through `cmdtest.SetupCmdForTest`:\n  - `TestWorkItems{Create,Update}_Iteration`: `--iteration 123` sends `IterationID` `123`, and leaving the flag out sends no `IterationID`.\n  - `TestWorkItems{Create,Update}_FlagValidation`: a non-numeric `--iteration` value is rejected.\n- `go test ./internal/commands/workitems/...` passes.\n- `golangci-lint run --new-from-rev=origin/main ./internal/commands/workitems/...` (2.14.0, Go 1.27.2) reports 0 issues.\n- `make check-args check-embed` passes.\n\n## Screenshots (if appropriate):",
+        "state": "merged",
+        "created_at": "2026-10-15T10:26:34.396Z",
+        "updated_at": "2026-10-15T17:51:08.825Z",
+        "merged_by": {
+          "id": 2935693,
+          "username": "phikai",
+          "public_email": "redacted@example.invalid",
+          "name": "Kai Armstrong",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/2935693/avatar.png?v=1792239409",
+          "web_url": "https://gitlab.com/phikai"
+        },
+        "merge_user": {
+          "id": 2935693,
+          "username": "phikai",
+          "public_email": "redacted@example.invalid",
+          "name": "Kai Armstrong",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/2935693/avatar.png?v=1792239409",
+          "web_url": "https://gitlab.com/phikai"
+        },
+        "merged_at": "2026-10-15T17:51:09.079Z",
+        "closed_by": null,
+        "closed_at": null,
+        "target_branch": "main",
+        "source_branch": "feat/8622-work-items-iteration",
+        "user_notes_count": 10,
+        "upvotes": 0,
+        "downvotes": 0,
+        "author": {
+          "id": 25983954,
+          "username": "BoxBoxJason",
+          "public_email": "",
+          "name": "BoxBoxJason",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/25983954/avatar.png?v=1792060003",
+          "web_url": "https://gitlab.com/BoxBoxJason",
+          "bot": false
+        },
+        "assignees": [
+          {
+            "id": 25983954,
+            "username": "BoxBoxJason",
+            "public_email": "",
+            "name": "BoxBoxJason",
+            "state": "active",
+            "locked": false,
+            "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/25983954/avatar.png?v=1792060003",
+            "web_url": "https://gitlab.com/BoxBoxJason"
+          }
+        ],
+        "assignee": {
+          "id": 25983954,
+          "username": "BoxBoxJason",
+          "public_email": "",
+          "name": "BoxBoxJason",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/25983954/avatar.png?v=1792060003",
+          "web_url": "https://gitlab.com/BoxBoxJason"
+        },
+        "reviewers": [
+          {
+            "id": 2935693,
+            "username": "phikai",
+            "public_email": "redacted@example.invalid",
+            "name": "Kai Armstrong",
+            "state": "active",
+            "locked": false,
+            "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/2935693/avatar.png?v=1792239409",
+            "web_url": "https://gitlab.com/phikai"
+          },
+          {
+            "id": 3714742,
+            "username": "ck3g",
+            "public_email": "",
+            "name": "Vitali Tatarintev",
+            "state": "active",
+            "locked": false,
+            "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/3714742/avatar.png?v=1792246311",
+            "web_url": "https://gitlab.com/ck3g"
+          },
+          {
+            "id": 4303289,
+            "username": "gweaver",
+            "public_email": "redacted@example.invalid",
+            "name": "Gabe Weaver",
+            "state": "active",
+            "locked": false,
+            "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/4303289/avatar.png?v=1792247430",
+            "web_url": "https://gitlab.com/gweaver"
+          },
+          {
+            "id": 11809982,
+            "username": "jay_mccure",
+            "public_email": "",
+            "name": "Jay McCure",
+            "state": "active",
+            "locked": false,
+            "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/11809982/avatar.png?v=1792199637",
+            "web_url": "https://gitlab.com/jay_mccure"
+          },
+          {
+            "id": 21826781,
+            "username": "GitLabDuo",
+            "public_email": null,
+            "name": "GitLab Duo",
+            "state": "active",
+            "locked": false,
+            "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/21826781/duo-bot.png?v=1781708173",
+            "web_url": "https://gitlab.com/GitLabDuo"
+          }
+        ],
+        "source_project_id": 45049979,
+        "target_project_id": 34675721,
+        "labels": [
+          "1st contribution",
+          "Category:Team Planning",
+          "Community contribution",
+          "backend",
+          "devops::plan",
+          "documentation",
+          "feature::addition",
+          "group::work items",
+          "linked-issue",
+          "section::dev",
+          "tw::triaged",
+          "type::feature",
+          "workflow::ready for review"
+        ],
+        "draft": false,
+        "imported": false,
+        "imported_from": "none",
+        "work_in_progress": false,
+        "milestone": null,
+        "merge_when_pipeline_succeeds": true,
+        "merge_status": "can_be_merged",
+        "detailed_merge_status": "not_open",
+        "merge_after": null,
+        "sha": "2a8d16ecab5a5103a6c4a9dd82a1115aff549cd9",
+        "merge_commit_sha": "5243baadb17712a1de86a408cf773d4e4ae6383b",
+        "squash_commit_sha": "2f19867b6a72cde27c7a03da23c5374e746ad3b1",
+        "discussion_locked": null,
+        "should_remove_source_branch": null,
+        "force_remove_source_branch": true,
+        "prepared_at": "2026-10-15T10:26:38.008Z",
+        "allow_collaboration": true,
+        "allow_maintainer_to_push": true,
+        "reference": "!4122",
+        "references": {
+          "short": "!4122",
+          "relative": "!4122",
+          "full": "gitlab-org/cli!4122"
+        },
+        "web_url": "https://gitlab.com/gitlab-org/cli/-/merge_requests/4122",
+        "time_stats": {
+          "time_estimate": 0,
+          "total_time_spent": 0,
+          "human_time_estimate": null,
+          "human_total_time_spent": null
+        },
+        "squash": true,
+        "squash_on_merge": true,
+        "task_completion_status": {
+          "count": 0,
+          "completed_count": 0
+        },
+        "has_conflicts": false,
+        "blocking_discussions_resolved": true,
+        "approvals_before_merge": null
+      }
+    ]
+  }
+}

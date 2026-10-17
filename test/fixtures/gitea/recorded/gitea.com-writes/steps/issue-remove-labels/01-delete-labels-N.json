@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "DELETE",
-    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/issues/43/labels/62720"
+    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/issues/73/labels/62720"
   },
   "response": {
     "status": 204,

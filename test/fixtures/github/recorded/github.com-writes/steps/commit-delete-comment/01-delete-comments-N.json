@@ -1,14 +1,15 @@
 {
   "request": {
     "method": "DELETE",
-    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/comments/204555973"
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/comments/205428249"
   },
   "response": {
     "status": 204,
     "headers": {
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4944",
-      "x-ratelimit-reset": "1791808503"
+      "x-ratelimit-remaining": "4749",
+      "x-ratelimit-reset": "1792251335",
+      "x-ratelimit-resource": "core"
     }
   }
 }

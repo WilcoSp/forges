@@ -1,20 +1,21 @@
 {
   "request": {
     "method": "GET",
-    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/commits/16be8af10261689c1c7b28fac571d93a83cd900d/status?per_page=100"
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/commits/6c1cfa7b4e7847ef986e2d1c4038ff2679440f58/status?per_page=100"
   },
   "response": {
     "status": 200,
     "headers": {
-      "etag": "W/\"c58c3fcd03475d64cff3eb49953875dc2a1ff1cdcc8a74801f433e56aaa45483\"",
+      "etag": "W/\"8e6f36e66448a4a1132831138500cf52d6c28d0cec557bd5186b99bc72097a13\"",
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4800",
-      "x-ratelimit-reset": "1791807905"
+      "x-ratelimit-remaining": "4852",
+      "x-ratelimit-reset": "1792251088",
+      "x-ratelimit-resource": "core"
     },
     "body": {
       "state": "pending",
       "statuses": [],
-      "sha": "16be8af10261689c1c7b28fac571d93a83cd900d",
+      "sha": "6c1cfa7b4e7847ef986e2d1c4038ff2679440f58",
       "total_count": 0,
       "repository": {
         "id": 1411702196,
@@ -84,8 +85,8 @@
         "releases_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases{/id}",
         "deployments_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/deployments"
       },
-      "commit_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/commits/16be8af10261689c1c7b28fac571d93a83cd900d",
-      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/commits/16be8af10261689c1c7b28fac571d93a83cd900d/status"
+      "commit_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/commits/6c1cfa7b4e7847ef986e2d1c4038ff2679440f58",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/commits/6c1cfa7b4e7847ef986e2d1c4038ff2679440f58/status"
     }
   }
 }

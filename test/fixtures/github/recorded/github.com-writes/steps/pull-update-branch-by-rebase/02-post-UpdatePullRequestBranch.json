@@ -1,0 +1,39 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://api.github.com/graphql",
+    "operationName": "UpdatePullRequestBranch",
+    "variables": {
+      "id": "PR_kwDOVCTdtM8AAAABJCMGrw",
+      "sha": "809f8687ada40b3be92de95e736c0ae524024055",
+      "method": "REBASE"
+    },
+    "body": {
+      "query": "mutation UpdatePullRequestBranch($id: ID!, $sha: GitObjectID, $method: PullRequestBranchUpdateMethod) {\n  updatePullRequestBranch(input: { pullRequestId: $id, expectedHeadOid: $sha, updateMethod: $method }) { pullRequest { headRefOid } }\n}",
+      "variables": {
+        "id": "PR_kwDOVCTdtM8AAAABJCMGrw",
+        "sha": "809f8687ada40b3be92de95e736c0ae524024055",
+        "method": "REBASE"
+      },
+      "operationName": "UpdatePullRequestBranch"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "x-ratelimit-limit": "5000",
+      "x-ratelimit-remaining": "4868",
+      "x-ratelimit-reset": "1792251345",
+      "x-ratelimit-resource": "graphql"
+    },
+    "body": {
+      "data": {
+        "updatePullRequestBranch": {
+          "pullRequest": {
+            "headRefOid": "809f8687ada40b3be92de95e736c0ae524024055"
+          }
+        }
+      }
+    }
+  }
+}

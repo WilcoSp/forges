@@ -1,14 +1,15 @@
 {
   "request": {
     "method": "DELETE",
-    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/hooks/696161298"
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/hooks/699550500"
   },
   "response": {
     "status": 204,
     "headers": {
       "x-ratelimit-limit": "500",
       "x-ratelimit-remaining": "493",
-      "x-ratelimit-reset": "1791805050"
+      "x-ratelimit-reset": "1792250247",
+      "x-ratelimit-resource": "webhook_deliveries"
     }
   }
 }

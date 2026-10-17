@@ -4,12 +4,12 @@
     "url": "https://api.github.com/graphql",
     "operationName": "DeleteDiscussionComment",
     "variables": {
-      "id": "DC_kwDOVCTdtM4BIBTS"
+      "id": "DC_kwDOVCTdtM4BIewL"
     },
     "body": {
       "query": "mutation DeleteDiscussionComment($id: ID!) {\n  deleteDiscussionComment(input: { id: $id }) { comment { id } }\n}",
       "variables": {
-        "id": "DC_kwDOVCTdtM4BIBTS"
+        "id": "DC_kwDOVCTdtM4BIewL"
       },
       "operationName": "DeleteDiscussionComment"
     }
@@ -18,14 +18,15 @@
     "status": 200,
     "headers": {
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4982",
-      "x-ratelimit-reset": "1791808523"
+      "x-ratelimit-remaining": "4886",
+      "x-ratelimit-reset": "1792251345",
+      "x-ratelimit-resource": "graphql"
     },
     "body": {
       "data": {
         "deleteDiscussionComment": {
           "comment": {
-            "id": "DC_kwDOVCTdtM4BIBTS"
+            "id": "DC_kwDOVCTdtM4BIewL"
           }
         }
       }

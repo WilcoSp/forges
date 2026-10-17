@@ -1,0 +1,20 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/actions/jobs/117428885020/rerun"
+  },
+  "response": {
+    "status": 403,
+    "headers": {
+      "x-ratelimit-limit": "5000",
+      "x-ratelimit-remaining": "4958",
+      "x-ratelimit-reset": "1792251190",
+      "x-ratelimit-resource": "core"
+    },
+    "body": {
+      "message": "Jobs in this workflow run cannot be re-run",
+      "documentation_url": "https://docs.github.com/rest/actions/workflow-runs#re-run-a-job-from-a-workflow-run",
+      "status": "403"
+    }
+  }
+}

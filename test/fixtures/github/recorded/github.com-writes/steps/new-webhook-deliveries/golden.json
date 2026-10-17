@@ -13,10 +13,10 @@
             "owner": "forges-fixtures",
             "name": "forges-fixtures"
           },
-          "id": "696161298"
+          "id": "699550500"
         },
-        "id": "3847871919097380864",
-        "guid": "2b3a5fe6-c631-11f1-9980-843da93df583"
+        "id": "3848827973325029376",
+        "guid": "b98bbd70-ca3d-11f1-9be5-851cc0aaa065"
       },
       "event": "ping",
       "status": 502,
@@ -25,10 +25,11 @@
       "duration": 0
     }
   ],
-  "etag": "W/\"602b6574295a66f57a72e44f8ec2e65a021058600527ab9ac579e43815762af5\"",
+  "etag": "W/\"5230b4f01896aeb12b49e9e6ac4abd45423f0b740221a891edc67218113013c7\"",
   "rateLimit": {
     "limit": 500,
     "remaining": 495,
-    "resetAt": "<now>"
+    "resetAt": "<now>",
+    "resource": "webhook_deliveries"
   }
 }

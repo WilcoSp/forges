@@ -1,0 +1,41 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "repo": {
+          "forge": "github",
+          "instance": "github.com",
+          "owner": "forges-fixtures",
+          "name": "forges-fixtures"
+        },
+        "id": "GHSA-7f2h-3vx6-j5pg",
+        "kind": "advisory",
+        "severityRaw": "low"
+      },
+      "kind": "advisory",
+      "kindRaw": "repository_advisory",
+      "severity": "low",
+      "severityRaw": "low",
+      "state": "open",
+      "stateRaw": "draft",
+      "title": "Fixture advisory for forges recordings",
+      "package": {
+        "ecosystem": "npm",
+        "name": "forges-fixtures",
+        "vulnerableRange": "< 0.0.1"
+      },
+      "url": "https://github.com/forges-fixtures/forges-fixtures/security/advisories/GHSA-7f2h-3vx6-j5pg",
+      "createdAt": "<now>",
+      "updatedAt": "<now>"
+    }
+  ],
+  "rateLimit": {
+    "limit": 5000,
+    "remaining": 4905,
+    "resetAt": "<now>",
+    "resource": "core"
+  },
+  "etag": "W/\"e3a584c657c294e012c757ec0b1c839f258d71ff565968987da48cb0ab2fbe78\""
+}

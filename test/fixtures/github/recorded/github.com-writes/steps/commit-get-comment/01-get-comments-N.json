@@ -1,21 +1,22 @@
 {
   "request": {
     "method": "GET",
-    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/comments/204555973"
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/comments/205428249"
   },
   "response": {
     "status": 200,
     "headers": {
-      "etag": "W/\"8f75c029c65e9335b107b648d5c8f00beb95bea3482ebf670ce897d3d18a6cd6\"",
+      "etag": "W/\"ad18e90760e7900e973072c3525a3f42d0a18fd1cf93b14ad4bc49f3508725d3\"",
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4947",
-      "x-ratelimit-reset": "1791808503"
+      "x-ratelimit-remaining": "4752",
+      "x-ratelimit-reset": "1792251335",
+      "x-ratelimit-resource": "core"
     },
     "body": {
-      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/comments/204555973",
-      "html_url": "https://github.com/forges-fixtures/forges-fixtures/commit/67bb144479c23e0c1acec7312a82075aaa53eaf3#commitcomment-204555973",
-      "id": 204555973,
-      "node_id": "CC_kwDOVCTdtM4MMUbF",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/comments/205428249",
+      "html_url": "https://github.com/forges-fixtures/forges-fixtures/commit/7e423f725601d2184b772243d32c0b65c4f5e322#commitcomment-205428249",
+      "id": 205428249,
+      "node_id": "CC_kwDOVCTdtM4MPpYZ",
       "user": {
         "login": "danielroe-bot",
         "id": 57801166,
@@ -40,13 +41,13 @@
       "position": null,
       "line": null,
       "path": null,
-      "commit_id": "67bb144479c23e0c1acec7312a82075aaa53eaf3",
-      "created_at": "2026-10-12T11:36:01Z",
-      "updated_at": "2026-10-12T11:36:01Z",
-      "body": "An edited commit comment from run 20261012113502.",
+      "commit_id": "7e423f725601d2184b772243d32c0b65c4f5e322",
+      "created_at": "2026-10-17T15:15:37Z",
+      "updated_at": "2026-10-17T15:15:40Z",
+      "body": "An edited commit comment from run 20261017151345.",
       "author_association": "MEMBER",
       "reactions": {
-        "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/comments/204555973/reactions",
+        "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/comments/205428249/reactions",
         "total_count": 0,
         "+1": 0,
         "-1": 0,

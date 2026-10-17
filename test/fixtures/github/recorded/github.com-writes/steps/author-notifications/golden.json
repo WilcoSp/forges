@@ -4,6 +4,333 @@
       "ref": {
         "forge": "github",
         "instance": "github.com",
+        "id": "26422995649"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures",
+            "externalId": "1411702196"
+          },
+          "kind": "pull_request",
+          "typeRaw": "PullRequest",
+          "number": "137"
+        }
+      },
+      "subjectTypeRaw": "PullRequest",
+      "reason": "author",
+      "reasonRaw": "author",
+      "unread": true,
+      "title": "forges fixture 20261017151345: pull 2",
+      "subjectState": "unknown",
+      "updatedAt": "<now>",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/137"
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "id": "26422995547"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures",
+            "externalId": "1411702196"
+          },
+          "kind": "pull_request",
+          "typeRaw": "PullRequest",
+          "number": "136"
+        }
+      },
+      "subjectTypeRaw": "PullRequest",
+      "reason": "state_change",
+      "reasonRaw": "state_change",
+      "unread": true,
+      "title": "forges fixture 20261017151345: pull, edited",
+      "subjectState": "unknown",
+      "updatedAt": "<now>",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/136"
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "id": "26422917367"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures",
+            "externalId": "1411702196"
+          },
+          "kind": "issue",
+          "typeRaw": "Issue",
+          "number": "127"
+        }
+      },
+      "subjectTypeRaw": "Issue",
+      "reason": "state_change",
+      "reasonRaw": "state_change",
+      "unread": true,
+      "title": "forges fixture 20261017150903: issue, edited",
+      "subjectState": "unknown",
+      "updatedAt": "<now>",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/127"
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "id": "26422926208"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures",
+            "externalId": "1411702196"
+          },
+          "kind": "pull_request",
+          "typeRaw": "PullRequest",
+          "number": "131"
+        }
+      },
+      "subjectTypeRaw": "PullRequest",
+      "reason": "author",
+      "reasonRaw": "author",
+      "unread": false,
+      "title": "forges fixture 20261017150903: pull 2",
+      "subjectState": "unknown",
+      "updatedAt": "<now>",
+      "lastReadAt": "<now>",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/131"
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "id": "26422925666"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures",
+            "externalId": "1411702196"
+          },
+          "kind": "pull_request",
+          "typeRaw": "PullRequest",
+          "number": "130"
+        }
+      },
+      "subjectTypeRaw": "PullRequest",
+      "reason": "state_change",
+      "reasonRaw": "state_change",
+      "unread": false,
+      "title": "forges fixture 20261017150903: pull, edited",
+      "subjectState": "unknown",
+      "updatedAt": "<now>",
+      "lastReadAt": "<now>",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/130"
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "id": "26291482316"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures",
+            "externalId": "1411702196"
+          },
+          "kind": "issue",
+          "typeRaw": "Issue",
+          "number": "96"
+        }
+      },
+      "subjectTypeRaw": "Issue",
+      "reason": "state_change",
+      "reasonRaw": "state_change",
+      "unread": false,
+      "title": "forges fixture 20261012213131: issue, edited",
+      "subjectState": "unknown",
+      "updatedAt": "2026-10-12T21:33:32.000Z",
+      "lastReadAt": "2026-10-12T22:02:32.000Z",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/96"
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "id": "26291488750"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures",
+            "externalId": "1411702196"
+          },
+          "kind": "pull_request",
+          "typeRaw": "PullRequest",
+          "number": "100"
+        }
+      },
+      "subjectTypeRaw": "PullRequest",
+      "reason": "author",
+      "reasonRaw": "author",
+      "unread": false,
+      "title": "forges fixture 20261012213131: pull 2",
+      "subjectState": "unknown",
+      "updatedAt": "2026-10-12T21:33:17.000Z",
+      "lastReadAt": "2026-10-12T22:02:33.000Z",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/100"
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "id": "26291488546"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures",
+            "externalId": "1411702196"
+          },
+          "kind": "pull_request",
+          "typeRaw": "PullRequest",
+          "number": "99"
+        }
+      },
+      "subjectTypeRaw": "PullRequest",
+      "reason": "state_change",
+      "reasonRaw": "state_change",
+      "unread": false,
+      "title": "forges fixture 20261012213131: pull, edited",
+      "subjectState": "unknown",
+      "updatedAt": "2026-10-12T21:33:08.000Z",
+      "lastReadAt": "2026-10-12T21:33:05.000Z",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/99"
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "id": "26278998196"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures",
+            "externalId": "1411702196"
+          },
+          "kind": "issue",
+          "typeRaw": "Issue",
+          "number": "90"
+        }
+      },
+      "subjectTypeRaw": "Issue",
+      "reason": "state_change",
+      "reasonRaw": "state_change",
+      "unread": false,
+      "title": "forges fixture 20261012113502: issue, edited",
+      "subjectState": "unknown",
+      "updatedAt": "2026-10-12T11:37:00.000Z",
+      "lastReadAt": "2026-10-12T21:33:06.000Z",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/90"
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
+        "id": "26279006428"
+      },
+      "subject": {
+        "type": "thread",
+        "thread": {
+          "forge": "github",
+          "instance": "github.com",
+          "repo": {
+            "forge": "github",
+            "instance": "github.com",
+            "owner": "forges-fixtures",
+            "name": "forges-fixtures",
+            "externalId": "1411702196"
+          },
+          "kind": "pull_request",
+          "typeRaw": "PullRequest",
+          "number": "94"
+        }
+      },
+      "subjectTypeRaw": "PullRequest",
+      "reason": "author",
+      "reasonRaw": "author",
+      "unread": false,
+      "title": "forges fixture 20261012113502: pull 2",
+      "subjectState": "unknown",
+      "updatedAt": "2026-10-12T11:36:45.000Z",
+      "lastReadAt": "2026-10-12T21:33:06.000Z",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/94"
+    },
+    {
+      "ref": {
+        "forge": "github",
+        "instance": "github.com",
         "id": "26279005954"
       },
       "subject": {
@@ -26,10 +353,11 @@
       "subjectTypeRaw": "PullRequest",
       "reason": "state_change",
       "reasonRaw": "state_change",
-      "unread": true,
+      "unread": false,
       "title": "forges fixture 20261012113502: pull, edited",
       "subjectState": "unknown",
-      "updatedAt": "<now>",
+      "updatedAt": "2026-10-12T11:36:36.000Z",
+      "lastReadAt": "2026-10-12T11:36:34.000Z",
       "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/93"
     },
     {
@@ -58,10 +386,11 @@
       "subjectTypeRaw": "Issue",
       "reason": "state_change",
       "reasonRaw": "state_change",
-      "unread": true,
+      "unread": false,
       "title": "forges fixture 20261011164520: issue, edited",
       "subjectState": "unknown",
       "updatedAt": "2026-10-11T16:47:20.000Z",
+      "lastReadAt": "2026-10-12T11:36:35.000Z",
       "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/85"
     },
     {
@@ -90,10 +419,11 @@
       "subjectTypeRaw": "PullRequest",
       "reason": "author",
       "reasonRaw": "author",
-      "unread": true,
+      "unread": false,
       "title": "forges fixture 20261011164520: pull 2",
       "subjectState": "unknown",
       "updatedAt": "2026-10-11T16:47:09.000Z",
+      "lastReadAt": "2026-10-12T11:36:35.000Z",
       "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/88"
     },
     {
@@ -1085,46 +1415,15 @@
       "updatedAt": "2026-10-09T14:22:46.000Z",
       "lastReadAt": "2026-10-09T21:08:07.000Z",
       "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/37"
-    },
-    {
-      "ref": {
-        "forge": "github",
-        "instance": "github.com",
-        "id": "26220717009"
-      },
-      "subject": {
-        "type": "thread",
-        "thread": {
-          "forge": "github",
-          "instance": "github.com",
-          "repo": {
-            "forge": "github",
-            "instance": "github.com",
-            "owner": "forges-fixtures",
-            "name": "forges-fixtures",
-            "externalId": "1411702196"
-          },
-          "kind": "pull_request",
-          "typeRaw": "PullRequest",
-          "number": "36"
-        }
-      },
-      "subjectTypeRaw": "PullRequest",
-      "reason": "state_change",
-      "reasonRaw": "state_change",
-      "unread": false,
-      "title": "forges fixture 20261009142055: pull, edited",
-      "subjectState": "unknown",
-      "updatedAt": "2026-10-09T14:22:37.000Z",
-      "lastReadAt": "2026-10-09T14:22:30.000Z",
-      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/36"
     }
   ],
-  "etag": "W/\"cb50f032c9b5db7d9f14e5636664652afd6ce673b600604af10db7b36862fd91\"",
+  "etag": "W/\"5c3660aeeeebfb35c6fd23a28eaa4aa52a487ed63ac554f6338f6b0103f38468\"",
   "notModified": false,
+  "nextPollAt": "<now>",
   "rateLimit": {
     "limit": 5000,
-    "remaining": 4928,
-    "resetAt": "<now>"
+    "remaining": 4725,
+    "resetAt": "<now>",
+    "resource": "core"
   }
 }

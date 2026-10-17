@@ -1,10 +1,10 @@
 {
   "request": {
     "method": "POST",
-    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/77/labels",
+    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/89/labels",
     "body": {
       "labels": [
-        2254615
+        2258428
       ]
     }
   },
@@ -16,13 +16,13 @@
     },
     "body": [
       {
-        "id": 2254615,
-        "name": "forges-fixture-20261016024347",
+        "id": 2258428,
+        "name": "forges-fixture-20261017151708",
         "exclusive": false,
         "is_archived": false,
         "color": "0e8a16",
-        "description": "Created by run 20261016024347",
-        "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/labels/2254615"
+        "description": "Created by run 20261017151708",
+        "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/labels/2258428"
       }
     ]
   }

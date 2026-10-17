@@ -18,8 +18,8 @@
     "status": 200,
     "headers": {
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4965",
-      "x-ratelimit-reset": "1792184408",
+      "x-ratelimit-remaining": "4876",
+      "x-ratelimit-reset": "1792251345",
       "x-ratelimit-resource": "graphql"
     },
     "body": {
@@ -28,13 +28,13 @@
           "discussion": {
             "id": "D_kwDOVCTdtM4Ap5qt",
             "number": 33,
-            "title": "forges fixture 20261012113502: discussion, edited",
-            "body": "Edited by run 20261012113502.",
+            "title": "forges fixture 20261017151345: discussion, edited",
+            "body": "Edited by run 20261017151345.",
             "closed": false,
             "stateReason": "REOPENED",
             "url": "https://github.com/forges-fixtures/forges-fixtures/discussions/33",
             "createdAt": "2026-10-09T14:18:08Z",
-            "updatedAt": "2026-10-16T20:01:35Z",
+            "updatedAt": "2026-10-17T15:15:36Z",
             "closedAt": null,
             "locked": false,
             "author": {

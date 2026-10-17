@@ -8,12 +8,12 @@
       "owner": "forges-fixtures",
       "name": "forges-fixtures"
     },
-    "id": "410537975",
-    "tag": "forges-fixture-20261012113502"
+    "id": "415874574",
+    "tag": "forges-fixture-20261017151345"
   },
-  "name": "forges fixture 20261012113502: release, edited",
-  "tag": "forges-fixture-20261012113502",
-  "body": "Edited by run 20261012113502.",
+  "name": "forges fixture 20261017151345: release, edited",
+  "tag": "forges-fixture-20261017151345",
+  "body": "Edited by run 20261017151345.",
   "isDraft": false,
   "isPrerelease": false,
   "immutable": true,
@@ -29,6 +29,6 @@
   },
   "publishedAt": "<now>",
   "createdAt": "<now>",
-  "url": "https://github.com/forges-fixtures/forges-fixtures/releases/tag/forges-fixture-20261012113502",
+  "url": "https://github.com/forges-fixtures/forges-fixtures/releases/tag/forges-fixture-20261017151345",
   "assets": []
 }

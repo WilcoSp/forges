@@ -1,13 +1,13 @@
 {
   "request": {
     "method": "POST",
-    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/pulls/80/reviews",
+    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/pulls/92/reviews",
     "body": {
-      "body": "A review from run 20261016024347.",
+      "body": "A review from run 20261017151708.",
       "comments": [
         {
-          "path": "forges-fixtures/20261016024347-1.md",
-          "body": "A line comment from run 20261016024347.",
+          "path": "forges-fixtures/20261017151708-1.md",
+          "body": "A line comment from run 20261017151708.",
           "new_position": 1
         }
       ]
@@ -16,11 +16,11 @@
   "response": {
     "status": 200,
     "headers": {
-      "ratelimit": "\"git_op\";r=245;t=600, \"baseline\";r=1920;t=600",
+      "ratelimit": "\"git_op\";r=245;t=600, \"baseline\";r=1977;t=600",
       "ratelimit-policy": "\"git_op\";q=250;w=600, \"baseline\";q=2000;w=600"
     },
     "body": {
-      "id": 2110687,
+      "id": 2115466,
       "user": {
         "id": 86052,
         "login": "danielroe",
@@ -41,16 +41,16 @@
       },
       "team": null,
       "state": "PENDING",
-      "body": "A review from run 20261016024347.",
-      "commit_id": "33bd0250ecbd43030be5476938be00e43f5917ef",
+      "body": "A review from run 20261017151708.",
+      "commit_id": "6c3e336b464c3a1756ed1a32af424c4ea3b6ea6a",
       "stale": false,
       "official": false,
       "dismissed": false,
       "comments_count": 1,
-      "submitted_at": "2026-10-16T04:49:49+02:00",
-      "updated_at": "2026-10-16T04:49:49+02:00",
-      "html_url": "https://codeberg.org/forges-fixtures/forges-fixtures/pulls/80#issuecomment-25405963",
-      "pull_request_url": "https://codeberg.org/forges-fixtures/forges-fixtures/pulls/80"
+      "submitted_at": "2026-10-17T17:23:23+02:00",
+      "updated_at": "2026-10-17T17:23:23+02:00",
+      "html_url": "https://codeberg.org/forges-fixtures/forges-fixtures/pulls/92#issuecomment-25515481",
+      "pull_request_url": "https://codeberg.org/forges-fixtures/forges-fixtures/pulls/92"
     }
   }
 }

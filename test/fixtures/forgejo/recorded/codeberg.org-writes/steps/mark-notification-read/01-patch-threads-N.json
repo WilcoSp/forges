@@ -1,12 +1,12 @@
 {
   "request": {
     "method": "PATCH",
-    "url": "https://codeberg.org/api/v1/notifications/threads/19864519?to-status=read"
+    "url": "https://codeberg.org/api/v1/notifications/threads/19950781?to-status=read"
   },
   "response": {
     "status": 205,
     "headers": {
-      "ratelimit": "\"baseline\";r=1897;t=600",
+      "ratelimit": "\"baseline\";r=1947;t=600",
       "ratelimit-policy": "\"baseline\";q=2000;w=600"
     }
   }

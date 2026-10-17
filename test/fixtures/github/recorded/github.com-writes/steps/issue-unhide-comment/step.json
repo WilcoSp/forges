@@ -1,0 +1,7 @@
+{
+  "name": "issue unhide comment",
+  "recordedAt": "2026-10-17T15:14:15.767Z",
+  "needs": [
+    "issue comment"
+  ]
+}

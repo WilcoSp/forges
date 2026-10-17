@@ -7,17 +7,17 @@
       "input": {
         "branch": {
           "repositoryNameWithOwner": "forges-fixtures/forges-fixtures",
-          "branchName": "forges-fixtures/20261012113502-files"
+          "branchName": "forges-fixtures/20261017151345-files"
         },
-        "expectedHeadOid": "813bcf7bff4533d9a39305032f80fe80dd398d00",
+        "expectedHeadOid": "a27a172b5a5e5339dd74cc3c191ab0f60215a976",
         "message": {
-          "headline": "test: delete a missing file from run 20261012113502"
+          "headline": "test: delete a missing file from run 20261017151345"
         },
         "fileChanges": {
           "additions": [],
           "deletions": [
             {
-              "path": "forges-fixtures/20261012113502-files/missing.md"
+              "path": "forges-fixtures/20261017151345-files/missing.md"
             }
           ]
         }
@@ -29,17 +29,17 @@
         "input": {
           "branch": {
             "repositoryNameWithOwner": "forges-fixtures/forges-fixtures",
-            "branchName": "forges-fixtures/20261012113502-files"
+            "branchName": "forges-fixtures/20261017151345-files"
           },
-          "expectedHeadOid": "813bcf7bff4533d9a39305032f80fe80dd398d00",
+          "expectedHeadOid": "a27a172b5a5e5339dd74cc3c191ab0f60215a976",
           "message": {
-            "headline": "test: delete a missing file from run 20261012113502"
+            "headline": "test: delete a missing file from run 20261017151345"
           },
           "fileChanges": {
             "additions": [],
             "deletions": [
               {
-                "path": "forges-fixtures/20261012113502-files/missing.md"
+                "path": "forges-fixtures/20261017151345-files/missing.md"
               }
             ]
           }
@@ -52,8 +52,9 @@
     "status": 200,
     "headers": {
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4992",
-      "x-ratelimit-reset": "1791924288"
+      "x-ratelimit-remaining": "4910",
+      "x-ratelimit-reset": "1792251345",
+      "x-ratelimit-resource": "graphql"
     },
     "body": {
       "data": {
@@ -71,7 +72,7 @@
               "column": 3
             }
           ],
-          "message": "A path was requested for deletion which does not exist as of commit oid `813bcf7bff4533d9a39305032f80fe80dd398d00`"
+          "message": "A path was requested for deletion which does not exist as of commit oid `a27a172b5a5e5339dd74cc3c191ab0f60215a976`"
         }
       ]
     }

@@ -24,8 +24,8 @@
     "status": 200,
     "headers": {
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4976",
-      "x-ratelimit-reset": "1792184408",
+      "x-ratelimit-remaining": "4888",
+      "x-ratelimit-reset": "1792251345",
       "x-ratelimit-resource": "graphql"
     },
     "body": {
@@ -35,7 +35,7 @@
             "comments": {
               "pageInfo": {
                 "hasNextPage": false,
-                "endCursor": "Y3Vyc29yOnYyOpK0MjAyNi0xMC0xMlQxMTozNTo1MVrOASAU0g=="
+                "endCursor": "Y3Vyc29yOnYyOpK0MjAyNi0xMC0xN1QxNToxNToxN1rOASHsCw=="
               },
               "nodes": [
                 {
@@ -60,7 +60,7 @@
                 {
                   "id": "DC_kwDOVCTdtM4BH241",
                   "databaseId": 18837045,
-                  "body": "An upserted comment from run 20261011164520.\n\n<!-- forges:key=forges-fixture -->",
+                  "body": "An upserted comment from run 20261017150903.\n\n<!-- forges:key=forges-fixture -->",
                   "createdAt": "2026-10-09T14:21:47Z",
                   "url": "https://github.com/forges-fixtures/forges-fixtures/discussions/33#discussioncomment-18837045",
                   "author": {
@@ -77,11 +77,11 @@
                   }
                 },
                 {
-                  "id": "DC_kwDOVCTdtM4BIBTS",
-                  "databaseId": 18879698,
-                  "body": "An edited comment from run 20261012113502.",
-                  "createdAt": "2026-10-16T20:01:21Z",
-                  "url": "https://github.com/forges-fixtures/forges-fixtures/discussions/33#discussioncomment-18879698",
+                  "id": "DC_kwDOVCTdtM4BIewL",
+                  "databaseId": 19000331,
+                  "body": "An edited comment from run 20261017151345.",
+                  "createdAt": "2026-10-17T15:15:17Z",
+                  "url": "https://github.com/forges-fixtures/forges-fixtures/discussions/33#discussioncomment-19000331",
                   "author": {
                     "__typename": "User",
                     "login": "danielroe-bot",

@@ -1,4 +1,7 @@
 {
   "name": "pull edit comment",
-  "recordedAt": "2026-10-12T11:39:24.090Z"
+  "recordedAt": "2026-10-17T15:17:49.641Z",
+  "needs": [
+    "pull comment"
+  ]
 }

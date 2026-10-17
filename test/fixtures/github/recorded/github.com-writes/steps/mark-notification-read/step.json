@@ -1,4 +1,7 @@
 {
   "name": "mark notification read",
-  "recordedAt": "2026-10-12T11:36:34.411Z"
+  "recordedAt": "2026-10-17T15:16:34.167Z",
+  "needs": [
+    "author notifications"
+  ]
 }

@@ -22,6 +22,8 @@ export interface WriteRun {
   pull?: string
   /** Where set, each thread the run opens has a title that ends with a suffix derived from it, for forges that refuse similar titles. */
   salt?: string
+  /** An account outside the scratch repository's owner that the block steps block and unblock, from `FIXTURE_<FORGE>_BLOCKED_USER`. */
+  blocked?: string
 }
 
 /** A write recording: the read manifest, the scratch repository every write goes to, and the run. */
@@ -127,6 +129,12 @@ function label(manifest: WriteManifest): string {
 
 type WriteKind = 'issue' | 'pull_request' | 'discussion'
 
+const blocks = (_provider: ForgeProvider, manifest: WriteManifest) => manifest.run.blocked !== undefined
+
+function ownerOf(manifest: WriteManifest): RepoRef {
+  return { forge: manifest.scratch.forge, instance: manifest.scratch.instance, owner: manifest.scratch.owner, name: '', kind: 'namespace' }
+}
+
 function threadOf(context: WriteContext, kind: WriteKind): ThreadRef {
   const thread = kind === 'issue' ? context.issue : kind === 'discussion' ? context.discussion : context.pulls[0]
   return need(thread, `the ${kind.replace('_', ' ')}`).ref
@@ -151,6 +159,8 @@ function threadWrites(kind: WriteKind): WriteStep[] {
       return context.comments[kind]
     } },
     { name: `${prefix} edit comment`, verb: 'threads.editComment', kind, run: (provider, manifest, context) => provider.threads.editComment(need(context.comments[kind], 'a comment').ref, `An edited comment from run ${manifest.run.id}.`) },
+    { name: `${prefix} hide comment`, verb: 'threads.hideComment', kind, run: (provider, _manifest, context) => provider.threads.hideComment(need(context.comments[kind], 'a comment').ref, 'outdated') },
+    { name: `${prefix} unhide comment`, verb: 'threads.unhideComment', kind, run: (provider, _manifest, context) => provider.threads.unhideComment(need(context.comments[kind], 'a comment').ref) },
     { name: `${prefix} get comment`, verb: 'threads.getComment', kind, run: async (provider, _manifest, context) => {
       // Comments read through an index, such as Constellation, appear late.
       for (let attempt = 1; ; attempt++) {
@@ -180,6 +190,8 @@ function threadWrites(kind: WriteKind): WriteStep[] {
     { name: `${prefix} update`, verb: 'threads.update', kind, run: (provider, manifest, context) => provider.threads.update(ref(context), { title: `${FIXTURE_TITLE} ${manifest.run.id}: ${prefix}, edited`, body: `Edited by run ${manifest.run.id}.` }) },
     { name: `${prefix} update to closed`, verb: 'threads.update', kind, when: updatesEverything(kind), run: (provider, manifest, context) => provider.threads.update(stateRef(context, kind), { state: 'closed', labels: [label(manifest)], assignees: [need(context.author, 'the author')] }) },
     { name: `${prefix} update to open`, verb: 'threads.update', kind, when: updatesEverything(kind), run: (provider, _manifest, context) => provider.threads.update(stateRef(context, kind), { state: 'open', labels: [], assignees: [] }) },
+    { name: `${prefix} lock`, verb: 'threads.lock', kind, run: (provider, _manifest, context) => provider.threads.lock(ref(context), { reason: 'resolved' }) },
+    { name: `${prefix} unlock`, verb: 'threads.unlock', kind, run: (provider, _manifest, context) => provider.threads.unlock(ref(context)) },
   ]
 }
 
@@ -195,6 +207,8 @@ function commitWrites(): WriteStep[] {
       return context.comments.commit
     } },
     { name: 'commit edit comment', verb: 'threads.editComment', kind: 'commit', run: (provider, manifest, context) => provider.threads.editComment(need(context.comments.commit, 'a commit comment').ref, `An edited commit comment from run ${manifest.run.id}.`) },
+    { name: 'commit hide comment', verb: 'threads.hideComment', kind: 'commit', run: (provider, _manifest, context) => provider.threads.hideComment(need(context.comments.commit, 'a commit comment').ref, 'outdated') },
+    { name: 'commit unhide comment', verb: 'threads.unhideComment', kind: 'commit', run: (provider, _manifest, context) => provider.threads.unhideComment(need(context.comments.commit, 'a commit comment').ref) },
     { name: 'commit get comment', verb: 'threads.getComment', kind: 'commit', run: (provider, _manifest, context) => provider.threads.getComment(need(context.comments.commit, 'a commit comment').ref) },
     { name: 'commit upsert comment', verb: 'threads.upsertComment', kind: 'commit', run: (provider, manifest, context) => provider.threads.upsertComment(ref(context), { key: 'forges-fixture', body: `An upserted commit comment from run ${manifest.run.id}.` }) },
     { name: 'commit delete comment', verb: 'threads.deleteComment', kind: 'commit', run: (provider, _manifest, context) => provider.threads.deleteComment(need(context.comments.commit, 'a commit comment').ref) },
@@ -446,7 +460,18 @@ export const WRITE_STEPS: WriteStep[] = [
   { name: 'merge', verb: 'threads.merge', kind: 'pull_request', run: (provider, manifest, context) => provider.threads.merge(threadOf(context, 'pull_request'), { method: provider.forge === 'tangled' ? 'rebase' : 'merge', title: `Merge run ${manifest.run.id}`, message: `Merged by run ${manifest.run.id}` }) },
   { name: 'pull close', verb: 'threads.close', kind: 'pull_request', run: (provider, _manifest, context) => provider.threads.close(need(context.pulls[2], 'the third pull request').ref) },
   { name: 'pull reopen', verb: 'threads.reopen', kind: 'pull_request', run: (provider, _manifest, context) => provider.threads.reopen(need(context.pulls[2], 'the third pull request').ref) },
+  // After the reopen, as GitHub refuses to reopen a pull request whose branch moved while it was closed.
+  { name: 'pull update branch by rebase', verb: 'threads.updateBranch', kind: 'pull_request', run: (provider, _manifest, context) => {
+    const pull = need(context.pulls[2], 'the third pull request')
+    return provider.threads.updateBranch(pull.ref, { method: 'rebase', sha: need(pull.branches?.head.sha, 'the third pull head sha') })
+  } },
   { name: 'approve and merge', verb: 'threads.approveAndMerge', kind: 'pull_request', as: 'reviewer', run: (provider, manifest, context) => provider.threads.approveAndMerge(need(context.pulls[1], 'the second pull request').ref, { method: 'merge', title: `Merge run ${manifest.run.id}`, message: `Merged by run ${manifest.run.id}` }) },
+  { name: 'pull update branch', verb: 'threads.updateBranch', kind: 'pull_request', when: provider => provider.forge !== 'gitlab', run: (provider, _manifest, context) => provider.threads.updateBranch(need(context.pulls[2], 'the third pull request').ref) },
+
+  { name: 'block for organization', verb: 'orgs.block', when: blocks, run: (provider, manifest) => provider.orgs.block(ownerOf(manifest), need(manifest.run.blocked, 'manifest.run.blocked')) },
+  { name: 'unblock for organization', verb: 'orgs.unblock', when: blocks, run: (provider, manifest) => provider.orgs.unblock(ownerOf(manifest), need(manifest.run.blocked, 'manifest.run.blocked')) },
+  { name: 'block for author', verb: 'users.block', when: blocks, run: (provider, manifest) => provider.users.block(need(manifest.run.blocked, 'manifest.run.blocked')) },
+  { name: 'unblock for author', verb: 'users.unblock', when: blocks, run: (provider, manifest) => provider.users.unblock(need(manifest.run.blocked, 'manifest.run.blocked')) },
 
   // GitLab has no draft releases or prereleases.
   { name: 'create draft release', verb: 'releases.create', when: provider => provider.forge !== 'gitlab', run: async (provider, manifest, context) => {

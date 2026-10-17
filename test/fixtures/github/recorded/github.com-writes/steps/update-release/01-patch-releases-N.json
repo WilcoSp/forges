@@ -1,26 +1,27 @@
 {
   "request": {
     "method": "PATCH",
-    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases/410537975",
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases/415874574",
     "body": {
-      "name": "forges fixture 20261012113502: release, edited",
-      "body": "Edited by run 20261012113502."
+      "name": "forges fixture 20261017151345: release, edited",
+      "body": "Edited by run 20261017151345."
     }
   },
   "response": {
     "status": 200,
     "headers": {
-      "etag": "W/\"99ea90b4b97610fc50bd957b3a084799b6194c975101a34101c98b7a81b40197\"",
+      "etag": "W/\"19a2150cc66594a768b5c9c7a572c6efb3ca831971bb5fc534dc2e16c8f2dbac\"",
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4930",
-      "x-ratelimit-reset": "1791808503"
+      "x-ratelimit-remaining": "4727",
+      "x-ratelimit-reset": "1792251335",
+      "x-ratelimit-resource": "core"
     },
     "body": {
-      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases/410537975",
-      "assets_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases/410537975/assets",
-      "upload_url": "https://uploads.github.com/repos/forges-fixtures/forges-fixtures/releases/410537975/assets{?name,label}",
-      "html_url": "https://github.com/forges-fixtures/forges-fixtures/releases/tag/forges-fixture-20261012113502",
-      "id": 410537975,
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases/415874574",
+      "assets_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases/415874574/assets",
+      "upload_url": "https://uploads.github.com/repos/forges-fixtures/forges-fixtures/releases/415874574/assets{?name,label}",
+      "html_url": "https://github.com/forges-fixtures/forges-fixtures/releases/tag/forges-fixture-20261017151345",
+      "id": 415874574,
       "author": {
         "login": "danielroe-bot",
         "id": 57801166,
@@ -42,20 +43,20 @@
         "user_view_type": "public",
         "site_admin": false
       },
-      "node_id": "RE_kwDOVCTdtM4YeE_3",
-      "tag_name": "forges-fixture-20261012113502",
+      "node_id": "RE_kwDOVCTdtM4Yyb4O",
+      "tag_name": "forges-fixture-20261017151345",
       "target_commitish": "main",
-      "name": "forges fixture 20261012113502: release, edited",
+      "name": "forges fixture 20261017151345: release, edited",
       "draft": false,
       "immutable": true,
       "prerelease": false,
-      "created_at": "2026-10-12T11:36:23Z",
-      "updated_at": "2026-10-12T11:36:29Z",
-      "published_at": "2026-10-12T11:36:28Z",
+      "created_at": "2026-10-17T15:16:14Z",
+      "updated_at": "2026-10-17T15:16:26Z",
+      "published_at": "2026-10-17T15:16:25Z",
       "assets": [],
-      "tarball_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/tarball/forges-fixture-20261012113502",
-      "zipball_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/zipball/forges-fixture-20261012113502",
-      "body": "Edited by run 20261012113502."
+      "tarball_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/tarball/forges-fixture-20261017151345",
+      "zipball_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/zipball/forges-fixture-20261017151345",
+      "body": "Edited by run 20261017151345."
     }
   }
 }

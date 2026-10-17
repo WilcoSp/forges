@@ -1,4 +1,7 @@
 {
   "name": "approve",
-  "recordedAt": "2026-10-12T11:36:13.343Z"
+  "recordedAt": "2026-10-17T15:16:00.585Z",
+  "needs": [
+    "create pull"
+  ]
 }

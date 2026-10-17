@@ -3,7 +3,7 @@
     "method": "POST",
     "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/branches",
     "body": {
-      "new_branch_name": "forges-fixtures/20261016024347-files",
+      "new_branch_name": "forges-fixtures/20261017151708-files",
       "old_ref_name": "main"
     }
   },

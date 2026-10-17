@@ -1,12 +1,12 @@
 {
   "request": {
     "method": "DELETE",
-    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/81/subscriptions/roebot"
+    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/93/subscriptions/roebot"
   },
   "response": {
     "status": 201,
     "headers": {
-      "ratelimit": "\"baseline\";r=1896;t=600",
+      "ratelimit": "\"baseline\";r=1946;t=600",
       "ratelimit-policy": "\"baseline\";q=2000;w=600"
     }
   }

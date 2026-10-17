@@ -9,12 +9,12 @@
       "name": "forges-fixtures"
     },
     "kind": "pull_request",
-    "number": "95",
-    "externalId": "PR_kwDOVCTdtM8AAAABH9HlbA"
+    "number": "138",
+    "externalId": "PR_kwDOVCTdtM8AAAABJCMGrw"
   },
   "kind": "pull_request",
-  "title": "forges fixture 20261012113502: pull 3",
-  "body": "Opened by run 20261012113502.",
+  "title": "forges fixture 20261017151345: pull 3",
+  "body": "Opened by run 20261017151345.",
   "state": "open",
   "stateRaw": "open",
   "isDraft": false,
@@ -33,7 +33,7 @@
   "assignees": [],
   "reviewers": [],
   "labels": [],
-  "url": "https://github.com/forges-fixtures/forges-fixtures/pull/95",
+  "url": "https://github.com/forges-fixtures/forges-fixtures/pull/138",
   "createdAt": "<now>",
   "updatedAt": "<now>",
   "lastActivityAt": "<now>",
@@ -41,8 +41,8 @@
   "commentCount": 0,
   "branches": {
     "head": {
-      "ref": "forges-fixtures/20261012113502-3",
-      "sha": "656ffc01def44fc26d1d6f3762e04764fd4bd3f4",
+      "ref": "forges-fixtures/20261017151345-3",
+      "sha": "809f8687ada40b3be92de95e736c0ae524024055",
       "repo": {
         "forge": "github",
         "instance": "github.com",
@@ -53,9 +53,8 @@
     },
     "base": {
       "ref": "main",
-      "sha": "16be8af10261689c1c7b28fac571d93a83cd900d"
-    },
-    "mergeCommitSha": "bb5523dc4356496b19c883d5332cca5c9c01e150"
+      "sha": "6c1cfa7b4e7847ef986e2d1c4038ff2679440f58"
+    }
   },
   "stats": {
     "additions": 1,

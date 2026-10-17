@@ -1,22 +1,22 @@
 {
   "request": {
     "method": "POST",
-    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/77/comments",
+    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/89/comments",
     "body": {
-      "body": "@roebot a mention from run 20261016024347."
+      "body": "@roebot a mention from run 20261017151708."
     }
   },
   "response": {
     "status": 201,
     "headers": {
-      "ratelimit": "\"baseline\";r=1899;t=600",
+      "ratelimit": "\"baseline\";r=1949;t=600",
       "ratelimit-policy": "\"baseline\";q=2000;w=600"
     },
     "body": {
-      "id": 25405996,
-      "html_url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/77#issuecomment-25405996",
+      "id": 25515535,
+      "html_url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/89#issuecomment-25515535",
       "pull_request_url": "",
-      "issue_url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/77",
+      "issue_url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/89",
       "user": {
         "id": 86052,
         "login": "danielroe",
@@ -37,10 +37,10 @@
       },
       "original_author": "",
       "original_author_id": 0,
-      "body": "@roebot a mention from run 20261016024347.",
+      "body": "@roebot a mention from run 20261017151708.",
       "assets": [],
-      "created_at": "2026-10-16T04:50:08+02:00",
-      "updated_at": "2026-10-16T04:50:08+02:00"
+      "created_at": "2026-10-17T17:23:51+02:00",
+      "updated_at": "2026-10-17T17:23:51+02:00"
     }
   }
 }

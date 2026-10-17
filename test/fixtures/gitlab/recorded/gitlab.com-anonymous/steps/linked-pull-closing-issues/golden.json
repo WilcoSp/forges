@@ -1,0 +1,96 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "repo": {
+          "forge": "gitlab",
+          "instance": "gitlab.com",
+          "owner": "gitlab-org",
+          "name": "cli",
+          "externalId": "34675721"
+        },
+        "kind": "issue",
+        "number": "8622",
+        "externalId": "206704546"
+      },
+      "kind": "issue",
+      "title": "Expose iteration as work item flag in CLI",
+      "body": "### Problem to solve\n\nAs a user planning work from the terminal, I want to set a work item's iteration with `glab work-items`, so I can create and schedule work without going to the UI or writing GraphQL.\n\nRight now neither `glab work-items create` nor `glab work-items update` has an iteration flag. `glab issue create` and `glab issue update` don't have one either. The only `--iteration` flag is on `glab issue list`, where it filters results.\n\n### Proposal\n\nAdd an `--iteration` flag to both commands:\n\n- `glab work-items create --iteration <id>`\n- `glab work-items update <iid> --iteration <id>`\n\n`client-go` already supports this. `CreateWorkItemOptions` and `UpdateWorkItemOptions` both have an `IterationID *int64` field, sent as the GraphQL `iterationWidget`. The v3.23.0 release that glab currently pins includes it, so no dependency bump is needed. The commands only have to pass the flag value through.\n\n### Further details\n\n- Accepting the numeric ID is enough to start, and `glab iteration list -F json` shows the IDs. Unlike `--milestone`, looking iterations up by title isn't reliable, because iterations from automatic cadences have no title.\n- Iterations are a Premium feature, so the flag only does something on instances where they are available.\n\n### Links / references\n\n- `client-go` `CreateWorkItemOptions.IterationID`: https://gitlab.com/gitlab-org/api/client-go/-/blob/main/workitems.go#L977\n- `client-go` `UpdateWorkItemOptions.IterationID`: https://gitlab.com/gitlab-org/api/client-go/-/blob/main/workitems.go#L1357\n- GraphQL `WorkItemWidgetIterationInput`: https://docs.gitlab.com/api/graphql/reference/#workitemwidgetiterationinput",
+      "state": "closed",
+      "stateRaw": "closed",
+      "isDraft": false,
+      "assignees": [
+        {
+          "forge": "gitlab",
+          "instance": "gitlab.com",
+          "login": "BoxBoxJason",
+          "id": "25983954",
+          "name": "BoxBoxJason",
+          "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/25983954/avatar.png?v=1792060003",
+          "url": "https://gitlab.com/BoxBoxJason",
+          "isBotHint": false
+        }
+      ],
+      "reviewers": [],
+      "lastActivityAt": "2026-10-15T17:51:13.575Z",
+      "author": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "login": "BoxBoxJason",
+        "id": "25983954",
+        "name": "BoxBoxJason",
+        "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/25983954/avatar.png?v=1792060003",
+        "url": "https://gitlab.com/BoxBoxJason",
+        "isBotHint": false
+      },
+      "url": "https://gitlab.com/gitlab-org/cli/-/work_items/8622",
+      "createdAt": "2026-10-15T10:15:34.537Z",
+      "updatedAt": "2026-10-15T17:51:13.575Z",
+      "closedAt": "2026-10-15T17:51:11.996Z",
+      "labels": [
+        {
+          "name": "Category:Team Planning"
+        },
+        {
+          "name": "automation:ml"
+        },
+        {
+          "name": "backend"
+        },
+        {
+          "name": "devops::plan"
+        },
+        {
+          "name": "feature::addition"
+        },
+        {
+          "name": "group::work items"
+        },
+        {
+          "name": "section::dev"
+        },
+        {
+          "name": "type::feature"
+        },
+        {
+          "name": "workflow::complete"
+        }
+      ],
+      "commentCount": 3,
+      "reactions": {
+        "total": 0,
+        "counts": {}
+      }
+    }
+  ],
+  "total": 1,
+  "etag": "W/\"8c3726cfdac122d84bb1bb76f10e6260\"",
+  "rateLimit": {
+    "limit": 1,
+    "remaining": 43,
+    "resetAt": "<now>",
+    "resource": "unauthenticated_traffic_per_ip"
+  }
+}

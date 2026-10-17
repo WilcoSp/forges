@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/issues/73/lock",
+    "body": {
+      "lock_reason": "Resolved"
+    }
+  },
+  "response": {
+    "status": 204,
+    "headers": {}
+  }
+}

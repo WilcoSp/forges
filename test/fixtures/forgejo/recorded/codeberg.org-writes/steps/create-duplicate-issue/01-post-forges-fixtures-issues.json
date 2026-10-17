@@ -3,8 +3,8 @@
     "method": "POST",
     "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues",
     "body": {
-      "title": "forges fixture 20261016024347: duplicate pjVioZ9952q3kL35kjupe4Wso9qhGOean7uu8B3BxBfiNKqVw92T_8SLnfi0KI8q",
-      "body": "Opened by run 20261016024347."
+      "title": "forges fixture 20261017151708: duplicate NJ4uzJJxvDnMLAcBZOiVsWQLMzGY7O1awWvP5XOFLpaSExq9oUF6M4Yn7DNl12dK",
+      "body": "Opened by run 20261017151708."
     }
   },
   "response": {
@@ -14,10 +14,10 @@
       "ratelimit-policy": "\"baseline\";q=2000;w=600"
     },
     "body": {
-      "id": 7731700,
-      "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/79",
-      "html_url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/79",
-      "number": 79,
+      "id": 7754542,
+      "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/91",
+      "html_url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/91",
+      "number": 91,
       "user": {
         "id": 1540800,
         "login": "roebot",
@@ -38,8 +38,8 @@
       },
       "original_author": "",
       "original_author_id": 0,
-      "title": "forges fixture 20261016024347: duplicate pjVioZ9952q3kL35kjupe4Wso9qhGOean7uu8B3BxBfiNKqVw92T_8SLnfi0KI8q",
-      "body": "Opened by run 20261016024347.",
+      "title": "forges fixture 20261017151708: duplicate NJ4uzJJxvDnMLAcBZOiVsWQLMzGY7O1awWvP5XOFLpaSExq9oUF6M4Yn7DNl12dK",
+      "body": "Opened by run 20261017151708.",
       "ref": "",
       "assets": [],
       "labels": [],
@@ -49,8 +49,8 @@
       "state": "open",
       "is_locked": false,
       "comments": 0,
-      "created_at": "2026-10-16T04:44:21+02:00",
-      "updated_at": "2026-10-16T04:44:21+02:00",
+      "created_at": "2026-10-17T17:17:51+02:00",
+      "updated_at": "2026-10-17T17:17:51+02:00",
       "closed_at": null,
       "due_date": null,
       "pull_request": null,

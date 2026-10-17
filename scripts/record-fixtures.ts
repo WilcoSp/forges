@@ -572,10 +572,18 @@ function scratchSetup(mode: string) {
   return { prefix, botToken, probe, scratch, transfer, collaborators, harness }
 }
 
+/** The block and unblock URLs of one account, for the scratch repository's owner and for the bot itself, as GitHub, Gitea and Forgejo spell them. */
+function blockPaths(baseUrl: string, owner: string, login: string): string[] {
+  const user = encodeURIComponent(login)
+  return [`/orgs/${encodeURIComponent(owner)}`, '/user'].flatMap(scope => ['blocks', 'block', 'unblock'].map(path => `${baseUrl}${scope}/${path}/${user}`))
+}
+
 async function recordWrites(): Promise<void> {
   const { prefix, botToken, probe, scratch, transfer, collaborators, harness } = scratchSetup('--writes')
   const guard = { scope: harness.scope, allows: harness.allows, repos: [scratch, transfer, collaborators].filter(repo => repo !== undefined) }
-  const author = targetFor({ token: botToken, identifier: env.TANGLED_BOT_IDENTIFIER, pds: env.TANGLED_BOT_PDS }, guardedFetch(recordLive, { ...guard, account: [`${probe.baseUrl}/notifications`, `${probe.baseUrl}/todos`] }))
+  const blocked = env[`FIXTURE_${prefix}_BLOCKED_USER`]
+  const blocks = blocked ? blockPaths(probe.baseUrl, scratch.owner, blocked) : []
+  const author = targetFor({ token: botToken, identifier: env.TANGLED_BOT_IDENTIFIER, pds: env.TANGLED_BOT_PDS }, guardedFetch(recordLive, { ...guard, account: [`${probe.baseUrl}/notifications`, `${probe.baseUrl}/todos`, ...blocks] }))
   const reviewer = reviewerCredentials && targetFor(reviewerCredentials, guardedFetch(recordLive, guard)).provider
   useInstance(author.provider)
   const recording = out.startsWith(fixtures) ? out.slice(fixtures.length, -1) : undefined
@@ -596,6 +604,7 @@ async function recordWrites(): Promise<void> {
     ...env[`FIXTURE_${prefix}_REVIEWER`] && { reviewer: env[`FIXTURE_${prefix}_REVIEWER`] },
     ...env[`FIXTURE_${prefix}_SCRATCH_DISCUSSION`] && { discussion: env[`FIXTURE_${prefix}_SCRATCH_DISCUSSION`] },
     ...env[`FIXTURE_${prefix}_SCRATCH_PULL`] && { pull: env[`FIXTURE_${prefix}_SCRATCH_PULL`] },
+    ...blocked && { blocked },
     // Codeberg refuses a new issue or pull request when the account opened two with similar titles in the last hour.
     ...new URL(probe.baseUrl).hostname === 'codeberg.org' && { salt: randomBytes(16).toString('hex') },
   }

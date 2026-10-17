@@ -1,4 +1,7 @@
 {
   "name": "issue subscribe",
-  "recordedAt": "2026-10-12T11:39:18.514Z"
+  "recordedAt": "2026-10-17T15:17:33.181Z",
+  "needs": [
+    "create issue"
+  ]
 }

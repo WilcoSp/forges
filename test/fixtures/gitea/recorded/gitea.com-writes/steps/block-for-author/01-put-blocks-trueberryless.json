@@ -1,0 +1,10 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "https://gitea.com/api/v1/user/blocks/trueberryless"
+  },
+  "response": {
+    "status": 204,
+    "headers": {}
+  }
+}

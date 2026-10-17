@@ -8,10 +8,10 @@
       "owner": "forges-fixtures",
       "name": "forges-fixtures"
     },
-    "sha": "f5a70290ff58c4cbf220da32dc7dac8d41b49485"
+    "sha": "b95951c7dc82f5ee96292acce9cb07b209c9530f"
   },
-  "sha": "f5a70290ff58c4cbf220da32dc7dac8d41b49485",
-  "message": "test: change files from run 20261016024347\n\nUpdates one file and deletes another.\n",
+  "sha": "b95951c7dc82f5ee96292acce9cb07b209c9530f",
+  "message": "test: change files from run 20261017151708\n\nUpdates one file and deletes another.\n",
   "author": {
     "name": "roebot",
     "email": "redacted@example.invalid",
@@ -23,7 +23,7 @@
     "date": "<now>"
   },
   "parents": [
-    "ab980307b9aee96e26865436ed276e8570fca0a4"
+    "089a08e7c7fa7c677c642dc172aff137e915a8c2"
   ],
-  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/commit/f5a70290ff58c4cbf220da32dc7dac8d41b49485"
+  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/commit/b95951c7dc82f5ee96292acce9cb07b209c9530f"
 }

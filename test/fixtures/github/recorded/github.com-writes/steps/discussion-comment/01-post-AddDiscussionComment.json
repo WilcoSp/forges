@@ -5,13 +5,13 @@
     "operationName": "AddDiscussionComment",
     "variables": {
       "id": "D_kwDOVCTdtM4Ap5qt",
-      "body": "A comment from run 20261012113502."
+      "body": "A comment from run 20261017151345."
     },
     "body": {
       "query": "mutation AddDiscussionComment($id: ID!, $body: String!) {\n  addDiscussionComment(input: { discussionId: $id, body: $body }) { comment { id databaseId body createdAt updatedAt url author { __typename login avatarUrl url ... on User { databaseId name } ... on Bot { databaseId } } authorAssociation } }\n}",
       "variables": {
         "id": "D_kwDOVCTdtM4Ap5qt",
-        "body": "A comment from run 20261012113502."
+        "body": "A comment from run 20261017151345."
       },
       "operationName": "AddDiscussionComment"
     }
@@ -20,20 +20,20 @@
     "status": 200,
     "headers": {
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4979",
-      "x-ratelimit-reset": "1792184408",
+      "x-ratelimit-remaining": "4893",
+      "x-ratelimit-reset": "1792251345",
       "x-ratelimit-resource": "graphql"
     },
     "body": {
       "data": {
         "addDiscussionComment": {
           "comment": {
-            "id": "DC_kwDOVCTdtM4BIBTS",
-            "databaseId": 18879698,
-            "body": "A comment from run 20261012113502.",
-            "createdAt": "2026-10-16T20:01:21Z",
-            "updatedAt": "2026-10-16T20:01:21Z",
-            "url": "https://github.com/forges-fixtures/forges-fixtures/discussions/33#discussioncomment-18879698",
+            "id": "DC_kwDOVCTdtM4BIewL",
+            "databaseId": 19000331,
+            "body": "A comment from run 20261017151345.",
+            "createdAt": "2026-10-17T15:15:17Z",
+            "updatedAt": "2026-10-17T15:15:17Z",
+            "url": "https://github.com/forges-fixtures/forges-fixtures/discussions/33#discussioncomment-19000331",
             "author": {
               "__typename": "User",
               "login": "danielroe-bot",

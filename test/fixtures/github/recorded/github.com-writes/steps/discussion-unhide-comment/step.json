@@ -1,0 +1,7 @@
+{
+  "name": "discussion unhide comment",
+  "recordedAt": "2026-10-17T15:15:20.049Z",
+  "needs": [
+    "discussion comment"
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/issues/43/labels"
+    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/issues/73/labels"
   },
   "response": {
     "status": 200,

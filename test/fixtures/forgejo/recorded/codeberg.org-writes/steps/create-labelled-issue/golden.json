@@ -9,12 +9,12 @@
       "name": "forges-fixtures"
     },
     "kind": "issue",
-    "number": "78",
-    "externalId": "7731697"
+    "number": "90",
+    "externalId": "7754539"
   },
   "kind": "issue",
-  "title": "forges fixture 20261016024347: labelled issue Cs_uJ-iF5wdGnBvSXO6cUv1bVvRBafkT12gXuQUq8ZZp5JooORWqQevM0mV1rrVT",
-  "body": "Opened by run 20261016024347.",
+  "title": "forges fixture 20261017151708: labelled issue ZL2yEuLoMhaOiy456SFy0pOufQnOfEBZs1O04gtkVDxycsV8jY3wp_3SBtj8H6YQ",
+  "body": "Opened by run 20261017151708.",
   "state": "open",
   "stateRaw": "open",
   "isDraft": false,
@@ -41,12 +41,12 @@
   "reviewers": [],
   "labels": [
     {
-      "name": "forges-fixture-20261016024347",
+      "name": "forges-fixture-20261017151708",
       "colour": "0e8a16",
-      "description": "Created by run 20261016024347"
+      "description": "Created by run 20261017151708"
     }
   ],
-  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/78",
+  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/90",
   "createdAt": "<now>",
   "updatedAt": "<now>",
   "lastActivityAt": "<now>",

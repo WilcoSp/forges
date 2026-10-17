@@ -1,4 +1,7 @@
 {
   "name": "retag immutable release",
-  "recordedAt": "2026-10-12T11:36:29.791Z"
+  "recordedAt": "2026-10-17T15:16:26.327Z",
+  "needs": [
+    "create release"
+  ]
 }

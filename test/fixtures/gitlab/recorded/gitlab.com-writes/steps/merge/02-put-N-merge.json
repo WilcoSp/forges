@@ -13,8 +13,9 @@
     "headers": {
       "etag": "W/\"a5ad5c66d4e151cf115da596f00857e4\"",
       "ratelimit-limit": "2000",
-      "ratelimit-remaining": "1916",
-      "ratelimit-reset": "1791842700"
+      "ratelimit-remaining": "1974",
+      "ratelimit-reset": "1792250340",
+      "ratelimit-name": "throttle_authenticated_api"
     },
     "body": {
       "id": 547090208,
@@ -23,8 +24,8 @@
       "title": "forges fixture 20261012113957: pull, edited",
       "description": "Edited by run 20261012113957.",
       "state": "merged",
-      "created_at": "2026-10-12T22:04:05.100Z",
-      "updated_at": "2026-10-12T22:04:29.408Z",
+      "created_at": "2026-10-17T15:17:56.091Z",
+      "updated_at": "2026-10-17T15:18:31.437Z",
       "merged_by": {
         "id": 43193323,
         "username": "roebot",
@@ -45,7 +46,7 @@
         "avatar_url": "https://secure.gravatar.com/avatar/14ceebcfdc10030d76768a65e9d7978b914694cebcbb6ab609b3a0e8243f0eb8?s=80&d=identicon",
         "web_url": "https://gitlab.com/roebot"
       },
-      "merged_at": "2026-10-12T22:04:29.552Z",
+      "merged_at": "2026-10-17T15:18:31.604Z",
       "closed_by": null,
       "closed_at": null,
       "target_branch": "main",
@@ -115,10 +116,10 @@
       "sha": "264f819c91c0bfd8e7ffa8be03595d535ea7c16f",
       "merge_commit_sha": "d18f3776502b8aae54697d46dec7fb47ca622c30",
       "squash_commit_sha": null,
-      "discussion_locked": null,
+      "discussion_locked": false,
       "should_remove_source_branch": null,
       "force_remove_source_branch": true,
-      "prepared_at": "2026-10-12T22:04:06.213Z",
+      "prepared_at": "2026-10-17T15:17:56.991Z",
       "reference": "!36",
       "references": {
         "short": "!36",
@@ -144,7 +145,7 @@
       "subscribed": true,
       "changes_count": "1",
       "latest_build_started_at": null,
-      "latest_build_finished_at": "2026-10-12T22:04:26.340Z",
+      "latest_build_finished_at": "2026-10-17T15:18:27.807Z",
       "first_deployed_to_production_at": null,
       "pipeline": {
         "id": 2938494768,
@@ -154,8 +155,8 @@
         "ref": "refs/merge-requests/36/head",
         "status": "success",
         "source": "merge_request_event",
-        "created_at": "2026-10-12T22:04:06.220Z",
-        "updated_at": "2026-10-12T22:04:26.344Z",
+        "created_at": "2026-10-17T15:17:57.098Z",
+        "updated_at": "2026-10-17T15:18:27.811Z",
         "web_url": "https://gitlab.com/forges-fixtures/forges-fixtures/-/pipelines/2938494768"
       },
       "head_pipeline": {
@@ -166,8 +167,8 @@
         "ref": "refs/merge-requests/36/head",
         "status": "success",
         "source": "merge_request_event",
-        "created_at": "2026-10-12T22:04:06.220Z",
-        "updated_at": "2026-10-12T22:04:26.344Z",
+        "created_at": "2026-10-17T15:17:57.098Z",
+        "updated_at": "2026-10-17T15:18:27.811Z",
         "web_url": "https://gitlab.com/forges-fixtures/forges-fixtures/-/pipelines/2938494768",
         "before_sha": "264f819c91c0bfd8e7ffa8be03595d535ea7c16f",
         "tag": false,
@@ -183,10 +184,10 @@
           "web_url": "https://gitlab.com/roebot"
         },
         "started_at": null,
-        "finished_at": "2026-10-12T22:04:26.340Z",
+        "finished_at": "2026-10-17T15:18:27.807Z",
         "committed_at": null,
         "duration": null,
-        "queued_duration": 20,
+        "queued_duration": 30,
         "coverage": null,
         "detailed_status": {
           "icon": "status_success",
@@ -202,9 +203,9 @@
         "archived": false
       },
       "diff_refs": {
-        "base_sha": "1fbd50f395a26d3af5a89288311d40dbae090f57",
+        "base_sha": "a366006c9d4e7f7e6697d30cecf4c61391b22149",
         "head_sha": "264f819c91c0bfd8e7ffa8be03595d535ea7c16f",
-        "start_sha": "1fbd50f395a26d3af5a89288311d40dbae090f57"
+        "start_sha": "a366006c9d4e7f7e6697d30cecf4c61391b22149"
       },
       "merge_error": null,
       "user": {

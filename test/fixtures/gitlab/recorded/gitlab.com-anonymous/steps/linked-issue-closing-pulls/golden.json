@@ -1,0 +1,195 @@
+{
+  "items": [
+    {
+      "ref": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "repo": {
+          "forge": "gitlab",
+          "instance": "gitlab.com",
+          "owner": "gitlab-org",
+          "name": "cli",
+          "externalId": "34675721"
+        },
+        "kind": "pull_request",
+        "number": "4122",
+        "externalId": "549234440"
+      },
+      "kind": "pull_request",
+      "title": "feat: support setting work item iteration id",
+      "body": "## Description\n\nAdd an `--iteration <id>` flag to `glab work-items create` and `glab work-items update`, so you can schedule a work item in an iteration without using the UI or GraphQL.\n\n- The flag takes the numeric iteration ID, which `glab iteration list -F json` shows. It doesn't look up iterations by title, because iterations from automatic cadences have no title.\n- The value goes to `IterationID` on `gitlab.CreateWorkItemOptions` and `gitlab.UpdateWorkItemOptions`. Both already exist in the pinned `client-go` v3.23.0, so no dependency bump is needed.\n- Both commands use `Flags().Changed(\"iteration\")` to tell whether the flag was set, so leaving it out never sends an iteration.\n- `docs/source/work-items/` is regenerated with `make gen-docs`.\n\nRemoving an iteration is out of scope. `client-go` omits a nil `IterationID`, so it can't send the `null` that GraphQL needs to clear the field.\n\n## Related Issues\n\nResolves #8622\n\n## How has this been tested?\n\n- New unit tests in `create_test.go` and `update_test.go`, using the `client-go` mocks through `cmdtest.SetupCmdForTest`:\n  - `TestWorkItems{Create,Update}_Iteration`: `--iteration 123` sends `IterationID` `123`, and leaving the flag out sends no `IterationID`.\n  - `TestWorkItems{Create,Update}_FlagValidation`: a non-numeric `--iteration` value is rejected.\n- `go test ./internal/commands/workitems/...` passes.\n- `golangci-lint run --new-from-rev=origin/main ./internal/commands/workitems/...` (2.14.0, Go 1.27.2) reports 0 issues.\n- `make check-args check-embed` passes.\n\n## Screenshots (if appropriate):",
+      "state": "merged",
+      "stateRaw": "merged",
+      "isDraft": false,
+      "assignees": [
+        {
+          "forge": "gitlab",
+          "instance": "gitlab.com",
+          "login": "BoxBoxJason",
+          "id": "25983954",
+          "name": "BoxBoxJason",
+          "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/25983954/avatar.png?v=1792060003",
+          "url": "https://gitlab.com/BoxBoxJason",
+          "isBotHint": false
+        }
+      ],
+      "reviewers": [
+        {
+          "actor": {
+            "forge": "gitlab",
+            "instance": "gitlab.com",
+            "login": "phikai",
+            "id": "2935693",
+            "name": "Kai Armstrong",
+            "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/2935693/avatar.png?v=1792239409",
+            "url": "https://gitlab.com/phikai",
+            "isBotHint": false
+          },
+          "state": "unknown"
+        },
+        {
+          "actor": {
+            "forge": "gitlab",
+            "instance": "gitlab.com",
+            "login": "ck3g",
+            "id": "3714742",
+            "name": "Vitali Tatarintev",
+            "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/3714742/avatar.png?v=1792246311",
+            "url": "https://gitlab.com/ck3g",
+            "isBotHint": false
+          },
+          "state": "unknown"
+        },
+        {
+          "actor": {
+            "forge": "gitlab",
+            "instance": "gitlab.com",
+            "login": "gweaver",
+            "id": "4303289",
+            "name": "Gabe Weaver",
+            "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/4303289/avatar.png?v=1792247430",
+            "url": "https://gitlab.com/gweaver",
+            "isBotHint": false
+          },
+          "state": "unknown"
+        },
+        {
+          "actor": {
+            "forge": "gitlab",
+            "instance": "gitlab.com",
+            "login": "jay_mccure",
+            "id": "11809982",
+            "name": "Jay McCure",
+            "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/11809982/avatar.png?v=1792199637",
+            "url": "https://gitlab.com/jay_mccure",
+            "isBotHint": false
+          },
+          "state": "unknown"
+        },
+        {
+          "actor": {
+            "forge": "gitlab",
+            "instance": "gitlab.com",
+            "login": "GitLabDuo",
+            "id": "21826781",
+            "name": "GitLab Duo",
+            "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/21826781/duo-bot.png?v=1781708173",
+            "url": "https://gitlab.com/GitLabDuo",
+            "isBotHint": false
+          },
+          "state": "unknown"
+        }
+      ],
+      "lastActivityAt": "2026-10-15T17:51:08.825Z",
+      "branches": {
+        "head": {
+          "ref": "feat/8622-work-items-iteration",
+          "sha": "2a8d16ecab5a5103a6c4a9dd82a1115aff549cd9"
+        },
+        "base": {
+          "ref": "main"
+        },
+        "mergeCommitSha": "5243baadb17712a1de86a408cf773d4e4ae6383b"
+      },
+      "author": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "login": "BoxBoxJason",
+        "id": "25983954",
+        "name": "BoxBoxJason",
+        "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/25983954/avatar.png?v=1792060003",
+        "url": "https://gitlab.com/BoxBoxJason",
+        "typeRaw": "user",
+        "isBotHint": false
+      },
+      "url": "https://gitlab.com/gitlab-org/cli/-/merge_requests/4122",
+      "createdAt": "2026-10-15T10:26:34.396Z",
+      "updatedAt": "2026-10-15T17:51:08.825Z",
+      "mergedAt": "2026-10-15T17:51:09.079Z",
+      "mergedBy": {
+        "forge": "gitlab",
+        "instance": "gitlab.com",
+        "login": "phikai",
+        "id": "2935693",
+        "name": "Kai Armstrong",
+        "avatarUrl": "https://gitlab.com/uploads/-/system/user/avatar/2935693/avatar.png?v=1792239409",
+        "url": "https://gitlab.com/phikai",
+        "isBotHint": false
+      },
+      "labels": [
+        {
+          "name": "1st contribution"
+        },
+        {
+          "name": "Category:Team Planning"
+        },
+        {
+          "name": "Community contribution"
+        },
+        {
+          "name": "backend"
+        },
+        {
+          "name": "devops::plan"
+        },
+        {
+          "name": "documentation"
+        },
+        {
+          "name": "feature::addition"
+        },
+        {
+          "name": "group::work items"
+        },
+        {
+          "name": "linked-issue"
+        },
+        {
+          "name": "section::dev"
+        },
+        {
+          "name": "tw::triaged"
+        },
+        {
+          "name": "type::feature"
+        },
+        {
+          "name": "workflow::ready for review"
+        }
+      ],
+      "commentCount": 10,
+      "reactions": {
+        "total": 0,
+        "counts": {}
+      }
+    }
+  ],
+  "total": 1,
+  "etag": "W/\"3fa75a057e9a66bac283d87765ff97a0\"",
+  "rateLimit": {
+    "limit": 500,
+    "remaining": 463,
+    "resetAt": "<now>",
+    "resource": "throttle_unauthenticated_api"
+  }
+}

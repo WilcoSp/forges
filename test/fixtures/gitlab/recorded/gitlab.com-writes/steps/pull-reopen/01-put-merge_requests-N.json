@@ -11,8 +11,9 @@
     "headers": {
       "etag": "W/\"f75f968c60c8525f80d9f7e436565d97\"",
       "ratelimit-limit": "2000",
-      "ratelimit-remaining": "1921",
-      "ratelimit-reset": "1791805260"
+      "ratelimit-remaining": "1972",
+      "ratelimit-reset": "1792250340",
+      "ratelimit-name": "throttle_authenticated_api"
     },
     "body": {
       "id": 547090230,
@@ -21,8 +22,8 @@
       "title": "forges fixture 20261012113957: pull 3",
       "description": "Opened by run 20261012113957.",
       "state": "opened",
-      "created_at": "2026-10-12T11:40:22.059Z",
-      "updated_at": "2026-10-12T11:40:43.102Z",
+      "created_at": "2026-10-17T15:17:58.089Z",
+      "updated_at": "2026-10-17T15:18:33.390Z",
       "merged_by": null,
       "merge_user": null,
       "merged_at": null,
@@ -76,7 +77,7 @@
       "discussion_locked": null,
       "should_remove_source_branch": null,
       "force_remove_source_branch": true,
-      "prepared_at": "2026-10-12T11:40:23.674Z",
+      "prepared_at": "2026-10-17T15:17:58.871Z",
       "reference": "!38",
       "references": {
         "short": "!38",
@@ -113,8 +114,8 @@
         "ref": "refs/merge-requests/38/head",
         "status": "failed",
         "source": "merge_request_event",
-        "created_at": "2026-10-12T11:40:23.772Z",
-        "updated_at": "2026-10-12T11:40:23.772Z",
+        "created_at": "2026-10-17T15:17:58.992Z",
+        "updated_at": "2026-10-17T15:17:58.992Z",
         "web_url": "https://gitlab.com/forges-fixtures/forges-fixtures/-/pipelines/2938494847",
         "before_sha": "f86dffdef622c4130b2097ae208eb6a40a018458",
         "tag": false,
@@ -130,7 +131,7 @@
           "web_url": "https://gitlab.com/roebot"
         },
         "started_at": null,
-        "finished_at": "2026-10-12T11:40:23.770Z",
+        "finished_at": "2026-10-17T15:17:58.991Z",
         "committed_at": null,
         "duration": null,
         "queued_duration": null,
@@ -149,7 +150,7 @@
         "archived": false
       },
       "diff_refs": {
-        "base_sha": "1fbd50f395a26d3af5a89288311d40dbae090f57",
+        "base_sha": "a366006c9d4e7f7e6697d30cecf4c61391b22149",
         "head_sha": "f86dffdef622c4130b2097ae208eb6a40a018458",
         "start_sha": "d18f3776502b8aae54697d46dec7fb47ca622c30"
       },

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "PATCH",
-    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/90",
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/133",
     "body": {
       "state": "open",
       "labels": [],
@@ -12,22 +12,23 @@
     "status": 200,
     "headers": {
       "link": "<https://docs.github.com/en/rest/about-the-rest-api/api-versions>; rel=\"deprecation\"; type=\"text/html\"",
-      "etag": "W/\"a5bb78357e5f22395257172e78d2d4e975db6a6b18ba7f4cd61cbd4be63feee1\"",
+      "etag": "W/\"d05267924f04c88f472e592670576aea311a8473ca1c13c15ec13a017063ccaf\"",
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4975",
-      "x-ratelimit-reset": "1791915493"
+      "x-ratelimit-remaining": "4790",
+      "x-ratelimit-reset": "1792251335",
+      "x-ratelimit-resource": "core"
     },
     "body": {
-      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/90",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/133",
       "repository_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures",
-      "labels_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/90/labels{/name}",
-      "comments_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/90/comments",
-      "events_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/90/events",
-      "html_url": "https://github.com/forges-fixtures/forges-fixtures/issues/90",
-      "id": 5813024699,
-      "node_id": "I_kwDOVCTdtM8AAAABWnu3uw",
-      "number": 90,
-      "title": "forges fixture 20261012113502: issue, edited",
+      "labels_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/133/labels{/name}",
+      "comments_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/133/comments",
+      "events_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/133/events",
+      "html_url": "https://github.com/forges-fixtures/forges-fixtures/issues/133",
+      "id": 5899795609,
+      "node_id": "I_kwDOVCTdtM8AAAABX6e8mQ",
+      "number": 133,
+      "title": "forges fixture 20261017151345: issue, edited",
       "user": {
         "login": "danielroe-bot",
         "id": 57801166,
@@ -55,8 +56,8 @@
       "assignees": [],
       "milestone": null,
       "comments": 1,
-      "created_at": "2026-10-13T17:18:23Z",
-      "updated_at": "2026-10-13T17:18:45Z",
+      "created_at": "2026-10-17T15:14:12Z",
+      "updated_at": "2026-10-17T15:14:35Z",
       "closed_at": null,
       "assignee": null,
       "author_association": "MEMBER",
@@ -74,10 +75,10 @@
         "blocking": 0,
         "total_blocking": 0
       },
-      "body": "Edited by run 20261012113502.",
+      "body": "Edited by run 20261017151345.",
       "closed_by": null,
       "reactions": {
-        "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/90/reactions",
+        "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/133/reactions",
         "total_count": 0,
         "+1": 0,
         "-1": 0,
@@ -88,7 +89,7 @@
         "rocket": 0,
         "eyes": 0
       },
-      "timeline_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/90/timeline",
+      "timeline_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/133/timeline",
       "performed_via_github_app": null,
       "state_reason": "reopened",
       "pinned_comment": null

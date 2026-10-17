@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/contents/forges-fixtures/20261012113905-files?ref=2438db9db31a3a73fd8aa63bea21a4528c4b358b"
+    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/contents/forges-fixtures/20261012113905-files?ref=9eee3c47157a98e748faa280bc657fdcf53fec5e"
   },
   "response": {
     "status": 404,

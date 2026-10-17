@@ -11,17 +11,18 @@
     "headers": {
       "etag": "W/\"3ceb06eb4ca809276cfb9b10500af78a\"",
       "ratelimit-limit": "2000",
-      "ratelimit-remaining": "1996",
-      "ratelimit-reset": "1791805260"
+      "ratelimit-remaining": "1998",
+      "ratelimit-reset": "1792250340",
+      "ratelimit-name": "throttle_authenticated_api"
     },
     "body": {
-      "id": "cc946452121469c1f72107e1c9f41e768d2fd2b0",
+      "id": "a96f9c3a4bda6427d7a0503f742a56d3c16d8ff9",
       "individual_note": false,
       "resolvable": true,
       "resolved": false,
       "notes": [
         {
-          "id": 3997721268,
+          "id": 4035114680,
           "type": "DiscussionNote",
           "body": "A review comment from run 20261012113957.",
           "author": {
@@ -34,8 +35,8 @@
             "avatar_url": "https://secure.gravatar.com/avatar/82a8f6237bb263bac46d7cc8ec3054d715ce6a55a8626d6e977769d57d2c94e6?s=80&d=identicon",
             "web_url": "https://gitlab.com/danielroe"
           },
-          "created_at": "2026-10-12T11:40:34.864Z",
-          "updated_at": "2026-10-12T11:40:34.864Z",
+          "created_at": "2026-10-17T15:18:22.647Z",
+          "updated_at": "2026-10-17T15:18:22.647Z",
           "system": false,
           "noteable_id": 547090208,
           "noteable_type": "MergeRequest",

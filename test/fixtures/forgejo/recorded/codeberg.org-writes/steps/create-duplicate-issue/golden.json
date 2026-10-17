@@ -9,12 +9,12 @@
       "name": "forges-fixtures"
     },
     "kind": "issue",
-    "number": "79",
-    "externalId": "7731700"
+    "number": "91",
+    "externalId": "7754542"
   },
   "kind": "issue",
-  "title": "forges fixture 20261016024347: duplicate pjVioZ9952q3kL35kjupe4Wso9qhGOean7uu8B3BxBfiNKqVw92T_8SLnfi0KI8q",
-  "body": "Opened by run 20261016024347.",
+  "title": "forges fixture 20261017151708: duplicate NJ4uzJJxvDnMLAcBZOiVsWQLMzGY7O1awWvP5XOFLpaSExq9oUF6M4Yn7DNl12dK",
+  "body": "Opened by run 20261017151708.",
   "state": "open",
   "stateRaw": "open",
   "isDraft": false,
@@ -30,7 +30,7 @@
   "assignees": [],
   "reviewers": [],
   "labels": [],
-  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/79",
+  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/91",
   "createdAt": "<now>",
   "updatedAt": "<now>",
   "lastActivityAt": "<now>",

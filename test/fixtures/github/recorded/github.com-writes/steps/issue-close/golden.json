@@ -9,12 +9,12 @@
       "name": "forges-fixtures"
     },
     "kind": "issue",
-    "number": "90",
-    "externalId": "I_kwDOVCTdtM8AAAABWnu3uw"
+    "number": "133",
+    "externalId": "I_kwDOVCTdtM8AAAABX6e8mQ"
   },
   "kind": "issue",
-  "title": "forges fixture 20261012113502: issue, edited",
-  "body": "Edited by run 20261012113502.",
+  "title": "forges fixture 20261017151345: issue, edited",
+  "body": "Edited by run 20261017151345.",
   "state": "closed",
   "stateRaw": "closed",
   "stateReason": "completed",
@@ -31,27 +31,10 @@
   },
   "authorAssociation": "member",
   "authorAssociationRaw": "MEMBER",
-  "assignees": [
-    {
-      "forge": "github",
-      "instance": "github.com",
-      "login": "danielroe-bot",
-      "id": "57801166",
-      "avatarUrl": "https://avatars.githubusercontent.com/u/57801166?v=4",
-      "url": "https://github.com/danielroe-bot",
-      "typeRaw": "User",
-      "isBotHint": false
-    }
-  ],
+  "assignees": [],
   "reviewers": [],
-  "labels": [
-    {
-      "name": "forges-fixture-20261012113502",
-      "colour": "0e8a16",
-      "description": "Created by run 20261012113502"
-    }
-  ],
-  "url": "https://github.com/forges-fixtures/forges-fixtures/issues/90",
+  "labels": [],
+  "url": "https://github.com/forges-fixtures/forges-fixtures/issues/133",
   "createdAt": "<now>",
   "updatedAt": "<now>",
   "closedAt": "<now>",

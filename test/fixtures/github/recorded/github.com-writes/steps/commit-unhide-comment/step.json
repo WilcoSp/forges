@@ -1,0 +1,7 @@
+{
+  "name": "commit unhide comment",
+  "recordedAt": "2026-10-17T15:15:40.028Z",
+  "needs": [
+    "commit comment"
+  ]
+}

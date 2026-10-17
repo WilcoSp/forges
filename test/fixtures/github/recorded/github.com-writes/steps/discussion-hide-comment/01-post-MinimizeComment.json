@@ -1,0 +1,37 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://api.github.com/graphql",
+    "operationName": "MinimizeComment",
+    "variables": {
+      "id": "DC_kwDOVCTdtM4BIewL",
+      "classifier": "OUTDATED"
+    },
+    "body": {
+      "query": "mutation MinimizeComment($id: ID!, $classifier: ReportedContentClassifiers!) {\n  minimizeComment(input: { subjectId: $id, classifier: $classifier }) { minimizedComment { isMinimized } }\n}",
+      "variables": {
+        "id": "DC_kwDOVCTdtM4BIewL",
+        "classifier": "OUTDATED"
+      },
+      "operationName": "MinimizeComment"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "x-ratelimit-limit": "5000",
+      "x-ratelimit-remaining": "4891",
+      "x-ratelimit-reset": "1792251345",
+      "x-ratelimit-resource": "graphql"
+    },
+    "body": {
+      "data": {
+        "minimizeComment": {
+          "minimizedComment": {
+            "isMinimized": true
+          }
+        }
+      }
+    }
+  }
+}

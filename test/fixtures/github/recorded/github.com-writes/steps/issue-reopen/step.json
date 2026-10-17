@@ -1,4 +1,7 @@
 {
   "name": "issue reopen",
-  "recordedAt": "2026-10-12T11:35:31.206Z"
+  "recordedAt": "2026-10-17T15:14:44.605Z",
+  "needs": [
+    "create issue"
+  ]
 }

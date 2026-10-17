@@ -7,16 +7,16 @@
       "input": {
         "branch": {
           "repositoryNameWithOwner": "forges-fixtures/forges-fixtures",
-          "branchName": "forges-fixtures/20261012113502-files"
+          "branchName": "forges-fixtures/20261017151345-files"
         },
-        "expectedHeadOid": "6cfc5c7040cf8ed0b453cab0f08c8b2e02878b06",
+        "expectedHeadOid": "cc32f7c004bc8a3da7157ac4fb492ac7e7f1ad16",
         "message": {
-          "headline": "test: change a file from run 20261012113502"
+          "headline": "test: change a file from run 20261017151345"
         },
         "fileChanges": {
           "additions": [
             {
-              "path": "forges-fixtures/20261012113502-files/text.md",
+              "path": "forges-fixtures/20261017151345-files/text.md",
               "contents": "Tm90IHdyaXR0ZW4uCg=="
             }
           ],
@@ -30,16 +30,16 @@
         "input": {
           "branch": {
             "repositoryNameWithOwner": "forges-fixtures/forges-fixtures",
-            "branchName": "forges-fixtures/20261012113502-files"
+            "branchName": "forges-fixtures/20261017151345-files"
           },
-          "expectedHeadOid": "6cfc5c7040cf8ed0b453cab0f08c8b2e02878b06",
+          "expectedHeadOid": "cc32f7c004bc8a3da7157ac4fb492ac7e7f1ad16",
           "message": {
-            "headline": "test: change a file from run 20261012113502"
+            "headline": "test: change a file from run 20261017151345"
           },
           "fileChanges": {
             "additions": [
               {
-                "path": "forges-fixtures/20261012113502-files/text.md",
+                "path": "forges-fixtures/20261017151345-files/text.md",
                 "contents": "Tm90IHdyaXR0ZW4uCg=="
               }
             ],
@@ -54,8 +54,9 @@
     "status": 200,
     "headers": {
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4993",
-      "x-ratelimit-reset": "1791924288"
+      "x-ratelimit-remaining": "4913",
+      "x-ratelimit-reset": "1792251345",
+      "x-ratelimit-resource": "graphql"
     },
     "body": {
       "data": {
@@ -73,7 +74,7 @@
               "column": 3
             }
           ],
-          "message": "Expected branch to point to \"6cfc5c7040cf8ed0b453cab0f08c8b2e02878b06\" but it did not.  Pull and try again."
+          "message": "Expected branch to point to \"cc32f7c004bc8a3da7157ac4fb492ac7e7f1ad16\" but it did not.  Pull and try again."
         }
       ]
     }

@@ -8,8 +8,9 @@
     "headers": {
       "etag": "W/\"7dcbdcd59e9708d464afd007e8f3784e\"",
       "ratelimit-limit": "2000",
-      "ratelimit-remaining": "1905",
-      "ratelimit-reset": "1791842700"
+      "ratelimit-remaining": "1961",
+      "ratelimit-reset": "1792250340",
+      "ratelimit-name": "throttle_authenticated_api"
     },
     "body": {
       "id": 782907554,
@@ -41,8 +42,8 @@
         "title": "forges fixture 20261012113957: issue, edited",
         "description": "Edited by run 20261012113957.",
         "state": "opened",
-        "created_at": "2026-10-12T22:03:47.870Z",
-        "updated_at": "2026-10-12T22:04:04.583Z",
+        "created_at": "2026-10-17T15:17:23.539Z",
+        "updated_at": "2026-10-17T15:17:55.126Z",
         "closed_at": null,
         "closed_by": null,
         "labels": [],
@@ -67,7 +68,7 @@
         "start_date": null,
         "due_date": null,
         "confidential": false,
-        "discussion_locked": null,
+        "discussion_locked": false,
         "issue_type": "issue",
         "web_url": "https://gitlab.com/forges-fixtures/forges-fixtures/-/work_items/28",
         "time_stats": {
@@ -105,8 +106,8 @@
       "target_url": "https://gitlab.com/forges-fixtures/forges-fixtures/-/work_items/28#note_3997723437",
       "body": "@roebot a mention from run 20261012113957.",
       "state": "done",
-      "created_at": "2026-10-12T22:04:37.920Z",
-      "updated_at": "2026-10-12T22:04:38.934Z"
+      "created_at": "2026-10-17T15:18:46.388Z",
+      "updated_at": "2026-10-17T15:18:48.141Z"
     }
   }
 }

@@ -15,8 +15,8 @@
     "comment"
   ],
   "nativeEvents": [
-    "pull_request_comment",
-    "issue_comment"
+    "issue_comment",
+    "pull_request_comment"
   ],
   "active": true,
   "contentType": "json",

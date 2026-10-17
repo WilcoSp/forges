@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "https://gitlab.com/api/v4/projects/forges-fixtures%2Fforges-fixtures/merge_requests/38/rebase"
+  },
+  "response": {
+    "status": 202,
+    "headers": {
+      "ratelimit-limit": "2000",
+      "ratelimit-remaining": "1970",
+      "ratelimit-reset": "1792250340",
+      "ratelimit-name": "throttle_authenticated_api"
+    },
+    "body": {
+      "rebase_in_progress": true
+    }
+  }
+}

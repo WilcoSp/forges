@@ -1,4 +1,8 @@
 {
   "name": "mark duplicate",
-  "recordedAt": "2026-10-12T11:35:28.148Z"
+  "recordedAt": "2026-10-17T15:14:39.613Z",
+  "needs": [
+    "create duplicate issue",
+    "create issue"
+  ]
 }

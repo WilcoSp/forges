@@ -8,10 +8,10 @@
       "owner": "forges-fixtures",
       "name": "forges-fixtures"
     },
-    "sha": "6cfc5c7040cf8ed0b453cab0f08c8b2e02878b06"
+    "sha": "cc32f7c004bc8a3da7157ac4fb492ac7e7f1ad16"
   },
-  "sha": "6cfc5c7040cf8ed0b453cab0f08c8b2e02878b06",
-  "message": "test: add files from run 20261012113502",
+  "sha": "cc32f7c004bc8a3da7157ac4fb492ac7e7f1ad16",
+  "message": "test: add files from run 20261017151345",
   "author": {
     "actor": {
       "forge": "github",
@@ -34,7 +34,7 @@
     "date": "<now>"
   },
   "parents": [
-    "01a27db0455f964f5035ca452074eec5a33addb3"
+    "6c1cfa7b4e7847ef986e2d1c4038ff2679440f58"
   ],
-  "url": "https://github.com/forges-fixtures/forges-fixtures/commit/6cfc5c7040cf8ed0b453cab0f08c8b2e02878b06"
+  "url": "https://github.com/forges-fixtures/forges-fixtures/commit/cc32f7c004bc8a3da7157ac4fb492ac7e7f1ad16"
 }

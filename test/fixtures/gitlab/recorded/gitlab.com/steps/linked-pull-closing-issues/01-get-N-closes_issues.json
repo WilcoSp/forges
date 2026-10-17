@@ -1,0 +1,112 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/merge_requests/4122/closes_issues?per_page=3"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "link": "<https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/merge_requests/4122/closes_issues?id=gitlab-org%2Fcli&merge_request_iid=4122&page=1&per_page=3>; rel=\"first\", <https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/merge_requests/4122/closes_issues?id=gitlab-org%2Fcli&merge_request_iid=4122&page=1&per_page=3>; rel=\"last\"",
+      "etag": "W/\"8c3726cfdac122d84bb1bb76f10e6260\"",
+      "ratelimit-limit": "2000",
+      "ratelimit-remaining": "1964",
+      "ratelimit-reset": "1792247700",
+      "ratelimit-name": "throttle_authenticated_api",
+      "x-total": "1",
+      "x-total-pages": "1",
+      "x-next-page": "",
+      "x-page": "1",
+      "x-per-page": "3"
+    },
+    "body": [
+      {
+        "id": 206704546,
+        "iid": 8622,
+        "project_id": 34675721,
+        "title": "Expose iteration as work item flag in CLI",
+        "description": "### Problem to solve\n\nAs a user planning work from the terminal, I want to set a work item's iteration with `glab work-items`, so I can create and schedule work without going to the UI or writing GraphQL.\n\nRight now neither `glab work-items create` nor `glab work-items update` has an iteration flag. `glab issue create` and `glab issue update` don't have one either. The only `--iteration` flag is on `glab issue list`, where it filters results.\n\n### Proposal\n\nAdd an `--iteration` flag to both commands:\n\n- `glab work-items create --iteration <id>`\n- `glab work-items update <iid> --iteration <id>`\n\n`client-go` already supports this. `CreateWorkItemOptions` and `UpdateWorkItemOptions` both have an `IterationID *int64` field, sent as the GraphQL `iterationWidget`. The v3.23.0 release that glab currently pins includes it, so no dependency bump is needed. The commands only have to pass the flag value through.\n\n### Further details\n\n- Accepting the numeric ID is enough to start, and `glab iteration list -F json` shows the IDs. Unlike `--milestone`, looking iterations up by title isn't reliable, because iterations from automatic cadences have no title.\n- Iterations are a Premium feature, so the flag only does something on instances where they are available.\n\n### Links / references\n\n- `client-go` `CreateWorkItemOptions.IterationID`: https://gitlab.com/gitlab-org/api/client-go/-/blob/main/workitems.go#L977\n- `client-go` `UpdateWorkItemOptions.IterationID`: https://gitlab.com/gitlab-org/api/client-go/-/blob/main/workitems.go#L1357\n- GraphQL `WorkItemWidgetIterationInput`: https://docs.gitlab.com/api/graphql/reference/#workitemwidgetiterationinput",
+        "state": "closed",
+        "created_at": "2026-10-15T10:15:34.537Z",
+        "updated_at": "2026-10-15T17:51:13.575Z",
+        "closed_at": "2026-10-15T17:51:11.996Z",
+        "closed_by": {
+          "id": 2935693,
+          "username": "phikai",
+          "public_email": "redacted@example.invalid",
+          "name": "Kai Armstrong",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/2935693/avatar.png?v=1792239409",
+          "web_url": "https://gitlab.com/phikai"
+        },
+        "labels": [
+          "Category:Team Planning",
+          "automation:ml",
+          "backend",
+          "devops::plan",
+          "feature::addition",
+          "group::work items",
+          "section::dev",
+          "type::feature",
+          "workflow::complete"
+        ],
+        "milestone": null,
+        "assignees": [
+          {
+            "id": 25983954,
+            "username": "BoxBoxJason",
+            "public_email": "",
+            "name": "BoxBoxJason",
+            "state": "active",
+            "locked": false,
+            "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/25983954/avatar.png?v=1792060003",
+            "web_url": "https://gitlab.com/BoxBoxJason"
+          }
+        ],
+        "author": {
+          "id": 25983954,
+          "username": "BoxBoxJason",
+          "public_email": "",
+          "name": "BoxBoxJason",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/25983954/avatar.png?v=1792060003",
+          "web_url": "https://gitlab.com/BoxBoxJason"
+        },
+        "type": "ISSUE",
+        "assignee": {
+          "id": 25983954,
+          "username": "BoxBoxJason",
+          "public_email": "",
+          "name": "BoxBoxJason",
+          "state": "active",
+          "locked": false,
+          "avatar_url": "https://gitlab.com/uploads/-/system/user/avatar/25983954/avatar.png?v=1792060003",
+          "web_url": "https://gitlab.com/BoxBoxJason"
+        },
+        "user_notes_count": 3,
+        "merge_requests_count": 1,
+        "upvotes": 0,
+        "downvotes": 0,
+        "start_date": null,
+        "due_date": null,
+        "confidential": false,
+        "discussion_locked": null,
+        "issue_type": "issue",
+        "web_url": "https://gitlab.com/gitlab-org/cli/-/work_items/8622",
+        "time_stats": {
+          "time_estimate": 0,
+          "total_time_spent": 0,
+          "human_time_estimate": null,
+          "human_total_time_spent": null
+        },
+        "task_completion_status": {
+          "count": 0,
+          "completed_count": 0
+        },
+        "weight": null,
+        "blocking_issues_count": 0
+      }
+    ]
+  }
+}

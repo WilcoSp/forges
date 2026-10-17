@@ -1,0 +1,7 @@
+{
+  "name": "issue lock",
+  "recordedAt": "2026-10-17T15:14:35.796Z",
+  "needs": [
+    "create issue"
+  ]
+}

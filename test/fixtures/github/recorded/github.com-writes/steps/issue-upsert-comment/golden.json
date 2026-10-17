@@ -13,12 +13,12 @@
           "name": "forges-fixtures"
         },
         "kind": "issue",
-        "number": "90",
-        "externalId": "I_kwDOVCTdtM8AAAABWnu3uw"
+        "number": "133",
+        "externalId": "I_kwDOVCTdtM8AAAABX6e8mQ"
       },
-      "id": "6123456029"
+      "id": "6235568990"
     },
-    "body": "An upserted comment from run 20261012113502.\n\n<!-- forges:key=forges-fixture -->",
+    "body": "An upserted comment from run 20261017151345.\n\n<!-- forges:key=forges-fixture -->",
     "author": {
       "forge": "github",
       "instance": "github.com",
@@ -33,7 +33,7 @@
     "authorAssociationRaw": "MEMBER",
     "createdAt": "<now>",
     "updatedAt": "<now>",
-    "url": "https://github.com/forges-fixtures/forges-fixtures/issues/90#issuecomment-6123456029",
+    "url": "https://github.com/forges-fixtures/forges-fixtures/issues/133#issuecomment-6235568990",
     "reactions": {
       "total": 0,
       "counts": {}

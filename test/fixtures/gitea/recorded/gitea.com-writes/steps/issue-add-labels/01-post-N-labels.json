@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/issues/43/labels",
+    "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/issues/73/labels",
     "body": {
       "labels": [
         62720

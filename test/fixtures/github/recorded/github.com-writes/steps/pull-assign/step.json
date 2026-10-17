@@ -1,4 +1,8 @@
 {
   "name": "pull assign",
-  "recordedAt": "2026-10-12T11:35:46.217Z"
+  "recordedAt": "2026-10-17T15:15:03.685Z",
+  "needs": [
+    "create pull",
+    "author"
+  ]
 }

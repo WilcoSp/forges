@@ -9,7 +9,7 @@
       "name": "forges-fixtures"
     },
     "kind": "pull_request",
-    "number": "46",
+    "number": "76",
     "externalId": "205283"
   },
   "kind": "pull_request",
@@ -46,7 +46,7 @@
       "description": "Created by run 20261012113905"
     }
   ],
-  "url": "https://gitea.com/forges-fixtures/forges-fixtures/pulls/46",
+  "url": "https://gitea.com/forges-fixtures/forges-fixtures/pulls/76",
   "createdAt": "<now>",
   "updatedAt": "<now>",
   "lastActivityAt": "<now>",
@@ -66,7 +66,7 @@
     },
     "base": {
       "ref": "main",
-      "sha": "404172c4465fc8f5401c416ba3b48245e81d4cb9"
+      "sha": "9eee3c47157a98e748faa280bc657fdcf53fec5e"
     }
   },
   "stats": {

@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "PUT",
-    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/77/labels",
+    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/89/labels",
     "body": {
       "labels": []
     }

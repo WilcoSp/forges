@@ -9,12 +9,12 @@
       "name": "forges-fixtures"
     },
     "kind": "issue",
-    "number": "77",
-    "externalId": "7731691"
+    "number": "89",
+    "externalId": "7754533"
   },
   "kind": "issue",
-  "title": "forges fixture 20261016024347: issue, edited",
-  "body": "Edited by run 20261016024347.",
+  "title": "forges fixture 20261017151708: issue, edited",
+  "body": "Edited by run 20261017151708.",
   "state": "open",
   "stateRaw": "open",
   "isDraft": false,
@@ -30,7 +30,7 @@
   "assignees": [],
   "reviewers": [],
   "labels": [],
-  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/77",
+  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/89",
   "createdAt": "<now>",
   "updatedAt": "<now>",
   "lastActivityAt": "<now>",

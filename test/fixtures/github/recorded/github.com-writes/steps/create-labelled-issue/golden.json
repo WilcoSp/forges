@@ -9,12 +9,12 @@
       "name": "forges-fixtures"
     },
     "kind": "issue",
-    "number": "91",
-    "externalId": "I_kwDOVCTdtM8AAAABWnvEtg"
+    "number": "134",
+    "externalId": "I_kwDOVCTdtM8AAAABX6fNoA"
   },
   "kind": "issue",
-  "title": "forges fixture 20261012113502: labelled issue",
-  "body": "Opened by run 20261012113502.",
+  "title": "forges fixture 20261017151345: labelled issue",
+  "body": "Opened by run 20261017151345.",
   "state": "open",
   "stateRaw": "open",
   "isDraft": false,
@@ -45,12 +45,12 @@
   "reviewers": [],
   "labels": [
     {
-      "name": "forges-fixture-20261012113502",
+      "name": "forges-fixture-20261017151345",
       "colour": "0e8a16",
-      "description": "Created by run 20261012113502"
+      "description": "Created by run 20261017151345"
     }
   ],
-  "url": "https://github.com/forges-fixtures/forges-fixtures/issues/91",
+  "url": "https://github.com/forges-fixtures/forges-fixtures/issues/134",
   "createdAt": "<now>",
   "updatedAt": "<now>",
   "lastActivityAt": "<now>",

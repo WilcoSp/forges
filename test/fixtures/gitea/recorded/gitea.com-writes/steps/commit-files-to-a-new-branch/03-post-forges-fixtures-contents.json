@@ -29,8 +29,8 @@
           "path": "forges-fixtures/20261012113905-files/text.md",
           "sha": "6ab3d6f18b10caee0a688a59687bb197f32103cf",
           "last_commit_sha": "fc8243f1acf0e642a441792b1a0d4c41b953a93a",
-          "last_committer_date": "2026-10-13T19:51:26Z",
-          "last_author_date": "2026-10-13T19:51:26Z",
+          "last_committer_date": "2026-10-17T15:17:15Z",
+          "last_author_date": "2026-10-17T15:17:15Z",
           "type": "file",
           "mode": "100644",
           "size": 19,
@@ -53,8 +53,8 @@
           "path": "forges-fixtures/20261012113905-files/bytes.bin",
           "sha": "25c851ed069d02318bf068f936150b642128f0e7",
           "last_commit_sha": "fc8243f1acf0e642a441792b1a0d4c41b953a93a",
-          "last_committer_date": "2026-10-13T19:51:26Z",
-          "last_author_date": "2026-10-13T19:51:26Z",
+          "last_committer_date": "2026-10-17T15:17:15Z",
+          "last_author_date": "2026-10-17T15:17:15Z",
           "type": "file",
           "mode": "100644",
           "size": 5,
@@ -81,17 +81,17 @@
         "author": {
           "name": "roebot",
           "email": "redacted@example.invalid",
-          "date": "2026-10-13T19:51:26Z"
+          "date": "2026-10-17T15:17:15Z"
         },
         "committer": {
           "name": "roebot",
           "email": "redacted@example.invalid",
-          "date": "2026-10-13T19:51:26Z"
+          "date": "2026-10-17T15:17:15Z"
         },
         "parents": [
           {
-            "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/git/commits/2438db9db31a3a73fd8aa63bea21a4528c4b358b",
-            "sha": "2438db9db31a3a73fd8aa63bea21a4528c4b358b",
+            "url": "https://gitea.com/api/v1/repos/forges-fixtures/forges-fixtures/git/commits/9eee3c47157a98e748faa280bc657fdcf53fec5e",
+            "sha": "9eee3c47157a98e748faa280bc657fdcf53fec5e",
             "created": "0001-01-01T00:00:00Z"
           }
         ],

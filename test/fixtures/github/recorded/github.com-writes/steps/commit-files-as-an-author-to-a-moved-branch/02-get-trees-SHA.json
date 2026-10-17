@@ -1,19 +1,20 @@
 {
   "request": {
     "method": "GET",
-    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/git/trees/6cfc5c7040cf8ed0b453cab0f08c8b2e02878b06"
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/git/trees/cc32f7c004bc8a3da7157ac4fb492ac7e7f1ad16"
   },
   "response": {
     "status": 200,
     "headers": {
-      "etag": "W/\"5763d793c9969f6484492a33a20b87a775a099d6b2ba8dfd48f80507b1f5aae9\"",
+      "etag": "W/\"1c1eaa77ef6c14fb188f730b10a3df8b8d92a6bdc29d8ac1607187bccc63ad35\"",
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4898",
-      "x-ratelimit-reset": "1791931266"
+      "x-ratelimit-remaining": "4952",
+      "x-ratelimit-reset": "1792253105",
+      "x-ratelimit-resource": "core"
     },
     "body": {
-      "sha": "6cfc5c7040cf8ed0b453cab0f08c8b2e02878b06",
-      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/git/trees/6cfc5c7040cf8ed0b453cab0f08c8b2e02878b06",
+      "sha": "cc32f7c004bc8a3da7157ac4fb492ac7e7f1ad16",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/git/trees/cc32f7c004bc8a3da7157ac4fb492ac7e7f1ad16",
       "tree": [
         {
           "path": ".github",
@@ -42,8 +43,8 @@
           "path": "forges-fixtures",
           "mode": "040000",
           "type": "tree",
-          "sha": "b008e084e7659cf39231873dc8f590c8ffb47440",
-          "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/git/trees/b008e084e7659cf39231873dc8f590c8ffb47440"
+          "sha": "581100ffc202c28a1fdc716a819fe0197a31fb12",
+          "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/git/trees/581100ffc202c28a1fdc716a819fe0197a31fb12"
         },
         {
           "path": "package-lock.json",

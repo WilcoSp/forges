@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "https://codeberg.org/api/v1/orgs/forges-fixtures/block/trueberryless"
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "ratelimit": "\"baseline\";r=1962;t=600",
+      "ratelimit-policy": "\"baseline\";q=2000;w=600"
+    }
+  }
+}

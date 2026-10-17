@@ -8,12 +8,12 @@
       "owner": "forges-fixtures",
       "name": "forges-fixtures"
     },
-    "id": "12939412",
-    "tag": "forges-fixture-20261016024347-draft"
+    "id": "12973618",
+    "tag": "forges-fixture-20261017151708-draft"
   },
-  "name": "forges fixture 20261016024347: draft",
-  "tag": "forges-fixture-20261016024347-draft",
-  "body": "Drafted by run 20261016024347.",
+  "name": "forges fixture 20261017151708: draft",
+  "tag": "forges-fixture-20261017151708-draft",
+  "body": "Drafted by run 20261017151708.",
   "isDraft": true,
   "isPrerelease": true,
   "author": {
@@ -27,6 +27,6 @@
     "isBotHint": false
   },
   "createdAt": "<now>",
-  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/releases/tag/forges-fixture-20261016024347-draft",
+  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/releases/tag/forges-fixture-20261017151708-draft",
   "assets": []
 }

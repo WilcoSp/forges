@@ -3,10 +3,10 @@
     "method": "POST",
     "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/releases",
     "body": {
-      "tag_name": "forges-fixture-20261016024347-draft",
+      "tag_name": "forges-fixture-20261017151708-draft",
       "target_commitish": "main",
-      "name": "forges fixture 20261016024347: draft",
-      "body": "Drafted by run 20261016024347.",
+      "name": "forges fixture 20261017151708: draft",
+      "body": "Drafted by run 20261017151708.",
       "draft": true,
       "prerelease": true
     }
@@ -14,25 +14,25 @@
   "response": {
     "status": 201,
     "headers": {
-      "ratelimit": "\"baseline\";r=1908;t=600",
+      "ratelimit": "\"baseline\";r=1958;t=600",
       "ratelimit-policy": "\"baseline\";q=2000;w=600"
     },
     "body": {
-      "id": 12939412,
-      "tag_name": "forges-fixture-20261016024347-draft",
+      "id": 12973618,
+      "tag_name": "forges-fixture-20261017151708-draft",
       "target_commitish": "main",
-      "name": "forges fixture 20261016024347: draft",
-      "body": "Drafted by run 20261016024347.",
-      "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/releases/12939412",
-      "html_url": "https://codeberg.org/forges-fixtures/forges-fixtures/releases/tag/forges-fixture-20261016024347-draft",
-      "tarball_url": "https://codeberg.org/forges-fixtures/forges-fixtures/archive/forges-fixture-20261016024347-draft.tar.gz",
-      "zipball_url": "https://codeberg.org/forges-fixtures/forges-fixtures/archive/forges-fixture-20261016024347-draft.zip",
+      "name": "forges fixture 20261017151708: draft",
+      "body": "Drafted by run 20261017151708.",
+      "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/releases/12973618",
+      "html_url": "https://codeberg.org/forges-fixtures/forges-fixtures/releases/tag/forges-fixture-20261017151708-draft",
+      "tarball_url": "https://codeberg.org/forges-fixtures/forges-fixtures/archive/forges-fixture-20261017151708-draft.tar.gz",
+      "zipball_url": "https://codeberg.org/forges-fixtures/forges-fixtures/archive/forges-fixture-20261017151708-draft.zip",
       "hide_archive_links": false,
-      "upload_url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/releases/12939412/assets",
+      "upload_url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/releases/12973618/assets",
       "draft": true,
       "prerelease": true,
-      "created_at": "2026-10-16T04:49:59+02:00",
-      "published_at": "2026-10-16T04:49:59+02:00",
+      "created_at": "2026-10-17T17:23:43+02:00",
+      "published_at": "2026-10-17T17:23:43+02:00",
       "author": {
         "id": 1540800,
         "login": "roebot",

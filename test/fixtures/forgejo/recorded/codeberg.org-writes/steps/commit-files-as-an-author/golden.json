@@ -8,10 +8,10 @@
       "owner": "forges-fixtures",
       "name": "forges-fixtures"
     },
-    "sha": "1880b1b45a5891f176d32945421dab12bc3bd40d"
+    "sha": "435fcd32b8589a0ad959fb4cdf6f3e7515d22922"
   },
-  "sha": "1880b1b45a5891f176d32945421dab12bc3bd40d",
-  "message": "test: add a file from run 20261016024347\n",
+  "sha": "435fcd32b8589a0ad959fb4cdf6f3e7515d22922",
+  "message": "test: add a file from run 20261017151708\n",
   "author": {
     "name": "forges fixtures",
     "email": "redacted@example.invalid",
@@ -23,7 +23,7 @@
     "date": "<now>"
   },
   "parents": [
-    "f5a70290ff58c4cbf220da32dc7dac8d41b49485"
+    "b95951c7dc82f5ee96292acce9cb07b209c9530f"
   ],
-  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/commit/1880b1b45a5891f176d32945421dab12bc3bd40d"
+  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/commit/435fcd32b8589a0ad959fb4cdf6f3e7515d22922"
 }

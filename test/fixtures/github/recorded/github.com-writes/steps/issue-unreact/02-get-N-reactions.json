@@ -1,20 +1,21 @@
 {
   "request": {
     "method": "GET",
-    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/90/reactions?content=%2B1&per_page=100"
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/133/reactions?content=%2B1&per_page=100"
   },
   "response": {
     "status": 200,
     "headers": {
-      "etag": "W/\"5b6465e8862d95d030b558eb55d9c246b22c7f052578b021f452d8cf52ddb1a5\"",
+      "etag": "W/\"1b125c091d77c17b3fa1320bd66cc133c7861ed0cac85018b6aac8dcc8c723c6\"",
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4982",
-      "x-ratelimit-reset": "1791808503"
+      "x-ratelimit-remaining": "4801",
+      "x-ratelimit-reset": "1792251335",
+      "x-ratelimit-resource": "core"
     },
     "body": [
       {
-        "id": 561743312,
-        "node_id": "REA_lAHOVCTdtM8AAAABWnu3u84he4XQ",
+        "id": 576027124,
+        "node_id": "REA_lAHOVCTdtM8AAAABX6e8mc4iVXn0",
         "user": {
           "login": "danielroe-bot",
           "id": 57801166,
@@ -37,7 +38,7 @@
           "site_admin": false
         },
         "content": "+1",
-        "created_at": "2026-10-12T11:35:16Z"
+        "created_at": "2026-10-17T15:14:20Z"
       }
     ]
   }

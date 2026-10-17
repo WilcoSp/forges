@@ -1,0 +1,95 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/security-advisories?per_page=3"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "etag": "W/\"e3a584c657c294e012c757ec0b1c839f258d71ff565968987da48cb0ab2fbe78\"",
+      "x-ratelimit-limit": "5000",
+      "x-ratelimit-remaining": "4905",
+      "x-ratelimit-reset": "1792251088",
+      "x-ratelimit-resource": "core"
+    },
+    "body": [
+      {
+        "ghsa_id": "GHSA-7f2h-3vx6-j5pg",
+        "cve_id": null,
+        "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/security-advisories/GHSA-7f2h-3vx6-j5pg",
+        "html_url": "https://github.com/forges-fixtures/forges-fixtures/security/advisories/GHSA-7f2h-3vx6-j5pg",
+        "summary": "Fixture advisory for forges recordings",
+        "description": "A draft advisory that the forges fixture recordings read. It describes no real vulnerability.",
+        "severity": "low",
+        "author": {
+          "login": "danielroe",
+          "id": 28706372,
+          "node_id": "REDACTED",
+          "avatar_url": "https://avatars.githubusercontent.com/u/28706372?v=4",
+          "gravatar_id": "",
+          "url": "https://api.github.com/users/danielroe",
+          "html_url": "https://github.com/danielroe",
+          "followers_url": "https://api.github.com/users/danielroe/followers",
+          "following_url": "https://api.github.com/users/danielroe/following{/other_user}",
+          "gists_url": "https://api.github.com/users/danielroe/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/danielroe/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/danielroe/subscriptions",
+          "organizations_url": "https://api.github.com/users/danielroe/orgs",
+          "repos_url": "https://api.github.com/users/danielroe/repos",
+          "events_url": "https://api.github.com/users/danielroe/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/danielroe/received_events",
+          "type": "User",
+          "user_view_type": "public",
+          "site_admin": false
+        },
+        "publisher": null,
+        "identifiers": [
+          {
+            "value": "GHSA-7f2h-3vx6-j5pg",
+            "type": "GHSA"
+          }
+        ],
+        "state": "draft",
+        "created_at": "2026-10-17T14:33:10Z",
+        "updated_at": "2026-10-17T14:33:10Z",
+        "published_at": null,
+        "closed_at": null,
+        "withdrawn_at": null,
+        "submission": null,
+        "vulnerabilities": [
+          {
+            "package": {
+              "ecosystem": "npm",
+              "name": "forges-fixtures"
+            },
+            "vulnerable_version_range": "< 0.0.1",
+            "patched_versions": null,
+            "vulnerable_functions": []
+          }
+        ],
+        "cvss_severities": {
+          "cvss_v3": {
+            "vector_string": null,
+            "score": null
+          },
+          "cvss_v4": {
+            "vector_string": null,
+            "score": null
+          }
+        },
+        "cwes": [],
+        "cwe_ids": [],
+        "credits": [],
+        "credits_detailed": [],
+        "collaborating_users": [],
+        "collaborating_teams": [],
+        "private_fork": null,
+        "comments": 0,
+        "cvss": {
+          "vector_string": null,
+          "score": null
+        }
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 {
   "name": "pull remove labels",
-  "recordedAt": "2026-10-16T02:49:37.407Z",
+  "recordedAt": "2026-10-17T15:23:10.397Z",
   "needs": [
     "create pull"
   ]

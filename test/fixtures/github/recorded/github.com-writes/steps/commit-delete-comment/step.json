@@ -1,4 +1,7 @@
 {
   "name": "commit delete comment",
-  "recordedAt": "2026-10-12T11:36:03.318Z"
+  "recordedAt": "2026-10-17T15:15:42.380Z",
+  "needs": [
+    "commit comment"
+  ]
 }

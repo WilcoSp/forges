@@ -12,12 +12,12 @@
         "name": "forges-fixtures"
       },
       "kind": "pull_request",
-      "number": "93",
-      "externalId": "PR_kwDOVCTdtM8AAAABH9Hj-Q"
+      "number": "136",
+      "externalId": "PR_kwDOVCTdtM8AAAABJCMFHg"
     },
-    "id": "6123461412"
+    "id": "6235574286"
   },
-  "body": "An edited comment from run 20261012113502.",
+  "body": "An edited comment from run 20261017151345.",
   "author": {
     "forge": "github",
     "instance": "github.com",
@@ -32,7 +32,7 @@
   "authorAssociationRaw": "MEMBER",
   "createdAt": "<now>",
   "updatedAt": "<now>",
-  "url": "https://github.com/forges-fixtures/forges-fixtures/pull/93#issuecomment-6123461412",
+  "url": "https://github.com/forges-fixtures/forges-fixtures/pull/136#issuecomment-6235574286",
   "reactions": {
     "total": 0,
     "counts": {}

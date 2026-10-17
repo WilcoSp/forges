@@ -1,0 +1,35 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://api.github.com/graphql",
+    "operationName": "UnminimizeComment",
+    "variables": {
+      "id": "IC_kwDOVCTdtM8AAAABc6tQDg"
+    },
+    "body": {
+      "query": "mutation UnminimizeComment($id: ID!) {\n  unminimizeComment(input: { subjectId: $id }) { unminimizedComment { isMinimized } }\n}",
+      "variables": {
+        "id": "IC_kwDOVCTdtM8AAAABc6tQDg"
+      },
+      "operationName": "UnminimizeComment"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "x-ratelimit-limit": "5000",
+      "x-ratelimit-remaining": "4899",
+      "x-ratelimit-reset": "1792251345",
+      "x-ratelimit-resource": "graphql"
+    },
+    "body": {
+      "data": {
+        "unminimizeComment": {
+          "unminimizedComment": {
+            "isMinimized": false
+          }
+        }
+      }
+    }
+  }
+}

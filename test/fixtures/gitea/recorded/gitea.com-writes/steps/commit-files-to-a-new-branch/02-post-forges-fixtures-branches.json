@@ -13,9 +13,9 @@
     "body": {
       "name": "forges-fixtures/20261012113905-files",
       "commit": {
-        "id": "2438db9db31a3a73fd8aa63bea21a4528c4b358b",
-        "message": "Merge run 20261012220452\n\nMerged by run 20261012220452\n",
-        "url": "https://gitea.com/forges-fixtures/forges-fixtures/commit/2438db9db31a3a73fd8aa63bea21a4528c4b358b",
+        "id": "9eee3c47157a98e748faa280bc657fdcf53fec5e",
+        "message": "Merge run 20261017144043\n\nMerged by run 20261017144043\n",
+        "url": "https://gitea.com/forges-fixtures/forges-fixtures/commit/9eee3c47157a98e748faa280bc657fdcf53fec5e",
         "author": {
           "name": "Daniel Roe",
           "email": "redacted@example.invalid",
@@ -33,7 +33,7 @@
           "signer": null,
           "payload": ""
         },
-        "timestamp": "2026-10-12T22:05:23Z",
+        "timestamp": "2026-10-17T14:41:57Z",
         "added": null,
         "removed": null,
         "modified": null

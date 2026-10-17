@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "DELETE",
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/133/lock"
+  },
+  "response": {
+    "status": 204,
+    "headers": {
+      "x-ratelimit-limit": "5000",
+      "x-ratelimit-remaining": "4788",
+      "x-ratelimit-reset": "1792251335",
+      "x-ratelimit-resource": "core"
+    }
+  }
+}

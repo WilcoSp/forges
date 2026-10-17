@@ -1,26 +1,27 @@
 {
   "request": {
     "method": "POST",
-    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/90/comments",
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/133/comments",
     "body": {
-      "body": "@danielroe-bot a mention from run 20261012113502."
+      "body": "@danielroe-bot a mention from run 20261017151345."
     }
   },
   "response": {
     "status": 201,
     "headers": {
-      "etag": "\"ae38d6518be76635d353271c33eb4558c7678ac402b06f19787244950edc3914\"",
-      "location": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/comments/6123475892",
+      "etag": "\"de8593da95d781ca3f92d0ee1cb667ea512e34457453e34dca6da0b7dfb31997\"",
+      "location": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/comments/6235594250",
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4966",
-      "x-ratelimit-reset": "1791807975"
+      "x-ratelimit-remaining": "4949",
+      "x-ratelimit-reset": "1792251190",
+      "x-ratelimit-resource": "core"
     },
     "body": {
-      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/comments/6123475892",
-      "html_url": "https://github.com/forges-fixtures/forges-fixtures/issues/90#issuecomment-6123475892",
-      "issue_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/90",
-      "id": 6123475892,
-      "node_id": "IC_kwDOVCTdtM8AAAABbPzTtA",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/comments/6235594250",
+      "html_url": "https://github.com/forges-fixtures/forges-fixtures/issues/133#issuecomment-6235594250",
+      "issue_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/133",
+      "id": 6235594250,
+      "node_id": "IC_kwDOVCTdtM8AAAABc6ueCg",
       "user": {
         "login": "danielroe",
         "id": 28706372,
@@ -42,12 +43,12 @@
         "user_view_type": "public",
         "site_admin": false
       },
-      "created_at": "2026-10-12T11:36:33Z",
-      "updated_at": "2026-10-12T11:36:33Z",
+      "created_at": "2026-10-17T15:16:33Z",
+      "updated_at": "2026-10-17T15:16:33Z",
       "author_association": "MEMBER",
-      "body": "@danielroe-bot a mention from run 20261012113502.",
+      "body": "@danielroe-bot a mention from run 20261017151345.",
       "reactions": {
-        "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/comments/6123475892/reactions",
+        "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/comments/6235594250/reactions",
         "total_count": 0,
         "+1": 0,
         "-1": 0,

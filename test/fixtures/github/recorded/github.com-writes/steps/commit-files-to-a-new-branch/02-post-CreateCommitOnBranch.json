@@ -7,20 +7,20 @@
       "input": {
         "branch": {
           "repositoryNameWithOwner": "forges-fixtures/forges-fixtures",
-          "branchName": "forges-fixtures/20261012113502-files"
+          "branchName": "forges-fixtures/20261017151345-files"
         },
-        "expectedHeadOid": "01a27db0455f964f5035ca452074eec5a33addb3",
+        "expectedHeadOid": "6c1cfa7b4e7847ef986e2d1c4038ff2679440f58",
         "message": {
-          "headline": "test: add files from run 20261012113502"
+          "headline": "test: add files from run 20261017151345"
         },
         "fileChanges": {
           "additions": [
             {
-              "path": "forges-fixtures/20261012113502-files/text.md",
+              "path": "forges-fixtures/20261017151345-files/text.md",
               "contents": "V3JpdHRlbiBieSBmb3JnZXMuCg=="
             },
             {
-              "path": "forges-fixtures/20261012113502-files/bytes.bin",
+              "path": "forges-fixtures/20261017151345-files/bytes.bin",
               "contents": "AAEC/v8="
             }
           ],
@@ -34,20 +34,20 @@
         "input": {
           "branch": {
             "repositoryNameWithOwner": "forges-fixtures/forges-fixtures",
-            "branchName": "forges-fixtures/20261012113502-files"
+            "branchName": "forges-fixtures/20261017151345-files"
           },
-          "expectedHeadOid": "01a27db0455f964f5035ca452074eec5a33addb3",
+          "expectedHeadOid": "6c1cfa7b4e7847ef986e2d1c4038ff2679440f58",
           "message": {
-            "headline": "test: add files from run 20261012113502"
+            "headline": "test: add files from run 20261017151345"
           },
           "fileChanges": {
             "additions": [
               {
-                "path": "forges-fixtures/20261012113502-files/text.md",
+                "path": "forges-fixtures/20261017151345-files/text.md",
                 "contents": "V3JpdHRlbiBieSBmb3JnZXMuCg=="
               },
               {
-                "path": "forges-fixtures/20261012113502-files/bytes.bin",
+                "path": "forges-fixtures/20261017151345-files/bytes.bin",
                 "contents": "AAEC/v8="
               }
             ],
@@ -62,20 +62,21 @@
     "status": 200,
     "headers": {
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4995",
-      "x-ratelimit-reset": "1791924288"
+      "x-ratelimit-remaining": "4917",
+      "x-ratelimit-reset": "1792251345",
+      "x-ratelimit-resource": "graphql"
     },
     "body": {
       "data": {
         "createCommitOnBranch": {
           "commit": {
-            "oid": "6cfc5c7040cf8ed0b453cab0f08c8b2e02878b06",
-            "message": "test: add files from run 20261012113502",
-            "url": "https://github.com/forges-fixtures/forges-fixtures/commit/6cfc5c7040cf8ed0b453cab0f08c8b2e02878b06",
+            "oid": "cc32f7c004bc8a3da7157ac4fb492ac7e7f1ad16",
+            "message": "test: add files from run 20261017151345",
+            "url": "https://github.com/forges-fixtures/forges-fixtures/commit/cc32f7c004bc8a3da7157ac4fb492ac7e7f1ad16",
             "author": {
               "name": "danielroe-bot",
               "email": "redacted@example.invalid",
-              "date": "2026-10-13T20:45:51+01:00",
+              "date": "2026-10-17T16:13:56+01:00",
               "user": {
                 "__typename": "User",
                 "login": "danielroe-bot",
@@ -88,13 +89,13 @@
             "committer": {
               "name": "GitHub",
               "email": "redacted@example.invalid",
-              "date": "2026-10-13T20:45:51+01:00",
+              "date": "2026-10-17T16:13:56+01:00",
               "user": null
             },
             "parents": {
               "nodes": [
                 {
-                  "oid": "01a27db0455f964f5035ca452074eec5a33addb3"
+                  "oid": "6c1cfa7b4e7847ef986e2d1c4038ff2679440f58"
                 }
               ]
             }

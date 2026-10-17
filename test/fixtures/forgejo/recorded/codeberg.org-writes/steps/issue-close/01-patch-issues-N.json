@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "PATCH",
-    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/77",
+    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/89",
     "body": {
       "state": "closed"
     }
@@ -13,10 +13,10 @@
       "ratelimit-policy": "\"baseline\";q=2000;w=600"
     },
     "body": {
-      "id": 7731691,
-      "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/77",
-      "html_url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/77",
-      "number": 77,
+      "id": 7754533,
+      "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/89",
+      "html_url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/89",
+      "number": 89,
       "user": {
         "id": 1540800,
         "login": "roebot",
@@ -37,8 +37,8 @@
       },
       "original_author": "",
       "original_author_id": 0,
-      "title": "forges fixture 20261016024347: issue, edited",
-      "body": "Edited by run 20261016024347.",
+      "title": "forges fixture 20261017151708: issue, edited",
+      "body": "Edited by run 20261017151708.",
       "ref": "",
       "assets": [],
       "labels": [],
@@ -48,9 +48,9 @@
       "state": "closed",
       "is_locked": false,
       "comments": 1,
-      "created_at": "2026-10-16T04:44:00+02:00",
-      "updated_at": "2026-10-16T04:44:22+02:00",
-      "closed_at": "2026-10-16T04:44:22+02:00",
+      "created_at": "2026-10-17T17:17:30+02:00",
+      "updated_at": "2026-10-17T17:17:52+02:00",
+      "closed_at": "2026-10-17T17:17:52+02:00",
       "due_date": null,
       "pull_request": null,
       "repository": {

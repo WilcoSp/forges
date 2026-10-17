@@ -3,10 +3,10 @@
     "method": "POST",
     "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases",
     "body": {
-      "tag_name": "forges-fixture-20261012113502-draft",
+      "tag_name": "forges-fixture-20261017151345-draft",
       "target_commitish": "main",
-      "name": "forges fixture 20261012113502: draft",
-      "body": "Drafted by run 20261012113502.",
+      "name": "forges fixture 20261017151345: draft",
+      "body": "Drafted by run 20261017151345.",
       "draft": true,
       "prerelease": true
     }
@@ -14,18 +14,19 @@
   "response": {
     "status": 201,
     "headers": {
-      "etag": "\"a3ebbca5b7a635c2c3fc280554d6bd80e020b2907d21bfa4fa64138656ee3567\"",
-      "location": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases/410537949",
+      "etag": "\"bd548ff08146a26a78df4c134c98c98c619c7d74a5dfb039574fddced005afce\"",
+      "location": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases/415874456",
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4933",
-      "x-ratelimit-reset": "1791808503"
+      "x-ratelimit-remaining": "4730",
+      "x-ratelimit-reset": "1792251335",
+      "x-ratelimit-resource": "core"
     },
     "body": {
-      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases/410537949",
-      "assets_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases/410537949/assets",
-      "upload_url": "https://uploads.github.com/repos/forges-fixtures/forges-fixtures/releases/410537949/assets{?name,label}",
-      "html_url": "https://github.com/forges-fixtures/forges-fixtures/releases/tag/untagged-062469514ab2ce898480",
-      "id": 410537949,
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases/415874456",
+      "assets_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/releases/415874456/assets",
+      "upload_url": "https://uploads.github.com/repos/forges-fixtures/forges-fixtures/releases/415874456/assets{?name,label}",
+      "html_url": "https://github.com/forges-fixtures/forges-fixtures/releases/tag/untagged-007afe78512ac46cf884",
+      "id": 415874456,
       "author": {
         "login": "danielroe-bot",
         "id": 57801166,
@@ -47,20 +48,20 @@
         "user_view_type": "public",
         "site_admin": false
       },
-      "node_id": "RE_kwDOVCTdtM4YeE_d",
-      "tag_name": "forges-fixture-20261012113502-draft",
+      "node_id": "RE_kwDOVCTdtM4Yyb2Y",
+      "tag_name": "forges-fixture-20261017151345-draft",
       "target_commitish": "main",
-      "name": "forges fixture 20261012113502: draft",
+      "name": "forges fixture 20261017151345: draft",
       "draft": true,
       "immutable": false,
       "prerelease": true,
-      "created_at": "2026-10-12T11:36:27Z",
-      "updated_at": "2026-10-12T11:36:27Z",
+      "created_at": "2026-10-17T15:16:23Z",
+      "updated_at": "2026-10-17T15:16:23Z",
       "published_at": null,
       "assets": [],
       "tarball_url": null,
       "zipball_url": null,
-      "body": "Drafted by run 20261012113502."
+      "body": "Drafted by run 20261017151345."
     }
   }
 }

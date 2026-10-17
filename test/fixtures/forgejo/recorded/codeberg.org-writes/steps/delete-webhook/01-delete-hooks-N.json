@@ -1,12 +1,12 @@
 {
   "request": {
     "method": "DELETE",
-    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/hooks/128449"
+    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/hooks/129316"
   },
   "response": {
     "status": 204,
     "headers": {
-      "ratelimit": "\"baseline\";r=1900;t=600",
+      "ratelimit": "\"baseline\";r=1950;t=600",
       "ratelimit-policy": "\"baseline\";q=2000;w=600"
     }
   }

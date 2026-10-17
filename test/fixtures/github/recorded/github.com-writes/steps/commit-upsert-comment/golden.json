@@ -13,11 +13,11 @@
           "name": "forges-fixtures"
         },
         "kind": "commit",
-        "number": "67bb144479c23e0c1acec7312a82075aaa53eaf3"
+        "number": "7e423f725601d2184b772243d32c0b65c4f5e322"
       },
-      "id": "204555979"
+      "id": "205428254"
     },
-    "body": "An upserted commit comment from run 20261012113502.\n\n<!-- forges:key=forges-fixture -->",
+    "body": "An upserted commit comment from run 20261017151345.\n\n<!-- forges:key=forges-fixture -->",
     "author": {
       "forge": "github",
       "instance": "github.com",
@@ -32,7 +32,7 @@
     "authorAssociationRaw": "MEMBER",
     "createdAt": "<now>",
     "updatedAt": "<now>",
-    "url": "https://github.com/forges-fixtures/forges-fixtures/commit/67bb144479c23e0c1acec7312a82075aaa53eaf3#commitcomment-204555979",
+    "url": "https://github.com/forges-fixtures/forges-fixtures/commit/7e423f725601d2184b772243d32c0b65c4f5e322#commitcomment-205428254",
     "reactions": {
       "total": 0,
       "counts": {}

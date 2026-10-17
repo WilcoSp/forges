@@ -129,6 +129,20 @@ async function text(stream: ReadableStream<Uint8Array>): Promise<string> {
   return new Response(stream).text()
 }
 
+/** Public threads with closing references, per instance, for recordings whose own pull request and issue have none. */
+const LINKED: Record<string, { owner: string, name: string, pull: string, issue: string }> = {
+  'github.com': { owner: 'h3js', name: 'h3', pull: '1559', issue: '1558' },
+  'gitlab.com': { owner: 'gitlab-org', name: 'cli', pull: '4122', issue: '8622' },
+}
+
+function linked(manifest: RecordingManifest, kind: 'issue' | 'pull_request'): ThreadRef {
+  const { owner, name, pull, issue } = need(LINKED[manifest.repo.instance], 'a linked thread on this instance')
+  const repo: RepoRef = { forge: manifest.repo.forge, instance: manifest.repo.instance, owner, name }
+  return { forge: repo.forge, instance: repo.instance, repo, kind, number: kind === 'issue' ? issue : pull }
+}
+
+const hasLinked = (_provider: ForgeProvider, manifest: RecordingManifest) => manifest.repo.instance in LINKED
+
 function namespaceOf(repo: RepoRef, owner: string): RepoRef {
   return { forge: repo.forge, instance: repo.instance, owner, name: '', kind: 'namespace' }
 }
@@ -196,7 +210,10 @@ function threadSteps(kind: 'issue' | 'pull_request' | 'discussion', key: 'issue'
     { name: `${key} subscription`, verb: 'threads.subscription', kind, run: (provider, manifest) => provider.threads.subscription(ref(manifest)) },
   ]
   if (kind === 'issue') {
-    steps.push({ name: 'issue closing pulls', verb: 'threads.closingPullRequestsPage', run: (provider, manifest) => provider.threads.closingPullRequestsPage(ref(manifest), page) })
+    steps.push(
+      { name: 'issue closing pulls', verb: 'threads.closingPullRequestsPage', run: (provider, manifest) => provider.threads.closingPullRequestsPage(ref(manifest), page) },
+      { name: 'linked issue closing pulls', verb: 'threads.closingPullRequestsPage', when: hasLinked, run: (provider, manifest) => provider.threads.closingPullRequestsPage(linked(manifest, 'issue'), page) },
+    )
   }
   if (kind === 'pull_request') {
     steps.push(
@@ -210,6 +227,7 @@ function threadSteps(kind: 'issue' | 'pull_request' | 'discussion', key: 'issue'
       { name: 'pull files', verb: 'threads.filesPage', kind, run: (provider, manifest) => provider.threads.filesPage(ref(manifest), page) },
       { name: 'pull commits', verb: 'threads.commitsPage', kind, run: (provider, manifest) => provider.threads.commitsPage(ref(manifest), page) },
       { name: 'pull closing issues', verb: 'threads.closingIssuesPage', run: (provider, manifest) => provider.threads.closingIssuesPage(ref(manifest), page) },
+      { name: 'linked pull closing issues', verb: 'threads.closingIssuesPage', when: hasLinked, run: (provider, manifest) => provider.threads.closingIssuesPage(linked(manifest, 'pull_request'), page) },
       { name: 'pull reviewer candidates', verb: 'repos.reviewerCandidatesPage', run: (provider, manifest) => provider.repos.reviewerCandidatesPage(ref(manifest), page) },
     )
   }

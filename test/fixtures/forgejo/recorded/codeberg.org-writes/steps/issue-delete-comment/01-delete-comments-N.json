@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "DELETE",
-    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/comments/25405750"
+    "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/issues/comments/25514782"
   },
   "response": {
     "status": 204,

@@ -1,0 +1,35 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "https://api.github.com/graphql",
+    "operationName": "UnlockLockable",
+    "variables": {
+      "id": "D_kwDOVCTdtM4Ap5qt"
+    },
+    "body": {
+      "query": "mutation UnlockLockable($id: ID!) {\n  unlockLockable(input: { lockableId: $id }) { unlockedRecord { locked } }\n}",
+      "variables": {
+        "id": "D_kwDOVCTdtM4Ap5qt"
+      },
+      "operationName": "UnlockLockable"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "x-ratelimit-limit": "5000",
+      "x-ratelimit-remaining": "4878",
+      "x-ratelimit-reset": "1792251345",
+      "x-ratelimit-resource": "graphql"
+    },
+    "body": {
+      "data": {
+        "unlockLockable": {
+          "unlockedRecord": {
+            "locked": false
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,4 +1,7 @@
 {
   "name": "issue update",
-  "recordedAt": "2026-10-12T11:35:25.568Z"
+  "recordedAt": "2026-10-17T15:14:31.888Z",
+  "needs": [
+    "create issue"
+  ]
 }

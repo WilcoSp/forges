@@ -1238,15 +1238,15 @@ describe('github reviews', () => {
   it('replies to a reply through the comment it answers', async () => {
     const { fetch, calls } = fixtureFetch('github/recorded/github.com-writes/steps/reply-to-review-comment')
     const provider = github({ auth: { type: 'token', token: 't' }, fetch }).create()
-    const scratch = { forge: 'github', instance: 'github.com', repo: { forge: 'github', instance: 'github.com', owner: 'forges-fixtures', name: 'forges-fixtures' }, kind: 'pull_request', number: '93' } as const
+    const scratch = { forge: 'github', instance: 'github.com', repo: { forge: 'github', instance: 'github.com', owner: 'forges-fixtures', name: 'forges-fixtures' }, kind: 'pull_request', number: '136' } as const
     const [comment] = (await provider.threads.reviewsPage(scratch)).items.flatMap(review => review.comments || [])
 
     const reply = await provider.threads.replyToReviewComment(scratch, comment!, 'A reply')
     await provider.threads.replyToReviewComment(scratch, reply, 'A reply')
 
     expect(calls.filter(call => call.url.endsWith('/replies')).map(call => new URL(call.url).pathname)).toEqual([
-      `/repos/forges-fixtures/forges-fixtures/pulls/93/comments/${comment!.ref!.id}/replies`,
-      `/repos/forges-fixtures/forges-fixtures/pulls/93/comments/${comment!.ref!.id}/replies`,
+      `/repos/forges-fixtures/forges-fixtures/pulls/136/comments/${comment!.ref!.id}/replies`,
+      `/repos/forges-fixtures/forges-fixtures/pulls/136/comments/${comment!.ref!.id}/replies`,
     ])
     expect(reply).toMatchObject({ inReplyTo: comment!.ref!.id, thread: comment!.thread })
   })

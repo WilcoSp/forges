@@ -3,7 +3,7 @@
     "method": "POST",
     "url": "https://codeberg.org/api/v1/repos/forges-fixtures/forges-fixtures/branches",
     "body": {
-      "new_branch_name": "forges-fixtures/20261016024347-files",
+      "new_branch_name": "forges-fixtures/20261017151708-files",
       "old_ref_name": "main"
     }
   },
@@ -14,20 +14,20 @@
       "ratelimit-policy": "\"baseline\";q=2000;w=600"
     },
     "body": {
-      "name": "forges-fixtures/20261016024347-files",
+      "name": "forges-fixtures/20261017151708-files",
       "commit": {
-        "id": "41bf21b9fb9fc3d27f3272777e66ee6f32caa56c",
-        "message": "Merge run 20261016013622\n\nMerged by run 20261016013622\n",
-        "url": "https://codeberg.org/forges-fixtures/forges-fixtures/commit/41bf21b9fb9fc3d27f3272777e66ee6f32caa56c",
+        "id": "d06e6219029a6a588b4e2149510a12872c1b9029",
+        "message": "Merge run 20261017144043\n\nMerged by run 20261017144043\n",
+        "url": "https://codeberg.org/forges-fixtures/forges-fixtures/commit/d06e6219029a6a588b4e2149510a12872c1b9029",
         "author": {
-          "name": "roebot",
+          "name": "Daniel Roe",
           "email": "redacted@example.invalid",
-          "username": "roebot"
+          "username": "danielroe"
         },
         "committer": {
-          "name": "roebot",
+          "name": "Daniel Roe",
           "email": "redacted@example.invalid",
-          "username": "roebot"
+          "username": "danielroe"
         },
         "verification": {
           "verified": false,
@@ -36,7 +36,7 @@
           "signer": null,
           "payload": ""
         },
-        "timestamp": "2026-10-16T03:42:34+02:00",
+        "timestamp": "2026-10-17T16:46:57+02:00",
         "added": null,
         "removed": null,
         "modified": null

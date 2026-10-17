@@ -4,13 +4,13 @@
     "url": "https://api.github.com/graphql",
     "operationName": "UpdateSubscription",
     "variables": {
-      "id": "PR_kwDOVCTdtM8AAAABH9Hj-Q",
+      "id": "PR_kwDOVCTdtM8AAAABJCMFHg",
       "state": "UNSUBSCRIBED"
     },
     "body": {
       "query": "mutation UpdateSubscription($id: ID!, $state: SubscriptionState!) {\n  updateSubscription(input: { subscribableId: $id, state: $state }) { subscribable { viewerSubscription } }\n}",
       "variables": {
-        "id": "PR_kwDOVCTdtM8AAAABH9Hj-Q",
+        "id": "PR_kwDOVCTdtM8AAAABJCMFHg",
         "state": "UNSUBSCRIBED"
       },
       "operationName": "UpdateSubscription"
@@ -20,8 +20,9 @@
     "status": 200,
     "headers": {
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4991",
-      "x-ratelimit-reset": "1791808523"
+      "x-ratelimit-remaining": "4897",
+      "x-ratelimit-reset": "1792251345",
+      "x-ratelimit-resource": "graphql"
     },
     "body": {
       "data": {

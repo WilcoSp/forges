@@ -1,0 +1,65 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/comments/6235574286"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "etag": "W/\"49f3bb7b668d68094b81a4f68d8454c5baffdcfeaa3f614ebc0029cd5dc3f426\"",
+      "x-ratelimit-limit": "5000",
+      "x-ratelimit-remaining": "4777",
+      "x-ratelimit-reset": "1792251335",
+      "x-ratelimit-resource": "core"
+    },
+    "body": {
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/comments/6235574286",
+      "html_url": "https://github.com/forges-fixtures/forges-fixtures/pull/136#issuecomment-6235574286",
+      "issue_url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/136",
+      "id": 6235574286,
+      "node_id": "IC_kwDOVCTdtM8AAAABc6tQDg",
+      "user": {
+        "login": "danielroe-bot",
+        "id": 57801166,
+        "node_id": "REDACTED",
+        "avatar_url": "https://avatars.githubusercontent.com/u/57801166?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/danielroe-bot",
+        "html_url": "https://github.com/danielroe-bot",
+        "followers_url": "https://api.github.com/users/danielroe-bot/followers",
+        "following_url": "https://api.github.com/users/danielroe-bot/following{/other_user}",
+        "gists_url": "https://api.github.com/users/danielroe-bot/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/danielroe-bot/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/danielroe-bot/subscriptions",
+        "organizations_url": "https://api.github.com/users/danielroe-bot/orgs",
+        "repos_url": "https://api.github.com/users/danielroe-bot/repos",
+        "events_url": "https://api.github.com/users/danielroe-bot/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/danielroe-bot/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "created_at": "2026-10-17T15:14:50Z",
+      "updated_at": "2026-10-17T15:14:52Z",
+      "author_association": "MEMBER",
+      "body": "An edited comment from run 20261017151345.",
+      "reactions": {
+        "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/issues/comments/6235574286/reactions",
+        "total_count": 0,
+        "+1": 0,
+        "-1": 0,
+        "laugh": 0,
+        "hooray": 0,
+        "confused": 0,
+        "heart": 0,
+        "rocket": 0,
+        "eyes": 0
+      },
+      "performed_via_github_app": null,
+      "minimized": {
+        "reason": "outdated"
+      },
+      "pin": null
+    }
+  }
+}

@@ -1,4 +1,7 @@
 {
   "name": "discussion subscribe",
-  "recordedAt": "2026-10-11T16:45:27.674Z"
+  "recordedAt": "2026-10-11T16:45:27.674Z",
+  "needs": [
+    "discussion"
+  ]
 }

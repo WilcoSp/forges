@@ -8,12 +8,12 @@
       "owner": "forges-fixtures",
       "name": "forges-fixtures"
     },
-    "id": "410537949",
-    "tag": "forges-fixture-20261012113502-draft"
+    "id": "415874456",
+    "tag": "forges-fixture-20261017151345-draft"
   },
-  "name": "forges fixture 20261012113502: draft",
-  "tag": "forges-fixture-20261012113502-draft",
-  "body": "Drafted by run 20261012113502.",
+  "name": "forges fixture 20261017151345: draft",
+  "tag": "forges-fixture-20261017151345-draft",
+  "body": "Drafted by run 20261017151345.",
   "isDraft": true,
   "isPrerelease": true,
   "immutable": false,
@@ -28,6 +28,6 @@
     "isBotHint": false
   },
   "createdAt": "<now>",
-  "url": "https://github.com/forges-fixtures/forges-fixtures/releases/tag/untagged-062469514ab2ce898480",
+  "url": "https://github.com/forges-fixtures/forges-fixtures/releases/tag/untagged-007afe78512ac46cf884",
   "assets": []
 }

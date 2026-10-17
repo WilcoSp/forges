@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/138/update-branch",
+    "body": {}
+  },
+  "response": {
+    "status": 202,
+    "headers": {
+      "location": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/138",
+      "x-ratelimit-limit": "5000",
+      "x-ratelimit-remaining": "4735",
+      "x-ratelimit-reset": "1792251335",
+      "x-ratelimit-resource": "core"
+    },
+    "body": {
+      "message": "Updating pull request branch.",
+      "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/pulls/138"
+    }
+  }
+}

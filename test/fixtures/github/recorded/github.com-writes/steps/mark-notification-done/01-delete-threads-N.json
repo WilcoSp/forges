@@ -1,14 +1,15 @@
 {
   "request": {
     "method": "DELETE",
-    "url": "https://api.github.com/notifications/threads/26279005954"
+    "url": "https://api.github.com/notifications/threads/26422995649"
   },
   "response": {
     "status": 204,
     "headers": {
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4925",
-      "x-ratelimit-reset": "1791808503"
+      "x-ratelimit-remaining": "4722",
+      "x-ratelimit-reset": "1792251335",
+      "x-ratelimit-resource": "core"
     }
   }
 }

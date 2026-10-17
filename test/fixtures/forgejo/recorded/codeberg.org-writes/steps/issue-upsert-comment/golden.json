@@ -13,12 +13,12 @@
           "name": "forges-fixtures"
         },
         "kind": "issue",
-        "number": "77",
-        "externalId": "7731691"
+        "number": "89",
+        "externalId": "7754533"
       },
-      "id": "25405753"
+      "id": "25514785"
     },
-    "body": "An upserted comment from run 20261016024347.\n\n<!-- forges:key=forges-fixture -->",
+    "body": "An upserted comment from run 20261017151708.\n\n<!-- forges:key=forges-fixture -->",
     "author": {
       "forge": "forgejo",
       "instance": "codeberg.org",
@@ -30,7 +30,7 @@
     },
     "createdAt": "<now>",
     "updatedAt": "<now>",
-    "url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/77#issuecomment-25405753"
+    "url": "https://codeberg.org/forges-fixtures/forges-fixtures/issues/89#issuecomment-25514785"
   },
   "created": true
 }

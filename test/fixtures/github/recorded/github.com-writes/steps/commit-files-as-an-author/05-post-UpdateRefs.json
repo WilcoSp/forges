@@ -8,9 +8,9 @@
         "repositoryId": "R_kgDOVCTdtA",
         "refUpdates": [
           {
-            "name": "refs/heads/forges-fixtures/20261012113502-files",
-            "beforeOid": "ab84d048fcb22a9aa3c0f150f70b09fcb205c2cc",
-            "afterOid": "813bcf7bff4533d9a39305032f80fe80dd398d00"
+            "name": "refs/heads/forges-fixtures/20261017151345-files",
+            "beforeOid": "7e32486bc4de0d385e6f7945a875ffb9491d1d83",
+            "afterOid": "a27a172b5a5e5339dd74cc3c191ab0f60215a976"
           }
         ]
       }
@@ -22,9 +22,9 @@
           "repositoryId": "R_kgDOVCTdtA",
           "refUpdates": [
             {
-              "name": "refs/heads/forges-fixtures/20261012113502-files",
-              "beforeOid": "ab84d048fcb22a9aa3c0f150f70b09fcb205c2cc",
-              "afterOid": "813bcf7bff4533d9a39305032f80fe80dd398d00"
+              "name": "refs/heads/forges-fixtures/20261017151345-files",
+              "beforeOid": "7e32486bc4de0d385e6f7945a875ffb9491d1d83",
+              "afterOid": "a27a172b5a5e5339dd74cc3c191ab0f60215a976"
             }
           ]
         }
@@ -36,8 +36,9 @@
     "status": 200,
     "headers": {
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4992",
-      "x-ratelimit-reset": "1791931278"
+      "x-ratelimit-remaining": "4914",
+      "x-ratelimit-reset": "1792251345",
+      "x-ratelimit-resource": "graphql"
     },
     "body": {
       "data": {

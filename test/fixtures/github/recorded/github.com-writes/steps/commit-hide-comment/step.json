@@ -1,0 +1,7 @@
+{
+  "name": "commit hide comment",
+  "recordedAt": "2026-10-17T15:15:38.776Z",
+  "needs": [
+    "commit comment"
+  ]
+}

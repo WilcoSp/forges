@@ -1,15 +1,16 @@
 {
   "request": {
     "method": "GET",
-    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/git/trees/ab84d048fcb22a9aa3c0f150f70b09fcb205c2cc%3Aforges-fixtures%2F20261012113502-files"
+    "url": "https://api.github.com/repos/forges-fixtures/forges-fixtures/git/trees/7e32486bc4de0d385e6f7945a875ffb9491d1d83%3Aforges-fixtures%2F20261017151345-files"
   },
   "response": {
     "status": 200,
     "headers": {
       "etag": "W/\"fe3c0563a20a762b74230332030f49f45dadca642c39b37048ea1313b38d5975\"",
       "x-ratelimit-limit": "5000",
-      "x-ratelimit-remaining": "4961",
-      "x-ratelimit-reset": "1791931266"
+      "x-ratelimit-remaining": "4955",
+      "x-ratelimit-reset": "1792253105",
+      "x-ratelimit-resource": "core"
     },
     "body": {
       "sha": "736d03516b5a1cff5ea4d9277f337bf177a443b5",

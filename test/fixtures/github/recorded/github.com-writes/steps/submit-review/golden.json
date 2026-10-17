@@ -12,10 +12,10 @@
         "name": "forges-fixtures"
       },
       "kind": "pull_request",
-      "number": "93",
-      "externalId": "PR_kwDOVCTdtM8AAAABH9Hj-Q"
+      "number": "136",
+      "externalId": "PR_kwDOVCTdtM8AAAABJCMFHg"
     },
-    "id": "5490176614"
+    "id": "5558423517"
   },
   "author": {
     "forge": "github",
@@ -29,8 +29,8 @@
   },
   "state": "commented",
   "stateRaw": "COMMENTED",
-  "body": "A submitted review from run 20261012113502.",
+  "body": "A submitted review from run 20261017151345.",
   "submittedAt": "<now>",
   "comments": [],
-  "url": "https://github.com/forges-fixtures/forges-fixtures/pull/93#pullrequestreview-5490176614"
+  "url": "https://github.com/forges-fixtures/forges-fixtures/pull/136#pullrequestreview-5558423517"
 }

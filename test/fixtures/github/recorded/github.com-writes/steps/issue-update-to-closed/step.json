@@ -1,6 +1,6 @@
 {
   "name": "issue update to closed",
-  "recordedAt": "2026-10-13T17:18:42.795Z",
+  "recordedAt": "2026-10-17T15:14:33.153Z",
   "needs": [
     "create issue",
     "author"

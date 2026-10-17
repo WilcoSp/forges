@@ -36,6 +36,7 @@
   "updatedAt": "<now>",
   "closedAt": "<now>",
   "labels": [],
+  "locked": false,
   "commentCount": 1,
   "reactions": {
     "total": 0,

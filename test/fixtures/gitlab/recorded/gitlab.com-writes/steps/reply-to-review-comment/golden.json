@@ -3,8 +3,9 @@
     "items": [],
     "rateLimit": {
       "limit": 2000,
-      "remaining": 1929,
-      "resetAt": "<now>"
+      "remaining": 1983,
+      "resetAt": "<now>",
+      "resource": "throttle_authenticated_api"
     }
   },
   "comments": {
@@ -59,7 +60,7 @@
             "number": "36",
             "externalId": "547090208"
           },
-          "id": "3997721268"
+          "id": "4035114680"
         },
         "body": "A review comment from run 20261012113957.",
         "author": {
@@ -75,17 +76,18 @@
         "createdAt": "<now>",
         "updatedAt": "<now>",
         "thread": {
-          "id": "cc946452121469c1f72107e1c9f41e768d2fd2b0",
+          "id": "a96f9c3a4bda6427d7a0503f742a56d3c16d8ff9",
           "resolved": false
         }
       }
     ],
-    "total": 6,
-    "etag": "W/\"81826f7d32fae438d44bf272182bf321\"",
+    "total": 8,
+    "etag": "W/\"fa4bd57c164d1c6b87133301497be60e\"",
     "rateLimit": {
       "limit": 2000,
-      "remaining": 1928,
-      "resetAt": "<now>"
+      "remaining": 1982,
+      "resetAt": "<now>",
+      "resource": "throttle_authenticated_api"
     }
   },
   "reply": {
@@ -121,7 +123,7 @@
     "createdAt": "<now>",
     "updatedAt": "<now>",
     "thread": {
-      "id": "cc946452121469c1f72107e1c9f41e768d2fd2b0",
+      "id": "a96f9c3a4bda6427d7a0503f742a56d3c16d8ff9",
       "resolved": false
     }
   }

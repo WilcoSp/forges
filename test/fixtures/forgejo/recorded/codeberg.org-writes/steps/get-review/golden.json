@@ -12,10 +12,10 @@
         "name": "forges-fixtures"
       },
       "kind": "pull_request",
-      "number": "80",
-      "externalId": "3389005"
+      "number": "92",
+      "externalId": "3401287"
     },
-    "id": "2110687"
+    "id": "2115466"
   },
   "author": {
     "forge": "forgejo",
@@ -27,8 +27,8 @@
       "name": "forges-fixtures"
     },
     "kind": "pull_request",
-    "number": "80",
-    "externalId": "3389005",
+    "number": "92",
+    "externalId": "3401287",
     "login": "danielroe",
     "id": "86052",
     "name": "Daniel Roe",
@@ -38,7 +38,7 @@
   },
   "state": "commented",
   "stateRaw": "COMMENT",
-  "body": "A submitted review from run 20261016024347.",
+  "body": "A submitted review from run 20261017151708.",
   "submittedAt": "<now>",
   "comments": [
     {
@@ -55,12 +55,12 @@
             "name": "forges-fixtures"
           },
           "kind": "pull_request",
-          "number": "80",
-          "externalId": "3389005"
+          "number": "92",
+          "externalId": "3401287"
         },
-        "id": "25405960"
+        "id": "25515478"
       },
-      "body": "A line comment from run 20261016024347.",
+      "body": "A line comment from run 20261017151708.",
       "author": {
         "forge": "forgejo",
         "instance": "codeberg.org",
@@ -71,8 +71,8 @@
           "name": "forges-fixtures"
         },
         "kind": "pull_request",
-        "number": "80",
-        "externalId": "3389005",
+        "number": "92",
+        "externalId": "3401287",
         "login": "danielroe",
         "id": "86052",
         "name": "Daniel Roe",
@@ -80,12 +80,12 @@
         "url": "https://codeberg.org/danielroe",
         "isBotHint": false
       },
-      "path": "forges-fixtures/20261016024347-1.md",
+      "path": "forges-fixtures/20261017151708-1.md",
       "line": 1,
       "side": "right",
       "createdAt": "<now>",
-      "url": "https://codeberg.org/forges-fixtures/forges-fixtures/pulls/80#issuecomment-25405960"
+      "url": "https://codeberg.org/forges-fixtures/forges-fixtures/pulls/92#issuecomment-25515478"
     }
   ],
-  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/pulls/80#issuecomment-25405963"
+  "url": "https://codeberg.org/forges-fixtures/forges-fixtures/pulls/92#issuecomment-25515481"
 }

@@ -11,9 +11,9 @@
     "headers": {},
     "body": {
       "id": 1757952,
-      "html_url": "https://gitea.com/forges-fixtures/forges-fixtures/issues/43#issuecomment-1757952",
+      "html_url": "https://gitea.com/forges-fixtures/forges-fixtures/issues/73#issuecomment-1757952",
       "pull_request_url": "",
-      "issue_url": "https://gitea.com/forges-fixtures/forges-fixtures/issues/43",
+      "issue_url": "https://gitea.com/forges-fixtures/forges-fixtures/issues/73",
       "user": {
         "id": 253592,
         "login": "roebot",
@@ -36,8 +36,8 @@
       "original_author_id": 0,
       "body": "An edited comment from run 20261012113905.",
       "assets": [],
-      "created_at": "2026-10-12T11:39:13Z",
-      "updated_at": "2026-10-12T11:39:13Z"
+      "created_at": "2026-10-17T15:17:21Z",
+      "updated_at": "2026-10-17T15:17:22Z"
     }
   }
 }
