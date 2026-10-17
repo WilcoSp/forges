@@ -32,6 +32,7 @@ import type {
   MergeMethod,
   MergeOptions,
   MergeResult,
+  Milestone,
   Notification,
   NotificationListOptions,
   NotificationRef,
@@ -46,6 +47,8 @@ import type {
   RepoRef,
   RepoRole,
   RepoSearchQuery,
+  RepoTemplate,
+  RepoTemplateOptions,
   ResolvedThreadRef,
   Review,
   ReviewEvent,
@@ -360,7 +363,34 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
     return []
   }
 
+  /** When each polled path may be read again, from GitHub's `X-Poll-Interval`. */
+  const nextPoll = new Map<string, number>()
+
+  function throttledPage<T>(path: string, listOptions: { cursor?: Cursor, force?: boolean }, subject: string): Page<T> | undefined {
+    const at = nextPoll.get(path) ?? 0
+    const wait = at - Date.now()
+    if (!isFirstPage(listOptions.cursor) || listOptions.force || wait <= 0) {
+      return undefined
+    }
+    const warning = { code: 'feed_throttled', message: `GitHub asked to wait ${Math.ceil(wait / 1000)}s more before reading ${subject} again; no request was sent. Read it later, or pass force: true` }
+    return { items: [], throttled: true, nextPollAt: new Date(at), warnings: [warning], ...listOptions.cursor?.etag ? { etag: listOptions.cursor.etag } : {} }
+  }
+
+  function recordPoll(path: string, cursor: Cursor | undefined, response: Response): { nextPollAt?: Date } {
+    const interval = Number(response.headers.get('x-poll-interval'))
+    if (!isFirstPage(cursor) || !(interval > 0)) {
+      return {}
+    }
+    const at = Date.now() + interval * 1000
+    nextPoll.set(path, at)
+    return { nextPollAt: new Date(at) }
+  }
+
   async function notificationPage(listOptions: NotificationListOptions = {}): Promise<Page<Notification>> {
+    const throttled = throttledPage<Notification>('/notifications', listOptions, 'notifications')
+    if (throttled) {
+      return throttled
+    }
     const result = await fetcher.json<GitHubNotification[]>(listOptions.cursor?.nextUrl ?? '/notifications', {
       query: listOptions.cursor?.nextUrl
         ? undefined
@@ -381,6 +411,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       ...etag ? { etag } : {},
       notModified: result.notModified,
       warnings: warnings.length ? warnings : undefined,
+      ...recordPoll('/notifications', listOptions.cursor, result.response),
       ...rateLimitPart(result.response),
     }
   }
@@ -562,9 +593,17 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       if (query.assignee) {
         return { items: [], warnings: [{ code: 'filter_unsupported', message: 'Discussions have no assignees' }] }
       }
+      if (query.milestone && query.milestone !== 'none') {
+        return { items: [], warnings: [{ code: 'filter_unsupported', message: 'Discussions have no milestones' }] }
+      }
       const warnings: ForgeWarning[] = isFirstPage(query.cursor) && query.sort === 'comments'
         ? [{ code: 'sort_unsupported', message: 'Discussions cannot be sorted by comments; sorted by update time' }]
         : []
+      for (const filter of ['involves', 'mentions'] as const) {
+        if (isFirstPage(query.cursor) && query[filter]) {
+          warnings.push({ code: 'filter_unsupported', message: `GitHub lists discussions without a ${filter} filter; it was ignored` })
+        }
+      }
       const data: { repository: { discussions: { pageInfo: { hasNextPage: boolean, endCursor: string | null }, nodes: GraphQLDiscussion[] } } | null } = await graphql('DISCUSSIONS_LIST', {
         owner: repo.owner,
         name: repo.name,
@@ -597,7 +636,12 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         assignee: query.assignee,
         involves: query.involves,
         since: query.since,
-        queryRaw: `is:merged${query.createdAfter ? ` created:>=${query.createdAfter.toISOString()}` : ''}`,
+        queryRaw: [
+          'is:merged',
+          query.createdAfter && `created:>=${query.createdAfter.toISOString()}`,
+          query.mentions && `mentions:${query.mentions}`,
+          query.milestone && (query.milestone === 'none' ? 'no:milestone' : `milestone:"${query.milestone.replaceAll('"', '')}"`),
+        ].filter(Boolean).join(' '),
         sort: query.sort ?? 'created',
         direction,
         perPage: query.perPage,
@@ -607,14 +651,25 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       await withPullChecks(page, query)
       return page
     }
-    // `/pulls` returns full pages but has no label, author, assignee or since filter.
-    const pullsOnly = query.kind === 'pull_request' && !query.labels?.length && !query.author && !query.assignee && !query.since && query.sort !== 'comments'
+    const milestone = query.milestone === undefined || query.milestone === 'none' || !isFirstPage(query.cursor)
+      ? query.milestone
+      : await milestoneNumber(repo, query.milestone, query)
+    if (milestone === null) {
+      return { items: [] }
+    }
+    const warnings: ForgeWarning[] = isFirstPage(query.cursor) && query.involves
+      ? [{ code: 'filter_unsupported', message: 'GitHub lists issues and pull requests without an involves filter; it was ignored. search.threads() has one' }]
+      : []
+    // `/pulls` returns full pages but has no label, author, assignee, mention, milestone or since filter.
+    const pullsOnly = query.kind === 'pull_request' && !query.labels?.length && !query.author && !query.assignee && !query.mentions && !query.milestone && !query.since && query.sort !== 'comments'
     const result = await fetcher.page<GitHubIssue>(`${repoPath(repo)}/${pullsOnly ? 'pulls' : 'issues'}`, {
       query: {
         state,
         labels: query.labels?.join(','),
         creator: query.author,
         assignee: query.assignee,
+        mentioned: query.mentions,
+        milestone,
         since: query.since?.toISOString(),
         sort: query.sort ?? 'created',
         direction,
@@ -633,7 +688,18 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
     })
     const ordered = (query.sort ?? 'created') === 'created' && direction === 'desc'
     await withPullChecks(page, query)
-    return ordered && (result.data ?? []).some(older) ? { ...page, cursor: undefined } : page
+    const listed = warnings.length ? { ...page, warnings: [...warnings, ...page.warnings ?? []] } : page
+    return ordered && (result.data ?? []).some(older) ? { ...listed, cursor: undefined } : listed
+  }
+
+  /** The number of the milestone titled `title`, or `null` when the repository has none by that title. */
+  async function milestoneNumber(repo: RepoRef, title: string, options: BaseOptions): Promise<string | null> {
+    for await (const milestone of iteratePages<Milestone, MilestoneListOptions>(page => milestonesPage(repo, page), { state: 'all', signal: options.signal })) {
+      if (milestone.title === title) {
+        return milestone.id
+      }
+    }
+    return null
   }
 
   /** Fills `checks`, and a missing `commentCount`, on every pull in the page with one batched read. */
@@ -1254,27 +1320,19 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
     }), warnings)
   }
 
-  /** When each feed may be read again, from GitHub's `X-Poll-Interval`. */
-  const nextPoll = new Map<string, number>()
-
   async function feedPage(path: string, listOptions: EventFeedOptions = {}): Promise<Page<ForgeEventInput>> {
-    const first = isFirstPage(listOptions.cursor)
-    const wait = (nextPoll.get(path) ?? 0) - Date.now()
-    if (first && !listOptions.force && wait > 0) {
-      const warning = { code: 'feed_throttled', message: `GitHub asked to wait ${Math.ceil(wait / 1000)}s more before reading this feed again; no request was sent. Read it later, or pass force: true` }
-      return { items: [], throttled: true, warnings: [warning], ...listOptions.cursor?.etag ? { etag: listOptions.cursor.etag } : {} }
+    const throttled = throttledPage<ForgeEventInput>(path, listOptions, 'this feed')
+    if (throttled) {
+      return throttled
     }
     const result = await fetcher.page<GitHubFeedEvent>(path, {
       query: { per_page: listOptions.perPage },
       cursor: listOptions.cursor,
       signal: listOptions.signal,
     })
-    const interval = Number(result.response.headers.get('x-poll-interval'))
-    if (first && interval > 0) {
-      nextPoll.set(path, Date.now() + interval * 1000)
-    }
+    const poll = recordPoll(path, listOptions.cursor, result.response)
     const { toFeedEvent } = await import('./events.ts')
-    return toPage(result, raw => toFeedEvent(instance, raw))
+    return { ...toPage(result, raw => toFeedEvent(instance, raw)), ...poll }
   }
 
   function createInstallationsApi(app: AppCredentials): Omit<InstallationsApi, 'list' | 'repos'> {
@@ -1337,6 +1395,18 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       ? data.content
       : (await fetcher.json<GitHubBlob>(`${repoPath(repo)}/git/blobs/${data.sha}`, { signal: fileOptions.signal })).data.content
     return toFileContent(fromBase64(content), file, fileOptions, context)
+  }
+
+  async function templates(repo: RepoRef, options: RepoTemplateOptions = {}): Promise<RepoTemplate[]> {
+    const signal = options.signal
+    return (await import('./templates.ts')).readTemplates(repo, options.kind ? [options.kind] : ['issue', 'pull_request'], {
+      list: async (ref, path) => {
+        const { data } = await fetcher.json<GitHubContentFile[] | GitHubContentFile>(`${repoPath(ref)}/contents${path ? `/${path.split('/').map(encodeURIComponent).join('/')}` : ''}`, { signal })
+        return Array.isArray(data) ? data : []
+      },
+      read: async (ref, path) => (await readFile(ref, path, { as: 'text', signal })).content as string,
+      repository: async ref => (await fetcher.json<GitHubRepositoryDetail>(repoPath(ref), { signal })).data,
+    })
   }
 
   async function treePage(repo: RepoRef, treeOptions: TreeOptions = {}): Promise<Page<TreeEntry>> {
@@ -1819,6 +1889,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       collaboratorsPage: verb(!anonymous, (repo, listOptions = {}) => list(`${repoPath(repo)}/collaborators`, listOptions, (raw: GitHubCollaborator) => toCollaborator(instance, raw))),
       contributorsPage: verb(true, (repo, listOptions = {}) => list(`${repoPath(repo)}/contributors`, listOptions, (raw: GitHubContributor) => toContributor(instance, raw), { query: { anon: 1 } })),
       contributorStats: verb(true, contributorStats),
+      templates: verb(true, templates),
       permissionFor: verb(!anonymous, async (repo, actor, options) => {
         const { data } = await fetcher.json<{ permission?: string, role_name?: string, user?: GitHubCollaborator }>(
           `${repoPath(repo)}/collaborators/${encodeURIComponent(actorLogin(actor))}/permission`,
@@ -1878,6 +1949,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       get: perKind({ issue: true, pull_request: true, discussion: !anonymous, commit: true }, get),
       getMany: verb(true, getMany),
       listPage: perKind({ ...ISSUE_LIKE, discussion: !anonymous }, listPage),
+      listFilters: ['involves', 'mentions', 'milestone'],
       eventsPage: verb(true, async (thread: ThreadRef, listOptions: ListOptions = {}): Promise<Page<ForgeEventInput>> => {
         const ref = requireThread(thread, context)
         if (ref.kind === 'discussion') {

@@ -84,8 +84,9 @@ import type {
 } from './types.ts'
 import { eventTime, reviewState } from '../events.ts'
 import { REACTION_CONTENTS } from '../model.ts'
-import { checkRunState, toDate, toFileStatus, toPullStats } from '../utils.ts'
+import { checkRunState, latestCommentOf, toDate, toFileStatus, toPullStats } from '../utils.ts'
 import { eventKindsOf } from '../webhooks.ts'
+import { toAuthorAssociation } from './association.ts'
 import { GITHUB_NATIVE_EVENTS } from './webhook-events.ts'
 
 export const FORGE = 'github' as const
@@ -390,9 +391,11 @@ export function toSubject(instance: string, raw: GitHubNotification): Notificati
 }
 
 export function toNotification(instance: string, raw: GitHubNotification): Notification {
+  const subject = toSubject(instance, raw)
+  const latestComment = latestCommentOf(subject, raw.subject.latest_comment_url)
   return {
     ref: { forge: FORGE, instance, id: raw.id },
-    subject: toSubject(instance, raw),
+    subject,
     subjectTypeRaw: raw.subject.type,
     reason: toReason(raw.reason),
     reasonRaw: raw.reason,
@@ -402,6 +405,7 @@ export function toNotification(instance: string, raw: GitHubNotification): Notif
     updatedAt: toDate(raw.updated_at) ?? new Date(0),
     lastReadAt: toDate(raw.last_read_at),
     url: raw.subject.url ?? raw.url,
+    ...latestComment ? { latestComment } : {},
     raw,
   }
 }
@@ -446,6 +450,7 @@ export function toThread(ref: ResolvedThreadRef, raw: GitHubIssue): Thread {
     stateReason: raw.state_reason ?? undefined,
     isDraft: raw.draft ?? false,
     author: toActor(ref.instance, raw.user),
+    ...toAuthorAssociation(raw.author_association),
     assignees: (raw.assignees ?? []).flatMap(user => toActor(ref.instance, user) ?? []),
     reviewers: toReviewers(ref.instance, raw),
     labels: toLabels(raw.labels),
@@ -477,6 +482,7 @@ export function toComment(thread: ResolvedThreadRef, raw: GitHubComment): Commen
     ref: { forge: FORGE, instance: thread.instance, thread, id: String(raw.id) },
     body: raw.body ?? '',
     author: toActor(thread.instance, raw.user),
+    ...toAuthorAssociation(raw.author_association),
     createdAt: toDate(raw.created_at),
     updatedAt: toDate(raw.updated_at),
     url: raw.html_url,

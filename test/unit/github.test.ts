@@ -9,7 +9,7 @@ import { graphqlOperations, graphqlUrl } from '../../src/github/graphql-client.t
 import { github } from '../../src/github/index.ts'
 import { toEvent, toNotification, toReason, toRepo } from '../../src/github/normalise.ts'
 import { commentMarker, notificationThread } from '../../src/model.ts'
-import { fixtureFetch, loadFixtures } from '../utils/fixtures.ts'
+import { contentsFile, contentsListing, fixtureFetch, loadFixtures } from '../utils/fixtures.ts'
 
 const { privateKey } = generateKeyPairSync('rsa', {
   modulusLength: 2048,
@@ -147,6 +147,24 @@ describe('github provider', () => {
     })
   })
 
+  it('links the latest comment only when the notification names an issue comment', () => {
+    const notification = (latest: string | null) => toNotification('github.com', {
+      id: '901234572',
+      unread: true,
+      reason: 'comment',
+      updated_at: '2025-09-18T09:12:44Z',
+      last_read_at: null,
+      url: 'https://api.github.com/notifications/threads/901234572',
+      repository: { name: 'widgets', full_name: 'acme/widgets' },
+      subject: { title: 'Bug', url: 'https://api.github.com/repos/acme/widgets/pulls/7', latest_comment_url: latest, type: 'PullRequest' },
+    })
+
+    expect(notification('https://api.github.com/repos/acme/widgets/issues/comments/770001').latestComment).toMatchObject({ id: '770001', thread: { kind: 'pull_request', number: '7' } })
+    expect(notification('https://api.github.com/repos/acme/widgets/pulls/7').latestComment).toBeUndefined()
+    expect(notification('https://api.github.com/repos/acme/widgets/pulls/comments/880001').latestComment).toBeUndefined()
+    expect(notification(null).latestComment).toBeUndefined()
+  })
+
   it('refuses to address an unresolved or other thread', async () => {
     const { provider } = tokenProvider()
     await expect(provider.threads.get({ ...pull, number: undefined })).rejects.toThrow(UnresolvedThreadError)
@@ -245,6 +263,17 @@ describe('github discussions', () => {
       ['comment', 'DiscussionComment', false],
       ['comment', 'DiscussionCommentReply', true],
     ])
+  })
+
+  it('names a bot from GraphQL as the REST API does', async () => {
+    const { provider } = tokenProvider()
+    const events = []
+    for await (const event of provider.threads.events(discussion)) {
+      events.push(event)
+    }
+
+    expect(events[1]!.actor).toMatchObject({ login: 'github-actions[bot]', id: '41898282', app: { slug: 'github-actions' } })
+    expect(events[0]!.actor).not.toHaveProperty('app')
   })
 
   it('looks up the node id once before mutating a discussion without one', async () => {
@@ -746,6 +775,180 @@ describe('github contributor statistics', () => {
   })
 })
 
+describe('github templates', () => {
+  const api = 'https://api.github.com/repos/acme'
+  const missing = { status: 404, body: { message: 'Not Found' } }
+  const dotGithub = (visibility = 'public') => ({ status: 200, body: { name: '.github', full_name: 'acme/.github', owner: { login: 'acme' }, private: visibility !== 'public', visibility } })
+
+  it('takes the pull request template from `.github` over the root and `docs`', async () => {
+    const { provider, calls } = tokenProvider({
+      [`GET ${api}/widgets/contents`]: contentsListing('.github/', 'docs/', 'pull_request_template.md'),
+      [`GET ${api}/widgets/contents/.github`]: contentsListing('.github/ISSUE_TEMPLATE/', '.github/PULL_REQUEST_TEMPLATE.md'),
+      [`GET ${api}/widgets/contents/docs`]: contentsListing('docs/pull_request_template.md'),
+      [`GET ${api}/widgets/contents/.github/ISSUE_TEMPLATE`]: contentsListing('.github/ISSUE_TEMPLATE/bug.yml', '.github/ISSUE_TEMPLATE/config.yml', '.github/ISSUE_TEMPLATE/question.md'),
+      [`GET ${api}/widgets/contents/.github/ISSUE_TEMPLATE/bug.yml`]: contentsFile('.github/ISSUE_TEMPLATE/bug.yml', 'name: Bug\nbody: []\n'),
+      [`GET ${api}/widgets/contents/.github/ISSUE_TEMPLATE/question.md`]: contentsFile('.github/ISSUE_TEMPLATE/question.md', '---\nname: Question\n---\nAsk away'),
+      [`GET ${api}/widgets/contents/.github/PULL_REQUEST_TEMPLATE.md`]: contentsFile('.github/PULL_REQUEST_TEMPLATE.md', '### Linked issue'),
+    })
+
+    const templates = await provider.repos.templates(repo)
+
+    expect(templates.map(({ kind, name, path, format, body, source }) => ({ kind, name, path, format, body, source }))).toEqual([
+      { kind: 'issue', name: 'bug.yml', path: '.github/ISSUE_TEMPLATE/bug.yml', format: 'form', body: 'name: Bug\nbody: []\n', source: undefined },
+      { kind: 'issue', name: 'question.md', path: '.github/ISSUE_TEMPLATE/question.md', format: 'markdown', body: '---\nname: Question\n---\nAsk away', source: undefined },
+      { kind: 'pull_request', name: 'PULL_REQUEST_TEMPLATE.md', path: '.github/PULL_REQUEST_TEMPLATE.md', format: 'markdown', body: '### Linked issue', source: undefined },
+    ])
+    expect(calls.some(call => call.url.includes('/acme/.github/'))).toBe(false)
+  })
+
+  it('falls back to the owner\'s `.github` repository only for the kinds the repository leaves out', async () => {
+    const { provider, calls } = tokenProvider({
+      [`GET ${api}/widgets/contents`]: contentsListing('.github/', 'README.md'),
+      [`GET ${api}/widgets/contents/.github`]: contentsListing('.github/ISSUE_TEMPLATE/'),
+      [`GET ${api}/widgets/contents/.github/ISSUE_TEMPLATE`]: contentsListing('.github/ISSUE_TEMPLATE/config.yml'),
+      [`GET ${api}/.github`]: dotGithub(),
+      [`GET ${api}/.github/contents`]: contentsListing('.github/', 'pull_request_template.md'),
+      [`GET ${api}/.github/contents/.github`]: contentsListing('.github/ISSUE_TEMPLATE/'),
+      [`GET ${api}/.github/contents/.github/ISSUE_TEMPLATE`]: contentsListing('.github/ISSUE_TEMPLATE/bug.yml'),
+      [`GET ${api}/.github/contents/.github/ISSUE_TEMPLATE/bug.yml`]: contentsFile('.github/ISSUE_TEMPLATE/bug.yml', 'name: Bug\n'),
+      [`GET ${api}/.github/contents/pull_request_template.md`]: contentsFile('pull_request_template.md', 'Thanks!'),
+    })
+
+    const templates = await provider.repos.templates(repo)
+
+    expect(templates).toEqual([expect.objectContaining({ kind: 'pull_request', path: 'pull_request_template.md', body: 'Thanks!', source: { forge: 'github', instance: 'github.com', owner: 'acme', name: '.github' } })])
+    expect(calls.map(call => new URL(call.url).pathname)).not.toContain('/repos/acme/.github/contents/.github/ISSUE_TEMPLATE')
+  })
+
+  it('still falls back for issues when the template folder holds nothing GitHub reads', async () => {
+    const { provider } = tokenProvider({
+      [`GET ${api}/widgets/contents`]: contentsListing('.github/'),
+      [`GET ${api}/widgets/contents/.github`]: contentsListing('.github/ISSUE_TEMPLATE/'),
+      [`GET ${api}/widgets/contents/.github/ISSUE_TEMPLATE`]: contentsListing('.github/ISSUE_TEMPLATE/README.txt'),
+      [`GET ${api}/.github`]: dotGithub(),
+      [`GET ${api}/.github/contents`]: contentsListing('.github/'),
+      [`GET ${api}/.github/contents/.github`]: contentsListing('.github/ISSUE_TEMPLATE/'),
+      [`GET ${api}/.github/contents/.github/ISSUE_TEMPLATE`]: contentsListing('.github/ISSUE_TEMPLATE/bug.yml'),
+      [`GET ${api}/.github/contents/.github/ISSUE_TEMPLATE/bug.yml`]: contentsFile('.github/ISSUE_TEMPLATE/bug.yml', 'name: Bug\n'),
+    })
+
+    const templates = await provider.repos.templates(repo, { kind: 'issue' })
+
+    expect(templates).toMatchObject([{ kind: 'issue', path: '.github/ISSUE_TEMPLATE/bug.yml', source: { name: '.github' } }])
+  })
+
+  it('rejects when the `.github` fallback fails, whether or not the repository has templates of its own', async () => {
+    const refused = { [`GET ${api}/.github`]: dotGithub(), [`GET ${api}/.github/contents`]: { status: 403, body: { message: 'Resource not accessible by integration' } } }
+    const own = {
+      [`GET ${api}/widgets/contents`]: contentsListing('PULL_REQUEST_TEMPLATE.md'),
+      [`GET ${api}/widgets/contents/PULL_REQUEST_TEMPLATE.md`]: contentsFile('PULL_REQUEST_TEMPLATE.md', 'What changed'),
+      ...refused,
+    }
+
+    await expect(tokenProvider(own).provider.repos.templates(repo)).rejects.toBeInstanceOf(InsufficientScopeError)
+    await expect(tokenProvider({ [`GET ${api}/widgets/contents`]: contentsListing('README.md'), ...refused }).provider.repos.templates(repo)).rejects.toBeInstanceOf(InsufficientScopeError)
+  })
+
+  it('finds nothing when the owner has no `.github` repository', async () => {
+    const { provider } = tokenProvider({
+      [`GET ${api}/widgets/contents`]: contentsListing('README.md'),
+      [`GET ${api}/.github`]: missing,
+    })
+
+    await expect(provider.repos.templates(repo)).resolves.toEqual([])
+  })
+
+  it('skips a private `.github` repository, and uses an internal one', async () => {
+    const fallback = {
+      [`GET ${api}/widgets/contents`]: contentsListing('README.md'),
+      [`GET ${api}/.github/contents`]: contentsListing('pull_request_template.md'),
+      [`GET ${api}/.github/contents/pull_request_template.md`]: contentsFile('pull_request_template.md', 'Thanks!'),
+    }
+
+    const hidden = tokenProvider({ ...fallback, [`GET ${api}/.github`]: dotGithub('private') })
+    await expect(hidden.provider.repos.templates(repo, { kind: 'pull_request' })).resolves.toEqual([])
+    expect(hidden.calls.map(call => new URL(call.url).pathname)).not.toContain('/repos/acme/.github/contents')
+    await expect(tokenProvider({ ...fallback, [`GET ${api}/.github`]: dotGithub('internal') }).provider.repos.templates(repo, { kind: 'pull_request' })).resolves.toMatchObject([{ body: 'Thanks!', source: { name: '.github' } }])
+  })
+
+  it('falls back to the `.github` repository of the owner a repository was transferred to', async () => {
+    const { provider, calls } = tokenProvider({
+      'GET https://api.github.com/repos/old/widgets/contents': { status: 200, body: [{ type: 'file', name: 'README.md', path: 'README.md', sha: 'f', url: 'https://api.github.com/repos/acme/widgets/contents/README.md?ref=main' }] },
+      [`GET ${api}/.github`]: dotGithub(),
+      [`GET ${api}/.github/contents`]: contentsListing('pull_request_template.md'),
+      [`GET ${api}/.github/contents/pull_request_template.md`]: contentsFile('pull_request_template.md', 'Thanks!'),
+    })
+
+    const templates = await provider.repos.templates({ ...repo, owner: 'old' }, { kind: 'pull_request' })
+
+    expect(templates).toMatchObject([{ body: 'Thanks!', source: { owner: 'acme', name: '.github' } }])
+    expect(calls.some(call => call.url.includes('/repos/old/.github'))).toBe(false)
+  })
+
+  it('falls back to `.github` for an empty repository', async () => {
+    const { provider } = tokenProvider({
+      [`GET ${api}/widgets/contents`]: { status: 404, body: { message: 'This repository is empty.' } },
+      [`GET ${api}/widgets`]: { status: 200, body: { name: 'widgets', full_name: 'acme/widgets', owner: { login: 'acme' } } },
+      [`GET ${api}/.github`]: dotGithub(),
+      [`GET ${api}/.github/contents`]: contentsListing('pull_request_template.md'),
+      [`GET ${api}/.github/contents/pull_request_template.md`]: contentsFile('pull_request_template.md', 'Thanks!'),
+    })
+
+    await expect(provider.repos.templates(repo, { kind: 'pull_request' })).resolves.toMatchObject([{ body: 'Thanks!', source: { name: '.github' } }])
+  })
+
+  it('lists issue forms before Markdown templates, as the template chooser does', async () => {
+    const { provider } = tokenProvider({
+      [`GET ${api}/widgets/contents`]: contentsListing('.github/'),
+      [`GET ${api}/widgets/contents/.github`]: contentsListing('.github/ISSUE_TEMPLATE/'),
+      [`GET ${api}/widgets/contents/.github/ISSUE_TEMPLATE`]: contentsListing('.github/ISSUE_TEMPLATE/a-question.md', '.github/ISSUE_TEMPLATE/b-bug.yml', '.github/ISSUE_TEMPLATE/c-idea.md', '.github/ISSUE_TEMPLATE/d-docs.yaml'),
+      [`GET ${api}/widgets/contents/.github/ISSUE_TEMPLATE/a-question.md`]: contentsFile('.github/ISSUE_TEMPLATE/a-question.md', 'Ask'),
+      [`GET ${api}/widgets/contents/.github/ISSUE_TEMPLATE/b-bug.yml`]: contentsFile('.github/ISSUE_TEMPLATE/b-bug.yml', 'name: Bug\n'),
+      [`GET ${api}/widgets/contents/.github/ISSUE_TEMPLATE/c-idea.md`]: contentsFile('.github/ISSUE_TEMPLATE/c-idea.md', 'Idea'),
+      [`GET ${api}/widgets/contents/.github/ISSUE_TEMPLATE/d-docs.yaml`]: contentsFile('.github/ISSUE_TEMPLATE/d-docs.yaml', 'name: Docs\n'),
+    })
+
+    const templates = await provider.repos.templates(repo, { kind: 'issue' })
+
+    expect(templates.map(template => template.name)).toEqual(['b-bug.yml', 'd-docs.yaml', 'a-question.md', 'c-idea.md'])
+  })
+
+  it('reads the legacy single issue template when the repository has no template folder', async () => {
+    const { provider } = tokenProvider({
+      [`GET ${api}/widgets/contents`]: contentsListing('ISSUE_TEMPLATE.md', 'PULL_REQUEST_TEMPLATE.md'),
+      [`GET ${api}/widgets/contents/ISSUE_TEMPLATE.md`]: contentsFile('ISSUE_TEMPLATE.md', 'Steps to reproduce'),
+      [`GET ${api}/widgets/contents/PULL_REQUEST_TEMPLATE.md`]: contentsFile('PULL_REQUEST_TEMPLATE.md', 'What changed'),
+    })
+
+    const templates = await provider.repos.templates(repo)
+
+    expect(templates.map(({ kind, path, format }) => ({ kind, path, format }))).toEqual([
+      { kind: 'issue', path: 'ISSUE_TEMPLATE.md', format: 'markdown' },
+      { kind: 'pull_request', path: 'PULL_REQUEST_TEMPLATE.md', format: 'markdown' },
+    ])
+  })
+
+  it('reads every template of a `PULL_REQUEST_TEMPLATE` folder after the default one', async () => {
+    const { provider } = tokenProvider({
+      [`GET ${api}/widgets/contents`]: contentsListing('docs/', 'pull_request_template.md'),
+      [`GET ${api}/widgets/contents/docs`]: contentsListing('docs/PULL_REQUEST_TEMPLATE/'),
+      [`GET ${api}/widgets/contents/docs/PULL_REQUEST_TEMPLATE`]: contentsListing('docs/PULL_REQUEST_TEMPLATE/hotfix.md'),
+      [`GET ${api}/widgets/contents/pull_request_template.md`]: contentsFile('pull_request_template.md', 'Default'),
+      [`GET ${api}/widgets/contents/docs/PULL_REQUEST_TEMPLATE/hotfix.md`]: contentsFile('docs/PULL_REQUEST_TEMPLATE/hotfix.md', 'Hotfix'),
+    })
+
+    const templates = await provider.repos.templates(repo, { kind: 'pull_request' })
+
+    expect(templates.map(template => template.body)).toEqual(['Default', 'Hotfix'])
+  })
+
+  it('rejects with NotFoundError for a repository that does not exist', async () => {
+    const { provider } = tokenProvider({ [`GET ${api}/widgets/contents`]: missing, [`GET ${api}/widgets`]: missing })
+
+    await expect(provider.repos.templates(repo)).rejects.toBeInstanceOf(NotFoundError)
+  })
+})
+
 describe('github reviews', () => {
   it('lists reviews with their inline comments and resolution state', async () => {
     const { provider, calls } = tokenProvider()
@@ -879,7 +1082,7 @@ describe('github checks and CI', () => {
     const { fetch } = fixtureFetch('github/recorded/github.com-app/steps/check')
     const provider = github({ auth: { type: 'token', token: 't' }, fetch }).create()
 
-    const page = await provider.checks.list({ forge: 'github', instance: 'github.com', owner: 'h3js', name: 'h3' }, 'dd84e37fca0559506ad97022b5ac9438b427e6e2')
+    const page = await provider.checks.list({ forge: 'github', instance: 'github.com', owner: 'h3js', name: 'h3' }, '04ba6e021cde76fa6fc0084866f231c575647beb')
 
     // The recording has seven check runs and one commit status.
     expect(page.items).toHaveLength(8)
@@ -1115,6 +1318,61 @@ describe('github release assets', () => {
   })
 })
 
+describe('github thread listing filters', () => {
+  function listing(milestones: Array<{ number: number, title: string }> = []) {
+    const urls: URL[] = []
+    const fetch = async (input: string | URL | Request) => {
+      const url = new URL(String(input))
+      urls.push(url)
+      const body = url.pathname.endsWith('/milestones')
+        ? milestones.map(milestone => ({ ...milestone, id: milestone.number, state: 'open' }))
+        : url.pathname.startsWith('/search/') ? { total_count: 0, items: [] } : []
+      return new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } })
+    }
+    return { urls, provider: github({ auth: { type: 'token', token: 't' }, fetch }).create() }
+  }
+
+  it('sends mentions and the number of the milestone titled in the query, reading pull requests from the issues listing', async () => {
+    const { urls, provider } = listing([{ number: 3, title: 'v2' }, { number: 7, title: '3' }])
+
+    await provider.threads.listPage(repo, { kind: 'pull_request', mentions: 'ada', milestone: '3' })
+
+    expect(urls.map(url => url.pathname)).toEqual(['/repos/acme/widgets/milestones', '/repos/acme/widgets/issues'])
+    expect(urls[0]!.searchParams.get('state')).toBe('all')
+    expect(urls[1]!.searchParams.get('mentioned')).toBe('ada')
+    expect(urls[1]!.searchParams.get('milestone')).toBe('7')
+  })
+
+  it('lists nothing for a milestone title the repository lacks, and passes none on', async () => {
+    const { urls, provider } = listing()
+
+    const missing = await provider.threads.listPage(repo, { milestone: 'v9' })
+    await provider.threads.listPage(repo, { milestone: 'none' })
+
+    expect(missing.items).toEqual([])
+    expect(urls.map(url => url.pathname)).toEqual(['/repos/acme/widgets/milestones', '/repos/acme/widgets/issues'])
+    expect(urls[1]!.searchParams.get('milestone')).toBe('none')
+  })
+
+  it('warns that the issues listing has no involves filter', async () => {
+    const { urls, provider } = listing()
+
+    const page = await provider.threads.listPage(repo, { involves: 'ada' })
+
+    expect(page.warnings?.map(warning => warning.code)).toEqual(['filter_unsupported'])
+    expect(urls[0]!.search).not.toContain('ada')
+  })
+
+  it('adds mentions and the milestone to the search behind merged pull requests', async () => {
+    const { urls, provider } = listing()
+
+    await provider.threads.listPage(repo, { state: 'merged', involves: 'ada', mentions: 'bob', milestone: 'v "2"' })
+
+    expect(urls[0]!.searchParams.get('q')).toContain('is:merged mentions:bob milestone:"v 2"')
+    expect(urls[0]!.searchParams.get('q')).toContain('involves:ada')
+  })
+})
+
 describe('github search', () => {
   it('translates a structured query into qualifiers and reads the repo from each result', async () => {
     const { provider, calls } = tokenProvider()
@@ -1303,6 +1561,22 @@ describe('github checks, releases and security alerts', () => {
     expect(result?.ok && result.thread.stats).toEqual({ additions: 24, deletions: 3, changedFileCount: 2, commitCount: 2 })
   })
 
+  it('reads when each pending review was last requested when reading several pull requests', async () => {
+    const { fetch } = fixtureFetch('github')
+    const provider = github({ auth: { type: 'token', token: 't' }, fetch }).create()
+    const [result] = await provider.threads.getMany([{ forge: 'github', instance: 'github.com', repo: widgets, kind: 'pull_request', number: '42' }])
+
+    expect(result?.ok && result.thread.reviewers?.map(reviewer => [reviewer.actor.login, reviewer.requestedAt])).toEqual([['hubot', new Date('2025-09-17T11:30:00Z')]])
+  })
+
+  it('reads how the author relates to the repository when reading several pull requests', async () => {
+    const { fetch } = fixtureFetch('github')
+    const provider = github({ auth: { type: 'token', token: 't' }, fetch }).create()
+    const [result] = await provider.threads.getMany([{ forge: 'github', instance: 'github.com', repo: widgets, kind: 'pull_request', number: '42' }])
+
+    expect(result?.ok && result.thread).toMatchObject({ authorAssociation: 'first_time_contributor', authorAssociationRaw: 'FIRST_TIME_CONTRIBUTOR' })
+  })
+
   it('reports a token missing a GraphQL scope on every thread it could not read', async () => {
     const message = 'Your token has not been granted the required scopes to execute this query.'
     const provider = github({
@@ -1312,6 +1586,16 @@ describe('github checks, releases and security alerts', () => {
     const results = await provider.threads.getMany([{ forge: 'github', instance: 'github.com', repo: widgets, kind: 'pull_request', number: '42' }, { forge: 'github', instance: 'github.com', repo: widgets, kind: 'issue', number: '7' }])
 
     expect(results.map(result => !result.ok && result.warning)).toEqual(Array.from({ length: 2 }, () => expect.objectContaining({ code: 'insufficient_scope', message: `GraphQL ThreadsBatch failed: ${message}`, cause: expect.objectContaining({ name: 'InsufficientScopeError' }) })))
+  })
+
+  it('reads the scopes that a GraphQL scope error names', async () => {
+    const message = 'Your token has not been granted the required scopes to execute this query. The \'email\' field requires one of the following scopes: [\'user:email\', \'read:user\'], but your token has only been granted the: [\'repo\'] scopes. Please modify your token\'s scopes at: https://github.com/settings/tokens.'
+    const provider = github({
+      auth: { type: 'token', token: 't' },
+      fetch: async () => Response.json({ errors: [{ type: 'INSUFFICIENT_SCOPES', message }] }),
+    }).create()
+
+    await expect(provider.graphql('query { viewer { email } }')).rejects.toMatchObject({ name: 'InsufficientScopeError', acceptedScopes: ['user:email', 'read:user'], grantedScopes: ['repo'] })
   })
 
   it('reports a missing GraphQL scope only on the thread whose alias was denied', async () => {

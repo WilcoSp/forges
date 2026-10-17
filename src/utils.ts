@@ -1,6 +1,6 @@
 import type { ForgeErrorContext } from './errors.ts'
 import type { Fetcher, FetchResult, PaginateOptions } from './fetch.ts'
-import type { Actor, BaseOptions, ChecksSummary, CheckState, Cursor, FileStatus, ForgeWarning, GetManyResult, ListOptions, MergeOptions, Milestone, Page, PageOptions, PullStats, RateLimit, RepoRef, ResolvedThreadRef, Review, ReviewState, Thread, ThreadRef } from './model.ts'
+import type { Actor, BaseOptions, ChecksSummary, CheckState, Cursor, FileStatus, ForgeWarning, GetManyResult, ListOptions, MergeOptions, Milestone, NotificationSubject, Page, PageOptions, PullStats, RateLimit, RepoRef, ResolvedCommentRef, ResolvedThreadRef, Review, ReviewState, Thread, ThreadRef } from './model.ts'
 import type { ForgeIterable, MilestoneListOptions, TokenAuth } from './provider.ts'
 import { ForgeApiError, ForgeError, RateLimitedError, TokenRevokedError, UnresolvedThreadError, UnsupportedOperationError } from './errors.ts'
 import { rateLimitOf } from './fetch.ts'
@@ -53,20 +53,27 @@ export function degradesToWarning(error: unknown): boolean {
   return error instanceof ForgeError && !(error instanceof RateLimitedError) && !(error instanceof TokenRevokedError)
 }
 
-/** Maps with at most `limit` calls in flight, preserving order. */
+/** Maps with at most `limit` calls in flight, preserving order. Once a call rejects, no further calls start. */
 export async function mapConcurrent<T, R>(items: readonly T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const results: R[] = Array.from({ length: items.length })
   let next = 0
+  let failed = false
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (next < items.length) {
+    while (!failed && next < items.length) {
       const index = next++
-      results[index] = await fn(items[index]!)
+      try {
+        results[index] = await fn(items[index]!)
+      }
+      catch (error) {
+        failed = true
+        throw error
+      }
     }
   }))
   return results
 }
 
-/** `threads.getMany` for forges without a batch endpoint. */
+/** `threads.getMany` for forges without a batch endpoint. A rate limit or a rejected credential rejects the call; other failures become per-item warnings. */
 export function getManyConcurrently(
   refs: ThreadRef[],
   get: (ref: ThreadRef, options?: BaseOptions) => Promise<Thread>,
@@ -78,9 +85,21 @@ export function getManyConcurrently(
       if (options.signal?.aborted) {
         throw options.signal.reason
       }
+      if (error instanceof ForgeError && !degradesToWarning(error)) {
+        throw error
+      }
       return { ok: false, ref, warning: toWarning(error instanceof UnresolvedThreadError ? 'thread_unresolved' : 'thread_unreadable', error, ref.number) }
     },
   ))
+}
+
+/** The issue comment that a notification's `latest_comment_url` names, for a thread subject with a number. */
+export function latestCommentOf(subject: NotificationSubject, url: string | null | undefined): ResolvedCommentRef | undefined {
+  const id = /\/issues\/comments\/(\d+)$/.exec(url ?? '')?.[1]
+  if (!id || subject.type !== 'thread' || !isResolvedThread(subject.thread)) {
+    return undefined
+  }
+  return { forge: subject.thread.forge, instance: subject.thread.instance, thread: subject.thread, id }
 }
 
 /** Compares dotted numeric versions, ignoring any suffix after the numbers. */

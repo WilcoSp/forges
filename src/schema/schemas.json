@@ -115,6 +115,21 @@
     "description": "The credential types that a provider can accept.",
     "x-forges-type": "AuthKind"
   },
+  "AuthorAssociation": {
+    "type": "string",
+    "enum": [
+      "owner",
+      "member",
+      "collaborator",
+      "contributor",
+      "first_time_contributor",
+      "first_timer",
+      "none",
+      "unknown"
+    ],
+    "description": "How the author of a thread or comment relates to its repository:\n\n- `owner` owns the repository.\n- `member` belongs to the organisation that owns it.\n- `collaborator` was invited to collaborate on it.\n- `contributor` has committed to it before.\n- `first_time_contributor` has not committed to it before.\n- `first_timer` has not committed to any repository on the forge before.\n- `none` has none of these, or is a placeholder for an unclaimed account.\n- `unknown` is an association with no normalised value; `authorAssociationRaw` names it.",
+    "x-forges-type": "AuthorAssociation"
+  },
   "Branch": {
     "type": "object",
     "properties": {
@@ -556,6 +571,14 @@
       },
       "author": {
         "$ref": "#/components/schemas/Actor"
+      },
+      "authorAssociation": {
+        "$ref": "#/components/schemas/AuthorAssociation",
+        "description": "How the author relates to the repository, where the forge reports it."
+      },
+      "authorAssociationRaw": {
+        "type": "string",
+        "description": "Forge-native association the normalised `authorAssociation` was derived from."
       },
       "createdAt": {
         "type": "string",
@@ -1434,6 +1457,10 @@
             "$ref": "#/components/schemas/Support",
             "description": "Support for `repos.contributorStats()`."
           },
+          "templates": {
+            "$ref": "#/components/schemas/Support",
+            "description": "Support for `repos.templates()`."
+          },
           "permissionFor": {
             "$ref": "#/components/schemas/Support",
             "description": "Support for `repos.permissionFor()`."
@@ -1465,6 +1492,7 @@
           "collaborators",
           "contributors",
           "contributorStats",
+          "templates",
           "permissionFor",
           "addCollaborator",
           "assignableUsers",
@@ -2529,6 +2557,10 @@
       "url": {
         "type": "string"
       },
+      "latestComment": {
+        "$ref": "#/components/schemas/ResolvedCommentRef",
+        "description": "The latest comment on a thread subject, where the forge links it. Read it with `threads.getComment()`. Absent when the latest activity is not a comment on the thread, such as a review comment."
+      },
       "raw": {
         "description": "Unnormalised forge payload, retained for fidelity."
       }
@@ -3347,6 +3379,103 @@
     "description": "A collaborator's role, highest first. `'none'` is an explicit absence of access.",
     "x-forges-type": "RepoRole"
   },
+  "RepoTemplate": {
+    "type": "object",
+    "properties": {
+      "kind": {
+        "type": "string",
+        "enum": [
+          "issue",
+          "pull_request"
+        ],
+        "description": "What the template opens."
+      },
+      "name": {
+        "type": "string",
+        "description": "The name of the template, where the forge's API parses one, or its file name."
+      },
+      "path": {
+        "type": "string",
+        "description": "The file the template lives in. Not available on GitLab."
+      },
+      "format": {
+        "type": "string",
+        "enum": [
+          "markdown",
+          "form"
+        ],
+        "description": "`'form'` for a form written in YAML, `'markdown'` for the rest."
+      },
+      "body": {
+        "type": "string",
+        "description": "The template as the repository stores it: Markdown with any front matter, or the YAML of a form."
+      },
+      "title": {
+        "type": "string",
+        "description": "The title a new thread starts with, where the forge parses one."
+      },
+      "about": {
+        "type": "string",
+        "description": "What the template is for, where the forge parses it."
+      },
+      "labels": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Labels a new thread gets, where the forge parses them."
+      },
+      "fields": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/RepoTemplateField"
+        },
+        "description": "The fields of a form, where the forge parses them."
+      },
+      "source": {
+        "$ref": "#/components/schemas/RepoRef",
+        "description": "Where the template comes from when the forge falls back to another repository, like GitHub's `.github`."
+      },
+      "raw": {}
+    },
+    "required": [
+      "kind",
+      "name",
+      "format",
+      "body",
+      "raw"
+    ],
+    "description": "An issue or pull request template of a repository, as `repos.templates()` reads it.",
+    "x-forges-type": "RepoTemplate"
+  },
+  "RepoTemplateField": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "description": "The kind of input, such as `'input'`, `'textarea'`, `'dropdown'`, `'checkboxes'` or `'markdown'`."
+      },
+      "id": {
+        "type": "string"
+      },
+      "attributes": {
+        "type": "object",
+        "additionalProperties": {},
+        "description": "The field's label, description, options and default value, as the form declares them."
+      },
+      "validations": {
+        "type": "object",
+        "additionalProperties": {},
+        "description": "Whether the field is required, and other checks the form declares."
+      }
+    },
+    "required": [
+      "type",
+      "attributes"
+    ],
+    "description": "One field of an issue form, as the forge parses it.",
+    "x-forges-type": "RepoTemplateField"
+  },
   "RepoVisibility": {
     "type": "string",
     "enum": [
@@ -3655,6 +3784,11 @@
       "isTeam": {
         "type": "boolean",
         "description": "True when the reviewer is a team rather than an account."
+      },
+      "requestedAt": {
+        "type": "string",
+        "format": "date-time",
+        "description": "When the pending review was last requested. Absent where the forge doesn't report it; on GitHub, `threads.getMany()` reports it."
       }
     },
     "required": [
@@ -3918,6 +4052,14 @@
       "author": {
         "$ref": "#/components/schemas/Actor"
       },
+      "authorAssociation": {
+        "$ref": "#/components/schemas/AuthorAssociation",
+        "description": "How the author relates to the repository, where the forge reports it."
+      },
+      "authorAssociationRaw": {
+        "type": "string",
+        "description": "Forge-native association the normalised `authorAssociation` was derived from."
+      },
       "assignees": {
         "type": "array",
         "items": {
@@ -3978,14 +4120,6 @@
           "$ref": "#/components/schemas/Actor"
         },
         "description": "Everyone who authored or commented on the thread, where the forge reports them."
-      },
-      "readState": {
-        "type": "string",
-        "enum": [
-          "read",
-          "unread"
-        ],
-        "description": "Whether the authenticated account has read the thread, where the forge tracks it per thread."
       },
       "subscription": {
         "$ref": "#/components/schemas/SubscriptionState",

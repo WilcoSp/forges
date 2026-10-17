@@ -1,6 +1,7 @@
 import type { Actor, ChecksSummary, Comment, Commit, CommitSignature, ForgeEventInput, Milestone, ReactionContent, RepoRef, ResolvedThreadRef, Reviewer, SubscriptionState, Thread } from '../model.ts'
 import { eventTime } from '../events.ts'
 import { toDate, toPullStats } from '../utils.ts'
+import { toAuthorAssociation } from './association.ts'
 
 // Not imported from normalise.ts: when two lazy chunks of a provider import from its main chunk, rolldown keeps the provider in bundles that never use it.
 const FORGE = 'github'
@@ -10,7 +11,7 @@ const ACTOR_FIELDS = `__typename login avatarUrl url ... on User { databaseId na
 const USER_FIELDS = `__typename login avatarUrl url databaseId name`
 
 const DISCUSSION_FIELDS = `id number title body closed stateReason url createdAt updatedAt closedAt locked
-      author { ${ACTOR_FIELDS} }
+      author { ${ACTOR_FIELDS} } authorAssociation
       labels(first: 50) { nodes { name color description } }
       comments { totalCount }`
 
@@ -37,7 +38,7 @@ export const UPDATE_DISCUSSION = `mutation UpdateDiscussion($id: ID!, $title: St
   updateDiscussion(input: { discussionId: $id, title: $title, body: $body }) { discussion { ${DISCUSSION_FIELDS} } }
 }`
 
-const COMMENT_FIELDS = `id databaseId body createdAt updatedAt url author { ${ACTOR_FIELDS} }`
+const COMMENT_FIELDS = `id databaseId body createdAt updatedAt url author { ${ACTOR_FIELDS} } authorAssociation`
 
 export const UPDATE_DISCUSSION_COMMENT = `mutation UpdateDiscussionComment($id: ID!, $body: String!) {
   updateDiscussionComment(input: { commentId: $id, body: $body }) { comment { ${COMMENT_FIELDS} } }
@@ -114,7 +115,7 @@ export interface SponsorableResult {
 }
 
 const ISSUE_FIELDS = `id number title body state stateReason createdAt updatedAt closedAt url locked
-      author { ${ACTOR_FIELDS} }
+      author { ${ACTOR_FIELDS} } authorAssociation
       assignees(first: 20) { nodes { ${USER_FIELDS} } }
       labels(first: 50) { nodes { name color description } }
       comments { totalCount }
@@ -123,7 +124,7 @@ const ISSUE_FIELDS = `id number title body state stateReason createdAt updatedAt
       viewerSubscription`
 
 const PULL_FIELDS = `id number title body state isDraft createdAt updatedAt closedAt mergedAt url locked
-      author { ${ACTOR_FIELDS} }
+      author { ${ACTOR_FIELDS} } authorAssociation
       mergedBy { ${ACTOR_FIELDS} }
       assignees(first: 20) { nodes { ${USER_FIELDS} } }
       labels(first: 50) { nodes { name color description } }
@@ -136,7 +137,8 @@ const PULL_FIELDS = `id number title body state isDraft createdAt updatedAt clos
       mergeCommit { oid }
       additions deletions changedFiles
       commits(last: 1) { totalCount nodes { commit { statusCheckRollup { state contexts { totalCount checkRunCountsByState { state count } statusContextCountsByState { state count } } } } } }
-      reviewRequests(first: 20) { nodes { requestedReviewer { __typename ... on User { login databaseId avatarUrl url } ... on Bot { login databaseId avatarUrl url } ... on Team { slug databaseId name url } } } }`
+      reviewRequests(first: 20) { nodes { requestedReviewer { __typename ... on User { login databaseId avatarUrl url } ... on Bot { login databaseId avatarUrl url } ... on Team { slug databaseId name url } } } }
+      timelineItems(itemTypes: [REVIEW_REQUESTED_EVENT], last: 20) { nodes { ... on ReviewRequestedEvent { createdAt requestedReviewer { __typename ... on User { login } ... on Bot { login } ... on Team { slug } } } } }`
 
 /** One aliased query reading many issues, pull requests and discussions. */
 export function threadsBatchQuery(refs: ResolvedThreadRef[]): { query: string, variables: Record<string, unknown> } {
@@ -194,6 +196,7 @@ export interface GraphQLIssueOrPull {
   url?: string
   locked?: boolean
   author?: GraphQLActor | null
+  authorAssociation?: string
   mergedBy?: GraphQLActor | null
   assignees?: { nodes: GraphQLActor[] }
   labels?: { nodes: GraphQLLabel[] }
@@ -212,6 +215,7 @@ export interface GraphQLIssueOrPull {
   changedFiles?: number
   commits?: { totalCount?: number, nodes: Array<{ commit: { statusCheckRollup?: GraphQLStatusRollup | null } }> }
   reviewRequests?: { nodes: Array<{ requestedReviewer: (GraphQLActor & { slug?: string }) | null }> }
+  timelineItems?: { nodes: Array<{ createdAt?: string, requestedReviewer?: { __typename: string, login?: string, slug?: string } | null }> }
 }
 
 export interface GraphQLStatusRollup {
@@ -243,6 +247,13 @@ export function toGraphQLThread(ref: ResolvedThreadRef, raw: GraphQLIssueOrPull)
   const isPull = raw.__typename === 'PullRequest'
   const kind = isPull ? 'pull_request' : 'issue'
   const state = raw.state === 'MERGED' ? 'merged' : raw.state === 'OPEN' ? 'open' : raw.state === 'CLOSED' ? 'closed' : 'unknown'
+  const requestedAt = new Map<string, string>()
+  for (const { createdAt, requestedReviewer } of raw.timelineItems?.nodes ?? []) {
+    const name = requestedReviewer?.slug ?? requestedReviewer?.login
+    if (createdAt && name) {
+      requestedAt.set(`${requestedReviewer!.__typename}:${name}`, createdAt)
+    }
+  }
   const reviewers: Reviewer[] = (raw.reviewRequests?.nodes ?? []).flatMap(({ requestedReviewer: reviewer }) => {
     if (!reviewer) {
       return []
@@ -251,7 +262,8 @@ export function toGraphQLThread(ref: ResolvedThreadRef, raw: GraphQLIssueOrPull)
     const actor = isTeam
       ? { forge: FORGE, instance, login: reviewer.slug ?? '', id: String(reviewer.databaseId ?? reviewer.slug), name: reviewer.name, url: reviewer.url, typeRaw: 'Team', isBotHint: false }
       : toGraphQLActor(instance, reviewer)!
-    return [{ actor, state: 'pending' as const, stateRaw: 'requested', ...isTeam ? { isTeam: true } : {} }]
+    const at = requestedAt.get(`${reviewer.__typename}:${isTeam ? reviewer.slug : reviewer.login}`)
+    return [{ actor, state: 'pending' as const, stateRaw: 'requested', ...isTeam ? { isTeam: true } : {}, ...at ? { requestedAt: new Date(at) } : {} }]
   })
   return {
     ref: { ...ref, kind, externalId: raw.id },
@@ -263,6 +275,7 @@ export function toGraphQLThread(ref: ResolvedThreadRef, raw: GraphQLIssueOrPull)
     stateReason: raw.stateReason?.toLowerCase() ?? undefined,
     isDraft: raw.isDraft ?? false,
     author: toGraphQLActor(instance, raw.author),
+    ...toAuthorAssociation(raw.authorAssociation),
     assignees: (raw.assignees?.nodes ?? []).flatMap(actor => toGraphQLActor(instance, actor) ?? []),
     participants: (raw.participants?.nodes ?? []).flatMap(actor => toGraphQLActor(instance, actor) ?? []),
     milestone: toGraphQLMilestone(raw.milestone),
@@ -319,8 +332,8 @@ export const DISCUSSION_COMMENTS = `query DiscussionComments($owner: String!, $n
         pageInfo { hasNextPage endCursor }
         nodes {
           id databaseId body createdAt url
-          author { ${ACTOR_FIELDS} }
-          replies(first: 50) { nodes { id databaseId body createdAt url author { ${ACTOR_FIELDS} } } }
+          author { ${ACTOR_FIELDS} } authorAssociation
+          replies(first: 50) { nodes { id databaseId body createdAt url author { ${ACTOR_FIELDS} } authorAssociation } }
         }
       }
     }
@@ -361,6 +374,7 @@ export interface GraphQLDiscussion {
   closedAt?: string | null
   locked?: boolean
   author?: GraphQLActor | null
+  authorAssociation?: string
   labels?: { nodes: Array<{ name: string, color?: string, description?: string | null }> }
   comments?: { totalCount: number }
 }
@@ -373,6 +387,7 @@ export interface GraphQLComment {
   updatedAt?: string
   url?: string
   author?: GraphQLActor | null
+  authorAssociation?: string
   replies?: { nodes: GraphQLComment[] }
 }
 
@@ -392,16 +407,19 @@ export function toGraphQLActor(instance: string, actor: GraphQLActor | null | un
   if (!actor) {
     return undefined
   }
+  const isBot = actor.__typename === 'Bot'
+  const slug = isBot ? actor.login.replace(/\[bot\]$/, '') : undefined
   return {
     forge: FORGE,
     instance,
-    login: actor.login,
+    login: slug ? `${slug}[bot]` : actor.login,
     id: String(actor.databaseId ?? actor.login),
     name: actor.name,
     avatarUrl: actor.avatarUrl,
     url: actor.url,
     typeRaw: actor.__typename,
-    isBotHint: actor.__typename === 'Bot' || actor.login.endsWith('[bot]'),
+    isBotHint: isBot || actor.login.endsWith('[bot]'),
+    ...slug ? { app: { slug } } : {},
   }
 }
 
@@ -416,6 +434,7 @@ export function toDiscussionThread(ref: ResolvedThreadRef, raw: GraphQLDiscussio
     stateReason: raw.stateReason?.toLowerCase(),
     isDraft: false,
     author: toGraphQLActor(ref.instance, raw.author),
+    ...toAuthorAssociation(raw.authorAssociation),
     assignees: [],
     reviewers: [],
     lastActivityAt: toDate(raw.updatedAt),
@@ -458,6 +477,7 @@ export function toDiscussionComment(thread: ResolvedThreadRef, raw: GraphQLComme
     ref: { forge: FORGE, instance: thread.instance, thread, id: raw.id },
     body: raw.body ?? '',
     author: toGraphQLActor(thread.instance, raw.author),
+    ...toAuthorAssociation(raw.authorAssociation),
     createdAt: toDate(raw.createdAt),
     updatedAt: toDate(raw.updatedAt),
     url: raw.url,

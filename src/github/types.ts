@@ -175,6 +175,7 @@ export interface GitHubIssue {
   updated_at?: string
   closed_at?: string | null
   user?: GitHubUser
+  author_association?: string
   labels?: Array<string | { name?: string, color?: string | null, description?: string | null }>
   assignees?: GitHubUser[] | null
   requested_reviewers?: GitHubUser[] | null
@@ -196,6 +197,7 @@ export interface GitHubComment {
   node_id?: string
   body?: string
   user?: GitHubUser | null
+  author_association?: string
   created_at?: string
   updated_at?: string
   html_url?: string
@@ -376,6 +378,7 @@ export interface GitHubContentFile {
   size?: number
   encoding?: string
   content?: string
+  url?: string
   html_url?: string | null
   download_url?: string | null
 }

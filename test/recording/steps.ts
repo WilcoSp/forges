@@ -284,6 +284,7 @@ export const STEPS: Step[] = [
   { name: 'milestones', verb: 'repos.milestonesPage', run: (provider, manifest) => provider.repos.milestonesPage(manifest.repo, page) },
   { name: 'collaborators', verb: 'repos.collaboratorsPage', run: (provider, manifest) => orScratch(manifest, repo => provider.repos.collaboratorsPage(repo, page)) },
   { name: 'contributors', verb: 'repos.contributorsPage', run: (provider, manifest) => provider.repos.contributorsPage(manifest.repo, page) },
+  { name: 'templates', verb: 'repos.templates', run: (provider, manifest) => provider.repos.templates(manifest.repo) },
   { name: 'contributor stats', verb: 'repos.contributorStats', run: (provider, manifest) => provider.repos.contributorStats(manifest.scratch ?? manifest.repo) },
   { name: 'assignable users', verb: 'repos.assignableUsersPage', run: (provider, manifest) => provider.repos.assignableUsersPage(manifest.repo, page) },
   { name: 'org teams', verb: 'orgs.teamsPage', run: async (provider, manifest, context) => {
@@ -298,6 +299,14 @@ export const STEPS: Step[] = [
     return { listed, read: await provider.threads.get(need(listed, 'a merged pull request').ref) }
   } },
   ...threadSteps('issue', 'issue'),
+  { name: 'issue list mentioning', verb: 'threads.listPage', kind: 'issue', when: (provider, manifest) => provider.forge === 'github' && !manifest.anonymous, run: (provider, manifest) => {
+    return provider.threads.listPage(manifest.repo, { kind: 'issue', state: 'all', mentions: manifest.feedUser ?? 'danielroe', ...page })
+  } },
+  { name: 'issue list in milestone', verb: 'threads.listPage', kind: 'issue', when: (provider, manifest) => provider.forge === 'github' && !manifest.anonymous, run: async (provider, manifest) => {
+    const repo = manifest.scratch ?? manifest.repo
+    const milestone = need((await provider.repos.milestonesPage(repo, page)).items[0], 'a milestone')
+    return provider.threads.listPage(repo, { kind: 'issue', state: 'all', milestone: milestone.title, ...page })
+  } },
   ...threadSteps('discussion', 'discussion'),
   ...commitSteps(),
   { name: 'permission', verb: 'repos.permissionFor', run: (provider, manifest, context) => orScratch(manifest, repo => provider.repos.permissionFor(repo, need(context.login, 'a login'))) },

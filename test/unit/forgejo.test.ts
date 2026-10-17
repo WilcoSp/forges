@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { NotFoundError, UnsupportedOperationError } from '../../src/errors.ts'
+import { NotFoundError, TokenRevokedError, UnsupportedOperationError } from '../../src/errors.ts'
 import { forgejo } from '../../src/forgejo/index.ts'
 import { gitea } from '../../src/gitea/index.ts'
-import { fixtureFetch, hangingFetch } from '../utils/fixtures.ts'
+import { contentsFile, contentsListing, fixtureFetch, hangingFetch } from '../utils/fixtures.ts'
 
 function provider(overrides = {}) {
   const { fetch, calls } = fixtureFetch('forgejo', overrides)
@@ -19,16 +19,13 @@ describe('forgejo provider', () => {
     expect(selfHosted.baseUrl).toBe('https://git.example.org/api/v1')
   })
 
-  it('emulates done as read plus unsubscribe', async () => {
+  it('emulates done as read, keeping the subscription', async () => {
     const { instance, calls } = provider()
 
     await instance.notifications!.markDone!({ forge: 'forgejo', instance: 'codeberg.org', id: '5512' })
 
     expect(calls.map(call => `${call.method} ${call.url}`)).toEqual([
       'PATCH https://codeberg.org/api/v1/notifications/threads/5512?to-status=read',
-      'GET https://codeberg.org/api/v1/notifications/threads/5512',
-      'GET https://codeberg.org/api/v1/user',
-      'DELETE https://codeberg.org/api/v1/repos/acme/widgets/issues/7/subscriptions/testuser',
     ])
   })
 
@@ -55,11 +52,10 @@ describe('forgejo provider', () => {
       number: '7',
     } as const
 
-    await instance.notifications!.markDone!({ forge: 'forgejo', instance: 'codeberg.org', id: '5512' }, { thread })
+    await instance.notifications!.unsubscribe!({ forge: 'forgejo', instance: 'codeberg.org', id: '5512' }, { thread })
     await instance.notifications!.unsubscribe!({ forge: 'forgejo', instance: 'codeberg.org', id: '5512' }, { thread })
 
     expect(calls.map(call => `${call.method} ${call.url}`)).toEqual([
-      'PATCH https://codeberg.org/api/v1/notifications/threads/5512?to-status=read',
       'GET https://codeberg.org/api/v1/user',
       'DELETE https://codeberg.org/api/v1/repos/acme/widgets/issues/7/subscriptions/testuser',
       'DELETE https://codeberg.org/api/v1/repos/acme/widgets/issues/7/subscriptions/testuser',
@@ -620,5 +616,137 @@ describe('forgejo organisation teams', () => {
 
     expect(anonymous.can('orgs.teams')).toBe(false)
     expect(anonymous.can('orgs.teamMembers')).toBe(false)
+  })
+})
+
+describe('forgejo templates', () => {
+  const repo = { forge: 'forgejo', instance: 'codeberg.org', owner: 'acme', name: 'widgets' } as const
+  const api = 'https://codeberg.org/api/v1/repos/acme/widgets'
+  const pullFiles = {
+    [`GET ${api}/contents`]: contentsListing('.forgejo/', '.github/', 'docs/'),
+    [`GET ${api}/contents/.forgejo`]: contentsListing('.forgejo/pull_request_template.md'),
+    [`GET ${api}/contents/.github`]: contentsListing('.github/PULL_REQUEST_TEMPLATE.md'),
+    [`GET ${api}/contents/docs`]: contentsListing('docs/pull_request_template.md'),
+    [`GET ${api}/contents/.forgejo/pull_request_template.md`]: contentsFile('.forgejo/pull_request_template.md', 'From .forgejo'),
+    [`GET ${api}/contents/.github/PULL_REQUEST_TEMPLATE.md`]: contentsFile('.github/PULL_REQUEST_TEMPLATE.md', 'From .github'),
+  }
+
+  it('reads an issue form as YAML, with the fields Forgejo parses from it', async () => {
+    const { instance } = provider({
+      [`GET ${api}/issue_templates`]: { status: 200, body: [{
+        name: 'Bug',
+        title: 'bug: ',
+        about: 'Something broke',
+        labels: ['bug'],
+        ref: 'refs/heads/',
+        content: '',
+        file_name: '.forgejo/issue_template/bug.yaml',
+        body: [{ type: 'textarea', id: 'what', attributes: { label: 'What happened?' }, validations: { required: true } }],
+      }] },
+      [`GET ${api}/contents/.forgejo/issue_template/bug.yaml`]: contentsFile('.forgejo/issue_template/bug.yaml', 'name: Bug\nbody: []\n'),
+    })
+
+    const templates = await instance.repos.templates(repo, { kind: 'issue' })
+
+    expect(templates).toEqual([expect.objectContaining({
+      kind: 'issue',
+      name: 'Bug',
+      path: '.forgejo/issue_template/bug.yaml',
+      format: 'form',
+      body: 'name: Bug\nbody: []\n',
+      title: 'bug: ',
+      about: 'Something broke',
+      labels: ['bug'],
+      fields: [{ type: 'textarea', id: 'what', attributes: { label: 'What happened?' }, validations: { required: true } }],
+    })])
+  })
+
+  it('reads the one pull request template the web UI would pick, `.forgejo` first', async () => {
+    const { instance } = provider(pullFiles)
+
+    const templates = await instance.repos.templates(repo, { kind: 'pull_request' })
+
+    expect(templates).toMatchObject([{ kind: 'pull_request', path: '.forgejo/pull_request_template.md', format: 'markdown', body: 'From .forgejo' }])
+  })
+
+  it('stops at a template in the root, which wins over every folder', async () => {
+    const { instance, calls } = provider({
+      [`GET ${api}/contents`]: contentsListing('.forgejo/', 'PULL_REQUEST_TEMPLATE.md'),
+      [`GET ${api}/contents/PULL_REQUEST_TEMPLATE.md`]: contentsFile('PULL_REQUEST_TEMPLATE.md', 'Prêt à merger ✓'),
+    })
+
+    const templates = await instance.repos.templates(repo, { kind: 'pull_request' })
+
+    expect(templates).toMatchObject([{ path: 'PULL_REQUEST_TEMPLATE.md', body: 'Prêt à merger ✓' }])
+    expect(calls.map(call => new URL(call.url).pathname)).not.toContain('/api/v1/repos/acme/widgets/contents/.forgejo')
+  })
+
+  it('skips the directories Gitea does not look in', async () => {
+    const { fetch, calls } = fixtureFetch('forgejo', Object.fromEntries(Object.entries(pullFiles).map(([key, response]) => [key.replace('codeberg.org', 'gitea.com'), response])))
+    const instance = gitea({ auth: { type: 'token', token: 't' }, fetch }).create()
+
+    const templates = await instance.repos.templates({ ...repo, forge: 'gitea', instance: 'gitea.com' }, { kind: 'pull_request' })
+
+    expect(templates).toMatchObject([{ path: '.github/PULL_REQUEST_TEMPLATE.md', body: 'From .github' }])
+    expect(calls.map(call => new URL(call.url).pathname)).not.toContain('/api/v1/repos/acme/widgets/contents/docs')
+  })
+})
+
+describe('forgejo thread listing filters', () => {
+  it('leaves out the filters the listing does not apply, with a warning on the first page only', async () => {
+    const urls: string[] = []
+    const fetch = async (input: string | URL | Request) => {
+      urls.push(String(input))
+      return new Response('[]', { headers: { 'content-type': 'application/json', 'link': '<https://codeberg.org/api/v1/repos/acme/widgets/issues?page=2>; rel="next"' } })
+    }
+    const instance = forgejo({ auth: { type: 'token', token: 't' }, fetch }).create()
+    const repo = { forge: 'forgejo', instance: 'codeberg.org', owner: 'acme', name: 'widgets' } as const
+
+    const first = await instance.threads.listPage(repo, { kind: 'issue', involves: 'ada', mentions: 'ada', milestone: 'v1' })
+    const next = await instance.threads.listPage(repo, { kind: 'issue', involves: 'ada', cursor: { nextUrl: 'https://codeberg.org/api/v1/repos/acme/widgets/issues?page=2' } })
+
+    expect(first.warnings?.filter(warning => warning.code === 'filter_unsupported').map(warning => warning.message)).toEqual([
+      'This listing has no involves filter; it was ignored',
+      'This listing has no mentions filter; it was ignored',
+      'This listing has no milestone filter; it was ignored',
+    ])
+    expect(next.warnings?.some(warning => warning.code === 'filter_unsupported')).toBeFalsy()
+    expect(urls.some(url => /ada|=v1/.test(url))).toBe(false)
+  })
+})
+
+describe('forgejo getMany', () => {
+  const repo = { forge: 'forgejo', instance: 'codeberg.org', owner: 'acme', name: 'widgets' } as const
+  const refs = Array.from({ length: 8 }, (_, index) => ({ forge: 'forgejo', instance: 'codeberg.org', repo, kind: 'issue', number: String(index + 1) }) as const)
+
+  function failing(status: number, headers: Record<string, string> = {}) {
+    const urls: string[] = []
+    const fetch = async (input: string | URL | Request) => {
+      urls.push(String(input))
+      return new Response('{"message":"refused"}', { status, headers: { 'content-type': 'application/json', ...headers } })
+    }
+    return { urls, instance: forgejo({ auth: { type: 'token', token: 't' }, fetch }).create() }
+  }
+
+  it('rejects a rejected credential instead of warning per thread, and starts no further reads', async () => {
+    const { urls, instance } = failing(401)
+
+    await expect(instance.threads.getMany(refs)).rejects.toBeInstanceOf(TokenRevokedError)
+    expect(urls.length).toBeLessThanOrEqual(4)
+  })
+
+  it('rejects a rate limit with its reset', async () => {
+    const reset = Math.floor(Date.now() / 1000) + 3600
+    const { instance } = failing(429, { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(reset) })
+
+    await expect(instance.threads.getMany(refs.slice(0, 1))).rejects.toMatchObject({ name: 'RateLimitedError', resetAt: new Date(reset * 1000) })
+  })
+
+  it('still turns a missing thread into a per-item warning', async () => {
+    const { instance } = failing(404)
+
+    const results = await instance.threads.getMany(refs.slice(0, 2))
+
+    expect(results.map(result => result.ok ? 'ok' : result.warning.code)).toEqual(['thread_unreadable', 'thread_unreadable'])
   })
 })

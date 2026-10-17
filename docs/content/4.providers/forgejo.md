@@ -43,7 +43,7 @@ forgejo({ baseUrl: 'https://git.example.com', auth })
 
 ## Marking notifications done
 
-Forgejo notifications have a read state but no done state. To give you `markDone()` anyway, the provider emulates it, which is why it is `'emulated'` in the capabilities. It marks the notification as read and unsubscribes you from the thread.
+Forgejo notifications have a read state but no done state. To give you `markDone()` anyway, the provider emulates it, which is why it is `'emulated'` in the capabilities. It marks the notification as read, so it leaves the unread listing, and you stay subscribed to the thread. A later change to the thread brings the notification back as unread. To stop those notifications as well, call `unsubscribe()`.
 
 ## Merging
 
@@ -76,6 +76,12 @@ With `files: false`, `contents.compare()` asks Forgejo to leave out the changed 
 Forgejo can't check the head of a branch as it commits, so with `expectedHead`, `contents.commitFiles()` reads the branch first and rejects with `BranchMovedError` when it has moved. A commit that lands between the two requests isn't caught. With `createFrom`, the provider creates the branch before the commit. If the commit fails, the provider deletes the branch again, unless it has moved since. Forgejo records `author` as the committer too.
 
 Forgejo refuses to write over a symlink, so a change with contents for one rejects with a `422` `ForgeApiError`. Deleting a symlink works.
+
+## Templates
+
+Issue templates come from Forgejo's API, which parses `title`, `about`, `labels` and the `fields` of a form. The provider reads each file once more for `body`, with its front matter or the YAML of the form.
+
+Pull request templates come from the files themselves. The provider picks the one file the web UI would fill a new pull request with: `PULL_REQUEST_TEMPLATE` or `pull_request_template`, as `.md`, `.yaml` or `.yml`, in the root, `.forgejo/`, `.gitea/`, `.github/` or `docs/`, in that order. Gitea looks only in the root, `.gitea/` and `.github/`. The provider takes the first file that exists without validating it, while the web UI skips a template it can't parse and tries the next.
 
 ## Listing an owner's repositories
 
@@ -148,6 +154,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `repos.collaborators` | ✅ | ❌ |
 | `repos.contributors` | ❌ | ❌ |
 | `repos.contributorStats` | ❌ | ❌ |
+| `repos.templates` | ✅ | ✅ |
 | `repos.permissionFor` | ✅ | ❌ |
 | `repos.addCollaborator` | ✅ | ❌ |
 | `repos.assignableUsers` | ✅ | ❌ |

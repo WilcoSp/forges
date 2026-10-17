@@ -136,6 +136,42 @@ export interface ContributorWeek {
   commits: number
 }
 
+/** An issue or pull request template of a repository, as `repos.templates()` reads it. */
+export interface RepoTemplate {
+  /** What the template opens. */
+  kind: 'issue' | 'pull_request'
+  /** The name of the template, where the forge's API parses one, or its file name. */
+  name: string
+  /** The file the template lives in. Not available on GitLab. */
+  path?: string
+  /** `'form'` for a form written in YAML, `'markdown'` for the rest. */
+  format: 'markdown' | 'form'
+  /** The template as the repository stores it: Markdown with any front matter, or the YAML of a form. */
+  body: string
+  /** The title a new thread starts with, where the forge parses one. */
+  title?: string
+  /** What the template is for, where the forge parses it. */
+  about?: string
+  /** Labels a new thread gets, where the forge parses them. */
+  labels?: string[]
+  /** The fields of a form, where the forge parses them. */
+  fields?: RepoTemplateField[]
+  /** Where the template comes from when the forge falls back to another repository, like GitHub's `.github`. */
+  source?: RepoRef
+  raw: unknown
+}
+
+/** One field of an issue form, as the forge parses it. */
+export interface RepoTemplateField {
+  /** The kind of input, such as `'input'`, `'textarea'`, `'dropdown'`, `'checkboxes'` or `'markdown'`. */
+  type: string
+  id?: string
+  /** The field's label, description, options and default value, as the form declares them. */
+  attributes: Record<string, unknown>
+  /** Whether the field is required, and other checks the form declares. */
+  validations?: Record<string, unknown>
+}
+
 /** What `repos.addCollaborator()` did. */
 export interface AddCollaboratorResult {
   /**
@@ -598,6 +634,11 @@ export interface Reviewer {
   stateRaw?: string
   /** True when the reviewer is a team rather than an account. */
   isTeam?: boolean
+  /**
+   * When the pending review was last requested. Absent where the forge doesn't report it; on GitHub,
+   * `threads.getMany()` reports it.
+   */
+  requestedAt?: Date
 }
 
 /** The branches of a pull request. */
@@ -1111,6 +1152,20 @@ export interface ForgeWarning {
   }
 }
 
+/**
+ * How the author of a thread or comment relates to its repository:
+ *
+ * - `owner` owns the repository.
+ * - `member` belongs to the organisation that owns it.
+ * - `collaborator` was invited to collaborate on it.
+ * - `contributor` has committed to it before.
+ * - `first_time_contributor` has not committed to it before.
+ * - `first_timer` has not committed to any repository on the forge before.
+ * - `none` has none of these, or is a placeholder for an unclaimed account.
+ * - `unknown` is an association with no normalised value; `authorAssociationRaw` names it.
+ */
+export type AuthorAssociation = 'owner' | 'member' | 'collaborator' | 'contributor' | 'first_time_contributor' | 'first_timer' | 'none' | 'unknown'
+
 /** An issue, pull request, discussion or commit conversation. */
 export interface Thread {
   ref: ResolvedThreadRef
@@ -1124,6 +1179,10 @@ export interface Thread {
   stateReason?: string
   isDraft: boolean
   author?: Actor
+  /** How the author relates to the repository, where the forge reports it. */
+  authorAssociation?: AuthorAssociation
+  /** Forge-native association the normalised `authorAssociation` was derived from. */
+  authorAssociationRaw?: string
   assignees: Actor[]
   /**
    * Reviewers the thread read reports. Some forges report outstanding requests
@@ -1146,8 +1205,6 @@ export interface Thread {
   commentCount?: number
   /** Everyone who authored or commented on the thread, where the forge reports them. */
   participants?: Actor[]
-  /** Whether the authenticated account has read the thread, where the forge tracks it per thread. */
-  readState?: 'read' | 'unread'
   /** The authenticated account's subscription, where the thread read already carries it. */
   subscription?: SubscriptionState
   milestone?: Milestone
@@ -1178,6 +1235,10 @@ export interface Comment {
   ref: ResolvedCommentRef
   body: string
   author?: Actor
+  /** How the author relates to the repository, where the forge reports it. */
+  authorAssociation?: AuthorAssociation
+  /** Forge-native association the normalised `authorAssociation` was derived from. */
+  authorAssociationRaw?: string
   createdAt?: Date
   updatedAt?: Date
   url?: string
@@ -1362,6 +1423,11 @@ export interface Notification {
   updatedAt: Date
   lastReadAt?: Date
   url?: string
+  /**
+   * The latest comment on a thread subject, where the forge links it. Read it with `threads.getComment()`.
+   * Absent when the latest activity is not a comment on the thread, such as a review comment.
+   */
+  latestComment?: ResolvedCommentRef
   /** Unnormalised forge payload, retained for fidelity. */
   raw: unknown
 }
@@ -1423,6 +1489,11 @@ export interface Page<T> {
    * page has no items and a `feed_throttled` warning; read it again later, or pass `force: true`.
    */
   throttled?: boolean
+  /**
+   * The earliest time the forge allows the first page to be read again, as GitHub sets with `X-Poll-Interval`.
+   * Until then, a read of the first page returns a `throttled` page unless it passes `force: true`.
+   */
+  nextPollAt?: Date
   /** The non-fatal problems that came up while reading the page. */
   warnings?: ForgeWarning[]
 }
@@ -1450,6 +1521,12 @@ export interface NotificationListOptions extends ListOptions {
    * @default false
    */
   all?: boolean
+  /**
+   * Read the first page even when the forge asked to wait longer between reads, as GitHub does with
+   * `X-Poll-Interval`. Without it, such a read returns a `throttled` page.
+   * @default false
+   */
+  force?: boolean
 }
 
 /** Filters for `threads.list()`. */
@@ -1468,7 +1545,10 @@ export interface ThreadQuery extends PageOptions {
   author?: string
   /** Assignee login. */
   assignee?: string
-  /** Threads the login authored, is assigned, commented on or was mentioned in. */
+  /**
+   * Threads the login authored, is assigned, commented on or was mentioned in.
+   * A listing without this filter ignores it and warns with `filter_unsupported`, as for `mentions` and `milestone`.
+   */
   involves?: string
   /** Threads the login was mentioned in. */
   mentions?: string
@@ -1584,6 +1664,12 @@ export interface BaseOptions {
    * Writes the forge has already received are not undone.
    */
   signal?: AbortSignal
+}
+
+/** Options for `repos.templates()`. */
+export interface RepoTemplateOptions extends BaseOptions {
+  /** Only templates for this kind of thread. Defaults to both. */
+  kind?: 'issue' | 'pull_request'
 }
 
 /** Options for listings that take no filters: releases, installations, labels. */
@@ -1990,6 +2076,9 @@ export function affectedKeys(item: ForgeEvent | Notification): AffectedKeys {
         repo(subject.repo)
         break
     }
+    if (item.latestComment) {
+      comments.add(commentKey(item.latestComment))
+    }
   }
   else {
     repo(item.repo)
@@ -2109,7 +2198,7 @@ export interface Installation extends ForgeOrigin {
 }
 
 /** Every `Date` field in the model, by name. */
-export const DATE_FIELDS: ReadonlySet<string> = new Set(['closedAt', 'completedAt', 'createdAt', 'date', 'deliveredAt', 'dismissedAt', 'dueOn', 'expiresAt', 'lastActivityAt', 'lastReadAt', 'mergedAt', 'occurredAt', 'publishedAt', 'pushedAt', 'resetAt', 'startedAt', 'submittedAt', 'updatedAt', 'week'])
+export const DATE_FIELDS: ReadonlySet<string> = new Set(['closedAt', 'completedAt', 'createdAt', 'date', 'deliveredAt', 'dismissedAt', 'dueOn', 'expiresAt', 'lastActivityAt', 'lastReadAt', 'mergedAt', 'nextPollAt', 'occurredAt', 'publishedAt', 'pushedAt', 'requestedAt', 'resetAt', 'startedAt', 'submittedAt', 'updatedAt', 'week'])
 
 const UNNORMALISED_FIELDS: ReadonlySet<string> = new Set(['payload', 'raw'])
 
