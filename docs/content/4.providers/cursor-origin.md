@@ -100,7 +100,7 @@ Deliveries of `installation.*` events become `installation` events. You register
 | Capability | User token | App installation | App | Without credentials |
 | --- | --- | --- | --- | --- |
 | `experimental` | ✅ | ✅ | ✅ | ✅ |
-| `sources.poll` | ❌ | ❌ | ❌ | ❌ |
+| `sources.poll` | ∅ | ∅ | ∅ | ∅ |
 | `sources.webhook` | ✅ | ✅ | ✅ | ✅ |
 | `sources.subscribe` | ❌ | ❌ | ❌ | ❌ |
 | `repos.get` | experimental | experimental | ❌ | ❌ |
@@ -108,7 +108,7 @@ Deliveries of `installation.*` events become `installation` events. You register
 | `users.me` | ❌ | ❌ | ❌ | ❌ |
 | `users.sponsorable` | ❌ | ❌ | ❌ | ❌ |
 | `users.events` | ❌ | ❌ | ❌ | ❌ |
-| `users.block` | ❌ | ❌ | ❌ | ❌ |
+| `users.block` | ∅ | ∅ | ∅ | ∅ |
 | `repos.list` | unverified | unverified | ❌ | ❌ |
 | `repos.byOwner` | ❌ | ❌ | ❌ | ❌ |
 | `repos.labels` | ❌ | ❌ | ❌ | ❌ |
@@ -117,7 +117,7 @@ Deliveries of `installation.*` events become `installation` events. You register
 | `repos.collaborators` | ❌ | ❌ | ❌ | ❌ |
 | `repos.contributors` | ❌ | ❌ | ❌ | ❌ |
 | `repos.contributorStats` | ❌ | ❌ | ❌ | ❌ |
-| `repos.templates` | ❌ | ❌ | ❌ | ❌ |
+| `repos.templates` | ∅ | ∅ | ∅ | ∅ |
 | `repos.permissionFor` | ❌ | ❌ | ❌ | ❌ |
 | `repos.addCollaborator` | ❌ | ❌ | ❌ | ❌ |
 | `repos.assignableUsers` | ❌ | ❌ | ❌ | ❌ |
@@ -125,7 +125,7 @@ Deliveries of `installation.*` events become `installation` events. You register
 | `repos.events` | ❌ | ❌ | ❌ | ❌ |
 | `orgs.teams` | ❌ | ❌ | ❌ | ❌ |
 | `orgs.teamMembers` | ❌ | ❌ | ❌ | ❌ |
-| `orgs.block` | ❌ | ❌ | ❌ | ❌ |
+| `orgs.block` | ∅ | ∅ | ∅ | ∅ |
 | `threads.get` | PR (experimental) | PR (experimental) | ❌ | ❌ |
 | `threads.list` | PR (experimental) | PR (experimental) | ❌ | ❌ |
 | `threads.getMany` | experimental | experimental | ❌ | ❌ |
@@ -136,20 +136,20 @@ Deliveries of `installation.*` events become `installation` events. You register
 | `comments.get` | PR (unverified) | PR (unverified) | ❌ | ❌ |
 | `comments.edit` | PR (unverified) | PR (unverified) | ❌ | ❌ |
 | `comments.delete` | PR (unverified) | PR (unverified) | ❌ | ❌ |
-| `comments.hide` | ❌ | ❌ | ❌ | ❌ |
+| `comments.hide` | ∅ | ∅ | ∅ | ∅ |
 | `reactions.list` | ❌ | ❌ | ❌ | ❌ |
-| `notifications.list` | ❌ | ❌ | ❌ | ❌ |
-| `notifications.markRead` | ❌ | ❌ | ❌ | ❌ |
-| `notifications.markDone` | ❌ | ❌ | ❌ | ❌ |
-| `notifications.unsubscribe` | ❌ | ❌ | ❌ | ❌ |
-| `notifications.markAllRead` | ❌ | ❌ | ❌ | ❌ |
-| `notifications.markAllDone` | ❌ | ❌ | ❌ | ❌ |
-| `notifications.unreadCount` | ❌ | ❌ | ❌ | ❌ |
+| `notifications.list` | ∅ | ∅ | ∅ | ∅ |
+| `notifications.markRead` | ∅ | ∅ | ∅ | ∅ |
+| `notifications.markDone` | ∅ | ∅ | ∅ | ∅ |
+| `notifications.unsubscribe` | ∅ | ∅ | ∅ | ∅ |
+| `notifications.markAllRead` | ∅ | ∅ | ∅ | ∅ |
+| `notifications.markAllDone` | ∅ | ∅ | ∅ | ∅ |
+| `notifications.unreadCount` | ∅ | ∅ | ∅ | ∅ |
 | `writes.comment` | PR (experimental) | PR (experimental) | ❌ | ❌ |
 | `writes.upsertComment` | PR (unverified) | PR (unverified) | ❌ | ❌ |
 | `writes.close` | PR (experimental) | PR (experimental) | ❌ | ❌ |
 | `writes.reopen` | PR (experimental) | PR (experimental) | ❌ | ❌ |
-| `writes.lock` | ❌ | ❌ | ❌ | ❌ |
+| `writes.lock` | ∅ | ∅ | ∅ | ∅ |
 | `writes.create` | PR (unverified) | PR (unverified) | ❌ | ❌ |
 | `writes.update` | PR (unverified) | PR (unverified) | ❌ | ❌ |
 | `writes.setLabels` | PR (unverified) | PR (unverified) | ❌ | ❌ |
@@ -161,7 +161,7 @@ Deliveries of `installation.*` events become `installation` events. You register
 | `writes.requestReview` | PR (unverified) | PR (unverified) | ❌ | ❌ |
 | `writes.merge` | experimental | experimental | ❌ | ❌ |
 | `writes.approveAndMerge` | unverified | unverified | ❌ | ❌ |
-| `writes.updateBranch` | ❌ | ❌ | ❌ | ❌ |
+| `writes.updateBranch` | ∅ | ∅ | ∅ | ∅ |
 | `writes.transfer` | ❌ | ❌ | ❌ | ❌ |
 | `writes.markDuplicate` | ❌ | ❌ | ❌ | ❌ |
 | `subscriptions.get` | ❌ | ❌ | ❌ | ❌ |
@@ -195,13 +195,13 @@ Deliveries of `installation.*` events become `installation` events. You register
 | `reviews.approve` | unverified | unverified | ❌ | ❌ |
 | `reviews.reply` | ❌ | ❌ | ❌ | ❌ |
 | `reviews.resolveThread` | unverified | unverified | ❌ | ❌ |
-| `releases.list` | ❌ | ❌ | ❌ | ❌ |
-| `releases.get` | ❌ | ❌ | ❌ | ❌ |
-| `releases.latest` | ❌ | ❌ | ❌ | ❌ |
-| `releases.getByTag` | ❌ | ❌ | ❌ | ❌ |
-| `releases.downloadAsset` | ❌ | ❌ | ❌ | ❌ |
-| `releases.create` | ❌ | ❌ | ❌ | ❌ |
-| `releases.update` | ❌ | ❌ | ❌ | ❌ |
+| `releases.list` | ∅ | ∅ | ∅ | ∅ |
+| `releases.get` | ∅ | ∅ | ∅ | ∅ |
+| `releases.latest` | ∅ | ∅ | ∅ | ∅ |
+| `releases.getByTag` | ∅ | ∅ | ∅ | ∅ |
+| `releases.downloadAsset` | ∅ | ∅ | ∅ | ∅ |
+| `releases.create` | ∅ | ∅ | ∅ | ∅ |
+| `releases.update` | ∅ | ∅ | ∅ | ∅ |
 | `webhooks.list` | ❌ | ❌ | ❌ | ❌ |
 | `webhooks.create` | ❌ | ❌ | ❌ | ❌ |
 | `webhooks.update` | ❌ | ❌ | ❌ | ❌ |

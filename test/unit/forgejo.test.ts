@@ -538,7 +538,7 @@ describe('gitea review replies', () => {
   it('waits for Gitea 1.27 on a self-hosted instance, and Forgejo has no replies', () => {
     expect(gitea({ auth, baseUrl: 'https://git.example.org', instanceVersion: '1.26.4' }).create().capabilities.reviews.reply).toBe(false)
     expect(gitea({ auth, baseUrl: 'https://git.example.org', instanceVersion: '1.27.0' }).create().capabilities.reviews.reply).toBe(true)
-    expect(forgejo({ auth }).create().capabilities.reviews.reply).toBe(false)
+    expect(forgejo({ auth }).create().capabilities.reviews.reply).toBe('not_applicable')
   })
 
   it('asks for write scopes to reply', () => {
@@ -788,7 +788,7 @@ describe('forgejo and gitea moderation', () => {
     ])
     expect(instance.scopesFor('orgs.block')).toEqual({ token: ['write:organization'] })
     expect(instance.scopesFor('users.block')).toEqual({ token: ['write:user'] })
-    expect(instance.capabilities.writes.lock).toEqual({ issue: false, pull_request: false, discussion: false, commit: false })
+    expect(instance.capabilities.writes.lock).toEqual({ issue: 'not_applicable', pull_request: 'not_applicable', discussion: 'not_applicable', commit: 'not_applicable' })
   })
 
   it('blocks and unblocks an account on Gitea, and locks an issue or pull request with the reason Gitea names', async () => {

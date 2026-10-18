@@ -180,7 +180,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `comments.get` | issue, PR | issue, PR |
 | `comments.edit` | issue, PR | ❌ |
 | `comments.delete` | issue, PR | ❌ |
-| `comments.hide` | ❌ | ❌ |
+| `comments.hide` | ∅ | ∅ |
 | `reactions.list` | issue, PR | issue, PR |
 | `notifications.list` | ✅ | ❌ |
 | `notifications.markRead` | ✅ | ❌ |
@@ -193,7 +193,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `writes.upsertComment` | issue (emulated), PR (emulated) | ❌ |
 | `writes.close` | issue, PR | ❌ |
 | `writes.reopen` | issue, PR | ❌ |
-| `writes.lock` | ❌ | ❌ |
+| `writes.lock` | ∅ | ∅ |
 | `writes.create` | issue, PR | ❌ |
 | `writes.update` | issue, PR | ❌ |
 | `writes.setLabels` | issue, PR | ❌ |
@@ -215,7 +215,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `checks.list` | ✅ | ✅ |
 | `checks.get` | ❌ | ❌ |
 | `checks.report` | ✅ | ❌ |
-| `checks.rerun` | ❌ | ❌ |
+| `checks.rerun` | ∅ | ∅ |
 | `ci.runs` | ✅ | ✅ |
 | `ci.run` | ✅ | ✅ |
 | `ci.jobs` | ✅ | ✅ |
@@ -237,8 +237,8 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `reviews.create` | ✅ | ❌ |
 | `reviews.submit` | ✅ | ❌ |
 | `reviews.approve` | ✅ | ❌ |
-| `reviews.reply` | ❌ | ❌ |
-| `reviews.resolveThread` | ❌ | ❌ |
+| `reviews.reply` | ∅ | ∅ |
+| `reviews.resolveThread` | ∅ | ∅ |
 | `releases.list` | ✅ | ✅ |
 | `releases.get` | ✅ | ✅ |
 | `releases.latest` | ✅ | ✅ |
@@ -251,8 +251,8 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | `webhooks.update` | ✅ | ❌ |
 | `webhooks.delete` | ✅ | ❌ |
 | `webhooks.rotateSecret` | ✅ | ❌ |
-| `webhooks.deliveries` | ❌ | ❌ |
-| `webhooks.redeliver` | ❌ | ❌ |
+| `webhooks.deliveries` | ∅ | ∅ |
+| `webhooks.redeliver` | ∅ | ∅ |
 | `search.threads` | ✅ | ✅ |
 | `search.repos` | ✅ | ✅ |
 | `search.commits` | ❌ | ❌ |
