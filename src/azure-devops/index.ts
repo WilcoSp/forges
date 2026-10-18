@@ -471,9 +471,9 @@ function setupAzure({ options, instance, origin: context, fetcher, baseUrl }: Pr
       'users.block',
       'orgs.block',
       'repos.templates',
-      'comments.hide',
-      'writes.lock',
-      'writes.updateBranch',
+      'threads.hideComment',
+      'threads.lock',
+      'threads.updateBranch',
     ],
     search: { threadsPage: verb(!anonymous, searchThreadsPage) },
     repos: {
@@ -499,7 +499,7 @@ function setupAzure({ options, instance, origin: context, fetcher, baseUrl }: Pr
         teamsListing(team.org, `/${enc(team.id ?? team.slug)}/members`, listOptions, (member: AzureTeamMember) => toActor(instance, member.identity))),
     },
     contents: {
-      file: verb(true, async (repo, path, fileOptions = {}) => {
+      getFile: verb(true, async (repo, path, fileOptions = {}) => {
         const query = {
           path,
           download: 'true',
@@ -529,24 +529,6 @@ function setupAzure({ options, instance, origin: context, fetcher, baseUrl }: Pr
         return { items: data.value.map(toTag), ...rateLimitPart(response) }
       }),
       resolveRef: verb(true, (repo, ref, options) => resolveSha(repo, ref, options?.signal)),
-      commitsPage: verb(true, async (repo, query = {}) => {
-        const { data, response } = await fetcher.json<{ value: AzureCommit[] }>(`${repoPath(repo)}/commits`, {
-          query: {
-            'searchCriteria.itemVersion.version': query.ref,
-            'searchCriteria.itemPath': query.path,
-            'searchCriteria.author': query.author,
-            'searchCriteria.fromDate': query.since?.toISOString(),
-            'searchCriteria.toDate': query.until?.toISOString(),
-            '$top': query.perPage,
-          },
-          signal: query.signal,
-        })
-        return { items: data.value.map(raw => toCommit(repo, raw)), ...rateLimitPart(response) }
-      }),
-      commit: verb(true, async (repo, sha, options) => {
-        const { data } = await fetcher.json<AzureCommit>(`${repoPath(repo)}/commits/${sha}`, { query: { changeCount: 100 }, signal: options?.signal })
-        return toCommit(repo, data, (data.changes ?? []).filter(change => !change.item?.isFolder).map(toChangedFile))
-      }),
       compare: verb(true, async (repo, base, head, options) => {
         const { data } = await fetcher.json<AzureCommitDiffs>(`${repoPath(repo)}/diffs/commits`, {
           query: { baseVersion: base, baseVersionType: versionType(base), targetVersion: head, targetVersionType: versionType(head), $top: 1000 },
@@ -564,6 +546,26 @@ function setupAzure({ options, instance, origin: context, fetcher, baseUrl }: Pr
         }
       }),
       commitFiles: verb(true, commitFiles),
+    },
+    commits: {
+      listPage: verb(true, async (repo, query = {}) => {
+        const { data, response } = await fetcher.json<{ value: AzureCommit[] }>(`${repoPath(repo)}/commits`, {
+          query: {
+            'searchCriteria.itemVersion.version': query.ref,
+            'searchCriteria.itemPath': query.path,
+            'searchCriteria.author': query.author,
+            'searchCriteria.fromDate': query.since?.toISOString(),
+            'searchCriteria.toDate': query.until?.toISOString(),
+            '$top': query.perPage,
+          },
+          signal: query.signal,
+        })
+        return { items: data.value.map(raw => toCommit(repo, raw)), ...rateLimitPart(response) }
+      }),
+      get: verb(true, async ({ repo, sha }, options) => {
+        const { data } = await fetcher.json<AzureCommit>(`${repoPath(repo)}/commits/${sha}`, { query: { changeCount: 100 }, signal: options?.signal })
+        return toCommit(repo, data, (data.changes ?? []).filter(change => !change.item?.isFolder).map(toChangedFile))
+      }),
     },
     checks: {
       list: verb(true, async (repo, sha, options) => ({ items: (await fetcher.json<{ value: AzureStatus[] }>(`${repoPath(repo)}/commits/${sha}/statuses`, { signal: options?.signal })).data.value.map(raw => toStatusCheck(repo, raw)) })),
@@ -610,7 +612,7 @@ function setupAzure({ options, instance, origin: context, fetcher, baseUrl }: Pr
         }
         return toPullComment(thread, data, comment)
       }),
-      comment: perKind({ issue: 'experimental', pull_request: true }, async (thread, body, options) => {
+      createComment: perKind({ issue: 'experimental', pull_request: true }, async (thread, body, options) => {
         const ref = requireIssueOrPull(thread, context, 'comment on')
         if (ref.kind === 'issue') {
           const { data } = await fetcher.json<AzureWorkItemComment>(`${workItemPath(ref)}/comments`, { method: 'POST', json: { text: body }, query: { 'api-version': COMMENTS_API_VERSION }, signal: options?.signal })
@@ -619,7 +621,7 @@ function setupAzure({ options, instance, origin: context, fetcher, baseUrl }: Pr
         const { data } = await fetcher.json<AzureThread>(`${pullPath(ref)}/threads`, { method: 'POST', json: { comments: [{ parentCommentId: 0, content: body, commentType: 'text' }], status: 'active' }, signal: options?.signal })
         return toPullComment(ref, data, data.comments[0]!)
       }),
-      editComment: perKind({ issue: 'experimental', pull_request: true }, async (ref, body, options) => {
+      updateComment: perKind({ issue: 'experimental', pull_request: true }, async (ref, body, options) => {
         const thread = requireIssueOrPull(ref.thread, context, 'edit comments on')
         if (thread.kind === 'issue') {
           const { data } = await fetcher.json<AzureWorkItemComment>(`${workItemPath(thread)}/comments/${ref.id}`, { method: 'PATCH', json: { text: body }, query: { 'api-version': COMMENTS_API_VERSION }, signal: options?.signal })
@@ -803,4 +805,4 @@ const AZURE_DEVOPS: ProviderDefinition<AzureDevOpsOptions, undefined, true> = {
 }
 
 /** Creates an Azure DevOps provider for one organization on dev.azure.com, or a collection on Azure DevOps Server. */
-export const azureDevOps: ProviderFactoryFunction<AzureDevOpsOptions, true, 'azure-devops', false> = /* @__PURE__ */ defineForgeProvider(AZURE_DEVOPS)
+export const azureDevOps: ProviderFactoryFunction<AzureDevOpsOptions, true, 'azure-devops'> = /* @__PURE__ */ defineForgeProvider(AZURE_DEVOPS)

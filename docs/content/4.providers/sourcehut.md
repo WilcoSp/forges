@@ -30,7 +30,7 @@ import { sourcehut } from 'forges/sourcehut'
 
 const forge = sourcehut({
   auth: { type: 'token', token: process.env.SOURCEHUT_TOKEN! },
-}).create()
+})
 ```
 
 An OAuth 2.0 bearer token works too. Every service refuses reads without a token, so unlike most providers there are no anonymous reads.
@@ -43,7 +43,7 @@ Sourcehut usernames are written with a leading tilde, so a repository ref's `own
 
 ## Repositories and contents
 
-`repos.get()`, `repos.list()` and `repos.byOwner()` read `git.sr.ht`. `contents.file()`, `contents.tree()`, `contents.branches()`, `contents.tags()`, `contents.resolveRef()`, `contents.commits()` and `contents.commit()` read the same service. Sourcehut has no compare resolver, so `contents.compare()` is unsupported.
+`repos.get()`, `repos.list()` and `repos.byOwner()` read `git.sr.ht`. `contents.getFile()`, `contents.tree()`, `contents.branches()`, `contents.tags()`, `contents.resolveRef()`, `commits.list()` and `commits.get()` read the same service. Sourcehut has no compare resolver, so `contents.compare()` is unsupported.
 
 `repos.labels()` and `repos.permissionFor()` are `'emulated'` from the repository's `todo.sr.ht` tracker and its `git.sr.ht` access list. The access list is served only to the repository's owner and collaborators, so for anyone else `permissionFor()` falls back to what the repository's visibility allows. Sourcehut has no milestones, contributors, contributors statistics, assignable users or reviewer candidates.
 
@@ -59,7 +59,7 @@ Sourcehut's equivalent of a pull request is a patchset on a mailing list. There 
 
 ## Builds
 
-`builds.sr.ht` lists the builds of the authenticated account, not of one repository, so `ci.runs()` is `'emulated'` and warns that it ignores the repository. `ci.run()` reads one build, `ci.jobs()` lists its tasks, and `ci.log()` streams a task's log. A job ref must name its run, because a task has no top-level resolver.
+`builds.sr.ht` lists the builds of the authenticated account, not of one repository, so `ci.runs()` is `'emulated'` and warns that it ignores the repository. `ci.getRun()` reads one build, `ci.jobs()` lists its tasks, and `ci.log()` streams a task's log. A job ref must name its run, because a task has no top-level resolver.
 
 ## Accounts
 
@@ -79,8 +79,6 @@ Because a Sourcehut webhook sends the result of a GraphQL query that you registe
 | Capability | Support | Without credentials |
 | --- | --- | --- |
 | `experimental` | ❌ | ❌ |
-| `sources.poll` | ❌ | ❌ |
-| `sources.webhook` | ✅ | ❌ |
 | `sources.subscribe` | ❌ | ❌ |
 | `repos.get` | ✅ | ❌ |
 | `users.get` | ✅ | ❌ |
@@ -111,12 +109,41 @@ Because a Sourcehut webhook sends the result of a GraphQL query that you registe
 | `threads.closingIssues` | ❌ | ❌ |
 | `threads.closingPullRequests` | ❌ | ❌ |
 | `threads.events` | issue, PR | ❌ |
-| `comments.list` | issue, PR | ❌ |
-| `comments.get` | issue (emulated), PR (emulated) | ❌ |
-| `comments.edit` | ❌ | ❌ |
-| `comments.delete` | ❌ | ❌ |
-| `comments.hide` | ❌ | ❌ |
-| `reactions.list` | ❌ | ❌ |
+| `threads.comments` | issue, PR | ❌ |
+| `threads.getComment` | issue (emulated), PR (emulated) | ❌ |
+| `threads.createComment` | ❌ | ❌ |
+| `threads.updateComment` | ❌ | ❌ |
+| `threads.deleteComment` | ❌ | ❌ |
+| `threads.hideComment` | ❌ | ❌ |
+| `threads.reactions` | ❌ | ❌ |
+| `threads.react` | ❌ | ❌ |
+| `threads.create` | ❌ | ❌ |
+| `threads.update` | ❌ | ❌ |
+| `threads.close` | ❌ | ❌ |
+| `threads.reopen` | ❌ | ❌ |
+| `threads.lock` | ❌ | ❌ |
+| `threads.setLabels` | ❌ | ❌ |
+| `threads.addLabels` | ❌ | ❌ |
+| `threads.removeLabels` | ❌ | ❌ |
+| `threads.setMilestone` | ❌ | ❌ |
+| `threads.setAssignees` | ❌ | ❌ |
+| `threads.requestReview` | ❌ | ❌ |
+| `threads.merge` | ❌ | ❌ |
+| `threads.updateBranch` | ❌ | ❌ |
+| `threads.transfer` | ❌ | ❌ |
+| `threads.markDuplicate` | ❌ | ❌ |
+| `threads.subscription` | issue | ❌ |
+| `threads.subscribe` | ❌ | ❌ |
+| `threads.checks` | ❌ | ❌ |
+| `threads.files` | ❌ | ❌ |
+| `threads.commits` | ❌ | ❌ |
+| `threads.reviews` | ❌ | ❌ |
+| `threads.getReview` | ❌ | ❌ |
+| `threads.createReview` | ❌ | ❌ |
+| `threads.submitReview` | ❌ | ❌ |
+| `threads.approve` | ❌ | ❌ |
+| `threads.replyToReviewComment` | ❌ | ❌ |
+| `threads.resolveReviewThread` | ❌ | ❌ |
 | `notifications.list` | ❌ | ❌ |
 | `notifications.markRead` | ❌ | ❌ |
 | `notifications.markDone` | ❌ | ❌ |
@@ -124,54 +151,31 @@ Because a Sourcehut webhook sends the result of a GraphQL query that you registe
 | `notifications.markAllRead` | ❌ | ❌ |
 | `notifications.markAllDone` | ❌ | ❌ |
 | `notifications.unreadCount` | ❌ | ❌ |
-| `writes.comment` | ❌ | ❌ |
-| `writes.close` | ❌ | ❌ |
-| `writes.reopen` | ❌ | ❌ |
-| `writes.lock` | ❌ | ❌ |
-| `writes.create` | ❌ | ❌ |
-| `writes.update` | ❌ | ❌ |
-| `writes.setLabels` | ❌ | ❌ |
-| `writes.addLabels` | ❌ | ❌ |
-| `writes.removeLabels` | ❌ | ❌ |
-| `writes.setMilestone` | ❌ | ❌ |
-| `writes.react` | ❌ | ❌ |
-| `writes.setAssignees` | ❌ | ❌ |
-| `writes.requestReview` | ❌ | ❌ |
-| `writes.merge` | ❌ | ❌ |
-| `writes.updateBranch` | ❌ | ❌ |
-| `writes.transfer` | ❌ | ❌ |
-| `writes.markDuplicate` | ❌ | ❌ |
-| `subscriptions.get` | issue | ❌ |
-| `subscriptions.set` | ❌ | ❌ |
-| `installations` | ❌ | ❌ |
-| `checks.thread` | ❌ | ❌ |
+| `installations.list` | ❌ | ❌ |
 | `checks.list` | ❌ | ❌ |
 | `checks.get` | ❌ | ❌ |
 | `checks.report` | ❌ | ❌ |
 | `checks.rerun` | ❌ | ❌ |
 | `ci.runs` | emulated | ❌ |
-| `ci.run` | ✅ | ❌ |
+| `ci.getRun` | ✅ | ❌ |
 | `ci.jobs` | ✅ | ❌ |
-| `ci.job` | emulated | ❌ |
+| `ci.getJob` | emulated | ❌ |
 | `ci.log` | ✅ | ❌ |
-| `contents.file` | ✅ | ❌ |
+| `contents.getFile` | ✅ | ❌ |
 | `contents.tree` | ✅ | ❌ |
 | `contents.branches` | ✅ | ❌ |
 | `contents.tags` | ✅ | ❌ |
 | `contents.resolveRef` | ✅ | ❌ |
-| `contents.commits` | ✅ | ❌ |
-| `contents.commit` | ✅ | ❌ |
 | `contents.compare` | ❌ | ❌ |
 | `contents.commitFiles` | ❌ | ❌ |
-| `contents.threadFiles` | ❌ | ❌ |
-| `contents.threadCommits` | ❌ | ❌ |
-| `reviews.list` | ❌ | ❌ |
-| `reviews.get` | ❌ | ❌ |
-| `reviews.create` | ❌ | ❌ |
-| `reviews.submit` | ❌ | ❌ |
-| `reviews.approve` | ❌ | ❌ |
-| `reviews.reply` | ❌ | ❌ |
-| `reviews.resolveThread` | ❌ | ❌ |
+| `commits.list` | ✅ | ❌ |
+| `commits.get` | ✅ | ❌ |
+| `commits.comments` | ❌ | ❌ |
+| `commits.getComment` | ❌ | ❌ |
+| `commits.createComment` | ❌ | ❌ |
+| `commits.updateComment` | ❌ | ❌ |
+| `commits.deleteComment` | ❌ | ❌ |
+| `commits.hideComment` | ❌ | ❌ |
 | `releases.list` | emulated | ❌ |
 | `releases.get` | emulated | ❌ |
 | `releases.latest` | emulated | ❌ |
@@ -179,6 +183,7 @@ Because a Sourcehut webhook sends the result of a GraphQL query that you registe
 | `releases.downloadAsset` | emulated | ❌ |
 | `releases.create` | ❌ | ❌ |
 | `releases.update` | ❌ | ❌ |
+| `webhooks.ingest` | ✅ | ❌ |
 | `webhooks.list` | ❌ | ❌ |
 | `webhooks.create` | ❌ | ❌ |
 | `webhooks.update` | ❌ | ❌ |
@@ -190,7 +195,7 @@ Because a Sourcehut webhook sends the result of a GraphQL query that you registe
 | `search.repos` | emulated | ❌ |
 | `search.commits` | ❌ | ❌ |
 | `search.code` | experimental | ❌ |
-| `securityAlerts` | ❌ | ❌ |
+| `securityAlerts.list` | ❌ | ❌ |
 | `eventKinds` | native | native |
 | `authKinds` | `token` | `token` |
 | `limits` | unknown | unknown |
