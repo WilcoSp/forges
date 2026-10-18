@@ -12,7 +12,7 @@ The Sourcehut provider works with [Sourcehut](https://sr.ht), a suite of small s
 | Detail | Value |
 | --- | --- |
 | Import | `forges/sourcehut` |
-| Factories | `sourcehut()`, `sourcehutLite()` |
+| Factories | `sourcehut()` |
 | Auth | `token` |
 ::
 <!-- header:end -->
@@ -71,8 +71,6 @@ Sourcehut signs deliveries with its own ed25519 key rather than a shared secret:
 
 Because a Sourcehut webhook sends the result of a GraphQL query that you register with it, the provider translates the shape it documents for repository and push events. Managing hooks is not implemented.
 
-The webhook code is separate, so `sourcehutLite()` creates the same provider without it, for a browser bundle.
-
 <!-- capabilities:start -->
 ## Capabilities
 
@@ -114,7 +112,7 @@ The webhook code is separate, so `sourcehutLite()` creates the same provider wit
 | `threads.closingPullRequests` | ❌ | ❌ |
 | `threads.events` | issue, PR | ❌ |
 | `comments.list` | issue, PR | ❌ |
-| `comments.get` | issue, PR | ❌ |
+| `comments.get` | issue (emulated), PR (emulated) | ❌ |
 | `comments.edit` | ❌ | ❌ |
 | `comments.delete` | ❌ | ❌ |
 | `comments.hide` | ❌ | ❌ |
@@ -127,7 +125,6 @@ The webhook code is separate, so `sourcehutLite()` creates the same provider wit
 | `notifications.markAllDone` | ❌ | ❌ |
 | `notifications.unreadCount` | ❌ | ❌ |
 | `writes.comment` | ❌ | ❌ |
-| `writes.upsertComment` | ❌ | ❌ |
 | `writes.close` | ❌ | ❌ |
 | `writes.reopen` | ❌ | ❌ |
 | `writes.lock` | ❌ | ❌ |
@@ -141,7 +138,6 @@ The webhook code is separate, so `sourcehutLite()` creates the same provider wit
 | `writes.setAssignees` | ❌ | ❌ |
 | `writes.requestReview` | ❌ | ❌ |
 | `writes.merge` | ❌ | ❌ |
-| `writes.approveAndMerge` | ❌ | ❌ |
 | `writes.updateBranch` | ❌ | ❌ |
 | `writes.transfer` | ❌ | ❌ |
 | `writes.markDuplicate` | ❌ | ❌ |
@@ -156,7 +152,7 @@ The webhook code is separate, so `sourcehutLite()` creates the same provider wit
 | `ci.runs` | emulated | ❌ |
 | `ci.run` | ✅ | ❌ |
 | `ci.jobs` | ✅ | ❌ |
-| `ci.job` | ✅ | ❌ |
+| `ci.job` | emulated | ❌ |
 | `ci.log` | ✅ | ❌ |
 | `contents.file` | ✅ | ❌ |
 | `contents.tree` | ✅ | ❌ |
