@@ -643,7 +643,7 @@ const ACTIONS_JOB_URL = /\/actions\/runs\/(\d+)\/job\/\d+$/
 export function toCheckRun(repo: RepoRef, raw: GitHubCheckRun): Check {
   const runId = raw.html_url?.match(ACTIONS_JOB_URL)?.[1]
   return {
-    ref: { forge: FORGE, instance: repo.instance, repo, id: String(raw.id), type: 'check_run' },
+    ref: { forge: FORGE, instance: repo.instance, repo, id: String(raw.id), type: 'check_run', ...raw.app?.slug ? { app: raw.app.slug } : {} },
     name: raw.name,
     state: checkRunState(raw.status, raw.conclusion),
     stateRaw: raw.status,

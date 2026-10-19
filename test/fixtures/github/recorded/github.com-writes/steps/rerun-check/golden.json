@@ -10,6 +10,7 @@
       "name": "forges-fixtures"
     },
     "id": "117428881237",
-    "type": "check_run"
+    "type": "check_run",
+    "app": "github-actions"
   }
 }

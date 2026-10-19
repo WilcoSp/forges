@@ -261,6 +261,7 @@ export interface GitHubCheckRun {
   details_url?: string | null
   started_at?: string | null
   completed_at?: string | null
+  app?: { slug: string } | null
 }
 
 export interface GitHubCommitStatus {

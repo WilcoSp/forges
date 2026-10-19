@@ -1,7 +1,7 @@
 import type { GitHubAuth } from '../../src/github/auth.ts'
 import type { TypedGraphQLDocument } from '../../src/github/index.ts'
 import type { GitHubNotification } from '../../src/github/types.ts'
-import type { ThreadRef } from '../../src/model.ts'
+import type { CheckRef, ThreadRef } from '../../src/model.ts'
 import { generateKeyPairSync } from 'node:crypto'
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { declaredCapabilities } from '../../src/capabilities.ts'
@@ -1341,21 +1341,21 @@ describe('github checks and CI', () => {
     expect(page.total).toBe(8)
   })
 
-  it('names the workflow run of a check run that GitHub Actions created', async () => {
+  it('names the app of a check run, and the workflow run of one that GitHub Actions created', async () => {
     const { fetch } = fixtureFetch('github/recorded/github.com-app/steps/check')
     const provider = github({ auth: { type: 'token', token: 't' }, fetch })
     const h3 = { forge: 'github', instance: 'github.com', owner: 'h3js', name: 'h3' } as const
 
     const { items } = await provider.checks.list(h3, '04ba6e021cde76fa6fc0084866f231c575647beb')
 
-    expect(items.filter(check => check.ref.type === 'check_run').map(check => [check.name, check.run?.id])).toEqual([
-      ['codecov/patch', undefined],
-      ['Continuous Releases', undefined],
-      ['publish-pkg-pr-new', '38897280463'],
-      ['Socket Security: Pull Request Alerts', undefined],
-      ['Socket Security: Project Report', undefined],
-      ['autofix', '38897280561'],
-      ['tests', '38897280463'],
+    expect(items.filter(check => check.ref.type === 'check_run').map(check => [check.name, check.ref.app, check.run?.id])).toEqual([
+      ['codecov/patch', 'codecov', undefined],
+      ['Continuous Releases', 'pkg-pr-new', undefined],
+      ['publish-pkg-pr-new', 'github-actions', '38897280463'],
+      ['Socket Security: Pull Request Alerts', 'socket-security', undefined],
+      ['Socket Security: Project Report', 'socket-security', undefined],
+      ['autofix', 'github-actions', '38897280561'],
+      ['tests', 'github-actions', '38897280463'],
     ])
     expect(items.find(check => check.run)!.run).toEqual({ forge: 'github', instance: 'github.com', repo: h3, id: '38897280463' })
   })
@@ -1419,6 +1419,60 @@ describe('github checks and CI', () => {
 
     await expect(rerun(403)).rejects.toMatchObject({ status: 403 })
     await expect(rerun(404)).rejects.toMatchObject({ status: 422 })
+  })
+
+  describe('re-running a check run another app may have created', () => {
+    const checkRef = (app?: string) => ({ forge: 'github', instance: 'github.com', repo, id: '7', type: 'check_run', ...app ? { app } : {} }) as const
+    const forbidden = (message: string) => new Response(JSON.stringify({ message }), { status: 403, headers: { 'x-accepted-github-permissions': 'checks=write' } })
+    const rerunWith = (respond: (url: string) => Response) => {
+      const calls: string[] = []
+      const provider = github({
+        auth: { type: 'token', token: 't' },
+        fetch: async (url) => {
+          calls.push(url)
+          return respond(url)
+        },
+      })
+      return { calls, rerun: (ref: CheckRef) => provider.checks.rerun(ref) }
+    }
+
+    it('re-runs the job of a GitHub Actions check run without re-requesting it', async () => {
+      const { calls, rerun } = rerunWith(() => new Response(null, { status: 201 }))
+
+      await rerun(checkRef('github-actions'))
+
+      expect(calls).toEqual(['https://api.github.com/repos/acme/widgets/actions/jobs/7/rerun'])
+    })
+
+    it('re-runs the job of a check run whose re-request is forbidden', async () => {
+      const { calls, rerun } = rerunWith(url => url.endsWith('/rerequest') ? forbidden('Forbidden') : new Response(null, { status: 201 }))
+
+      await rerun(checkRef())
+
+      expect(calls).toEqual([
+        'https://api.github.com/repos/acme/widgets/check-runs/7/rerequest',
+        'https://api.github.com/repos/acme/widgets/actions/jobs/7/rerun',
+      ])
+    })
+
+    it('rejects a check run that another app created as not_owner', async () => {
+      const { rerun } = rerunWith(url => url.endsWith('/rerequest') ? forbidden('Forbidden') : new Response('{"message":"Not Found"}', { status: 404 }))
+
+      await expect(rerun(checkRef('ci-bot'))).rejects.toMatchObject({ name: 'ForbiddenError', status: 403, reason: 'not_owner' })
+    })
+
+    it('rejects a check run that is not rerequestable and has no job with the 422', async () => {
+      const { calls, rerun } = rerunWith(url => url.endsWith('/rerequest') ? new Response('{"message":"This check run is not rerequestable"}', { status: 422 }) : new Response('{"message":"Not Found"}', { status: 404 }))
+
+      await expect(rerun(checkRef())).rejects.toMatchObject({ name: 'ForgeApiError', status: 422 })
+      expect(calls).toHaveLength(2)
+    })
+
+    it('rejects a re-request that the credential lacks the permission for as InsufficientScopeError', async () => {
+      const { rerun } = rerunWith(url => url.endsWith('/rerequest') ? forbidden('Resource not accessible by integration') : new Response('{"message":"Not Found"}', { status: 404 }))
+
+      await expect(rerun(checkRef())).rejects.toMatchObject({ name: 'InsufficientScopeError', status: 403, acceptedPermissionsRaw: 'checks=write' })
+    })
   })
 
   it('declares the app permissions of the endpoints each checks and CI verb calls', () => {

@@ -9,7 +9,8 @@
       "name": "h3"
     },
     "id": "116961343121",
-    "type": "check_run"
+    "type": "check_run",
+    "app": "codecov"
   },
   "name": "codecov/patch",
   "state": "success",

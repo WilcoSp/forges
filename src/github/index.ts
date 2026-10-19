@@ -1184,6 +1184,15 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
     return error
   }
 
+  /** GitHub responds with `403` to a re-request of another app's check run, and names a missing permission as `Resource not accessible by ...`. */
+  function notOwnerOfCheckRun(error: InsufficientScopeError): ForgeApiError {
+    const missingScope = error.acceptedScopes?.length && !error.acceptedScopes.some(scope => error.grantedScopes?.includes(scope))
+    if (missingScope || /not accessible by/i.test(error.body)) {
+      return error
+    }
+    return new ForbiddenError('GitHub refused to re-request a check run that another app created', error.status, error.body, 'not_owner', { forge: error.forge, instance: error.instance, url: error.url, method: error.method }, { cause: error })
+  }
+
   /** GitHub responds with `422` to a change of the tag, target or draft state of an immutable release. */
   function immutableReleaseIs422(error: unknown): unknown {
     if (!(error instanceof ForgeApiError) || error.constructor !== ForgeApiError || error.status !== 422) {
@@ -1801,19 +1810,27 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         if (ref.type !== 'check_run') {
           throw new UnsupportedOperationError(`GitHub cannot re-run a ${ref.type}; only check runs can be re-requested`, context)
         }
+        // Only the app that created a check run can re-request it; an Actions check run is re-run as its job, which has the same id.
+        const rerunJob = () => fetcher.raw(`${repoPath(ref.repo)}/actions/jobs/${encodeURIComponent(ref.id)}/rerun`, { method: 'POST', signal: options?.signal })
+        if (ref.app === 'github-actions') {
+          await rerunJob()
+          return
+        }
         try {
           await fetcher.raw(`${repoPath(ref.repo)}/check-runs/${encodeURIComponent(ref.id)}/rerequest`, { method: 'POST', signal: options?.signal })
         }
         catch (error) {
-          // Only the app that created a check run can re-request it; an Actions check run is re-run as its job.
-          if (!(error instanceof ForgeApiError) || error.status !== 422) {
+          if (!(error instanceof InsufficientScopeError) && !(error instanceof ForgeApiError && error.status === 422)) {
             throw error
           }
           try {
-            await fetcher.raw(`${repoPath(ref.repo)}/actions/jobs/${encodeURIComponent(ref.id)}/rerun`, { method: 'POST', signal: options?.signal })
+            await rerunJob()
           }
           catch (rerunError) {
-            throw rerunError instanceof NotFoundError ? error : rerunError
+            if (!(rerunError instanceof NotFoundError)) {
+              throw rerunError
+            }
+            throw error instanceof InsufficientScopeError ? notOwnerOfCheckRun(error) : error
           }
         }
       }),

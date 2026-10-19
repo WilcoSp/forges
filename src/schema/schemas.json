@@ -273,6 +273,10 @@
           "policy"
         ],
         "description": "What the id addresses: a check run, a commit status, a CI job, or a branch policy evaluation."
+      },
+      "app": {
+        "type": "string",
+        "description": "Slug of the app that created the check run, where the forge reports one, such as `github-actions`."
       }
     },
     "required": [

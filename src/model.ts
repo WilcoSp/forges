@@ -430,6 +430,8 @@ export interface CheckRef extends ForgeOrigin {
   id: string
   /** What the id addresses: a check run, a commit status, a CI job, or a branch policy evaluation. */
   type: 'check_run' | 'status' | 'job' | 'policy'
+  /** Slug of the app that created the check run, where the forge reports one, such as `github-actions`. */
+  app?: string
 }
 
 /**
