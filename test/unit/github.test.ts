@@ -2,6 +2,7 @@ import type { GitHubAuth } from '../../src/github/auth.ts'
 import type { TypedGraphQLDocument } from '../../src/github/index.ts'
 import type { GitHubNotification } from '../../src/github/types.ts'
 import type { CheckRef, ThreadRef } from '../../src/model.ts'
+import type { Fixture } from '../utils/fixtures.ts'
 import { generateKeyPairSync } from 'node:crypto'
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { declaredCapabilities } from '../../src/capabilities.ts'
@@ -1330,34 +1331,41 @@ describe('github checks and CI', () => {
       .toBeInstanceOf(UnsupportedOperationError)
   })
 
+  function recordedChecks() {
+    const fixtures = loadFixtures('github/recorded/github.com-app/steps/check')
+    const runs = fixtures.find(fixture => fixture.request.url.includes('/check-runs?'))!
+    const statuses = fixtures.find(fixture => fixture.request.url.includes('/status?'))!
+    return {
+      sha: /\/commits\/(\w+)\//.exec(runs.request.url)![1]!,
+      runs: runs.response.body as { total_count: number, check_runs: Array<{ name: string, app: { slug: string }, details_url: string }> },
+      statuses: statuses.response.body as { total_count: number },
+    }
+  }
+
   it('adds the commit statuses to the check-run total', async () => {
+    const { sha, runs, statuses } = recordedChecks()
     const { fetch } = fixtureFetch('github/recorded/github.com-app/steps/check')
     const provider = github({ auth: { type: 'token', token: 't' }, fetch })
 
-    const page = await provider.checks.list({ forge: 'github', instance: 'github.com', owner: 'h3js', name: 'h3' }, '04ba6e021cde76fa6fc0084866f231c575647beb')
+    const page = await provider.checks.list({ forge: 'github', instance: 'github.com', owner: 'h3js', name: 'h3' }, sha)
 
-    // The recording has seven check runs and one commit status.
-    expect(page.items).toHaveLength(8)
-    expect(page.total).toBe(8)
+    expect(statuses.total_count).toBeGreaterThan(0)
+    expect(page.items).toHaveLength(runs.total_count + statuses.total_count)
+    expect(page.total).toBe(runs.total_count + statuses.total_count)
   })
 
   it('names the app of a check run, and the workflow run of one that GitHub Actions created', async () => {
+    const { sha, runs } = recordedChecks()
+    const expected = runs.check_runs.map(run => [run.name, run.app.slug, run.app.slug === 'github-actions' ? /\/actions\/runs\/(\d+)\//.exec(run.details_url)![1] : undefined])
     const { fetch } = fixtureFetch('github/recorded/github.com-app/steps/check')
     const provider = github({ auth: { type: 'token', token: 't' }, fetch })
     const h3 = { forge: 'github', instance: 'github.com', owner: 'h3js', name: 'h3' } as const
 
-    const { items } = await provider.checks.list(h3, '04ba6e021cde76fa6fc0084866f231c575647beb')
+    const { items } = await provider.checks.list(h3, sha)
 
-    expect(items.filter(check => check.ref.type === 'check_run').map(check => [check.name, check.ref.app, check.run?.id])).toEqual([
-      ['codecov/patch', 'codecov', undefined],
-      ['Continuous Releases', 'pkg-pr-new', undefined],
-      ['publish-pkg-pr-new', 'github-actions', '38897280463'],
-      ['Socket Security: Pull Request Alerts', 'socket-security', undefined],
-      ['Socket Security: Project Report', 'socket-security', undefined],
-      ['autofix', 'github-actions', '38897280561'],
-      ['tests', 'github-actions', '38897280463'],
-    ])
-    expect(items.find(check => check.run)!.run).toEqual({ forge: 'github', instance: 'github.com', repo: h3, id: '38897280463' })
+    expect(expected.some(([, app]) => app !== 'github-actions')).toBe(true)
+    expect(items.filter(check => check.ref.type === 'check_run').map(check => [check.name, check.ref.app, check.run?.id])).toEqual(expected)
+    expect(items.find(check => check.run)!.run).toEqual({ forge: 'github', instance: 'github.com', repo: h3, id: expected.find(([, , run]) => run)![2] })
   })
 
   it('counts every page of commit statuses', async () => {
@@ -1797,6 +1805,7 @@ describe('github search', () => {
   describe('code', () => {
     const h3 = { forge: 'github', instance: 'github.com', owner: 'h3js', name: 'h3' } as const
     const search = 'https://api.github.com/search/code?q=import+repo%3Ah3js%2Fh3&per_page=3'
+    const recorded = () => loadFixtures('github/recorded/github.com').find(fixture => fixture.request.url === search)!.response as Fixture['response'] & { body: { total_count: number, items: Array<{ path: string, html_url: string }> } }
 
     it('asks for text matches, and reads the indexed commit from each file', async () => {
       const { fetch, calls } = fixtureFetch('github/recorded/github.com')
@@ -1805,24 +1814,24 @@ describe('github search', () => {
       const { items } = await provider.search.code({ text: 'import', repo: h3, perPage: 3 }).page()
 
       expect(calls[0]!.headers.get('accept')).toBe('application/vnd.github.text-match+json')
-      expect(items[1]).toMatchObject({
+      expect(items).toMatchObject(recorded().body.items.map(item => ({
         repo: h3,
-        path: 'docs/99.blog/3.v2.md',
-        ref: '66cfb8a357b6285451bad498c2c40002601fae98',
-        fragments: [{ text: '```js\nimport { H3, serve } from "h3";\n' }, { text: '```js\nimport { defineHandler } from "h3";\n' }],
-        url: 'https://github.com/h3js/h3/blob/66cfb8a357b6285451bad498c2c40002601fae98/docs/99.blog/3.v2.md',
-      })
+        path: item.path,
+        ref: /\/blob\/([0-9a-f]{40})\//.exec(item.html_url)![1],
+        fragments: expect.arrayContaining([{ text: expect.stringContaining('import') }]),
+        url: item.html_url,
+      })))
     })
 
     it('warns when GitHub stops the search before it finishes', async () => {
-      const recorded = loadFixtures('github/recorded/github.com').find(fixture => fixture.request.url === search)!.response
-      const { fetch } = fixtureFetch('github/recorded/github.com', { [`GET ${search}`]: { ...recorded, body: { ...recorded.body as object, incomplete_results: true } } })
+      const response = recorded()
+      const { fetch } = fixtureFetch('github/recorded/github.com', { [`GET ${search}`]: { ...response, body: { ...response.body, incomplete_results: true } } })
       const provider = github({ auth: { type: 'token', token: 't' }, fetch })
 
       const page = await provider.search.code({ text: 'import', repo: h3, perPage: 3 }).page()
 
       expect(page.items).toHaveLength(3)
-      expect(page.total).toBe(208)
+      expect(page.total).toBe(response.body.total_count)
       expect(page.warnings).toEqual([expect.objectContaining({ code: 'search_incomplete' })])
     })
   })
