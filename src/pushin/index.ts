@@ -178,9 +178,9 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
     webhooks: {},
     scopes: pushinScopesFor,
     releases: {
-      get: verb('experimental', async (ref, options) => toRelease(ref.repo, (await fetcher.json<PushinRelease>(`${repoPath(ref.repo)}/releases/${encodeURIComponent(ref.id)}`, { signal: options?.signal })).data)),
-      getByTag: verb('experimental', async (repo, tag, options) => toRelease(repo, (await fetcher.json<PushinRelease>(`${repoPath(repo)}/releases/tags/${encodeURIComponent(tag)}`, { signal: options?.signal })).data)),
-      latest: verb('experimental', async (repo, options) => {
+      get: verb(true, async (ref, options) => toRelease(ref.repo, (await fetcher.json<PushinRelease>(`${repoPath(ref.repo)}/releases/${encodeURIComponent(ref.id)}`, { signal: options?.signal })).data)),
+      getByTag: verb(true, async (repo, tag, options) => toRelease(repo, (await fetcher.json<PushinRelease>(`${repoPath(repo)}/releases/tags/${encodeURIComponent(tag)}`, { signal: options?.signal })).data)),
+      latest: verb(true, async (repo, options) => {
         try {
           return toRelease(repo, (await fetcher.json<PushinRelease>(`${repoPath(repo)}/releases/latest`, { signal: options?.signal })).data)
         }
@@ -191,8 +191,8 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
           throw error
         }
       }),
-      listPage: verb('experimental', releasesPage),
-      downloadAsset: verb('experimental', async (ref, downloadOptions = {}) => (await fetcher.stream(`${repoPath(ref.repo)}/releases/assets/${encodeURIComponent(ref.id)}`, {
+      listPage: verb(true, releasesPage),
+      downloadAsset: verb(true, async (ref, downloadOptions = {}) => (await fetcher.stream(`${repoPath(ref.repo)}/releases/assets/${encodeURIComponent(ref.id)}`, {
         headers: { accept: 'application/octet-stream' },
         signal: downloadOptions.signal,
       })).body),

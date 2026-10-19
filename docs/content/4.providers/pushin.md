@@ -173,11 +173,11 @@ The API has no endpoints for hooks and no documented signature scheme. For this 
 | `commits.updateComment` | ❌ | ❌ |
 | `commits.deleteComment` | ❌ | ❌ |
 | `commits.hideComment` | ❌ | ❌ |
-| `releases.list` | experimental | experimental |
-| `releases.get` | experimental | experimental |
-| `releases.latest` | experimental | experimental |
-| `releases.getByTag` | experimental | experimental |
-| `releases.downloadAsset` | experimental | experimental |
+| `releases.list` | ✅ | ✅ |
+| `releases.get` | ✅ | ✅ |
+| `releases.latest` | ✅ | ✅ |
+| `releases.getByTag` | ✅ | ✅ |
+| `releases.downloadAsset` | ✅ | ✅ |
 | `releases.create` | unverified | ❌ |
 | `releases.update` | unverified | ❌ |
 | `webhooks.ingest` | ∅ | ∅ |
