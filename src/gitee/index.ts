@@ -370,7 +370,7 @@ function setupGitee({ options, instance, origin: context, fetcher, baseUrl }: Pr
     users: {
       get: verb(true, (login, options) => readUser(`/users/${encodeURIComponent(login)}`, options?.signal)),
       me: verb(true, options => readUser('/user', options?.signal)),
-      eventsPage: verb(!anonymous && 'unverified', (login, listOptions = {}) => feedPage(`/users/${encodeURIComponent(login)}/events`, listOptions)),
+      eventsPage: verb(!anonymous, (login, listOptions = {}) => feedPage(`/users/${encodeURIComponent(login)}/events`, listOptions)),
     },
     repos: {
       get: verb(true, async (ref, options) => toRepo(instance, (await fetcher.json<GiteeRepository>(repoPath(ref), { signal: options?.signal })).data)),
