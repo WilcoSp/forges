@@ -575,6 +575,7 @@ const TANGLED: ProviderDefinition<TangledOptions, undefined, true> = {
         'threads.setIssueType',
       ],
       request: api,
+      emulated: { getComment: { pull_request: writable ? 'emulated' : 'unverified' } },
       repos: {
         get: verb(true, async (ref, options) => {
           const { ref: found, record } = await canonicalRepo(ref, options?.signal)
