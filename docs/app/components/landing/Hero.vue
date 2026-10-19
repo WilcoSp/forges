@@ -17,7 +17,7 @@ const { copied, copy, message } = useCopyToClipboard(() => command)
     />
     <LandingPixelField class="-z-10" />
 
-    <div class="mx-auto flex max-w-4xl flex-col items-center px-4 pt-10 pb-14 text-center sm:px-6 sm:pt-16 sm:pb-16">
+    <div class="mx-auto flex max-w-4xl flex-col items-center px-4 pt-(--ui-header-height) pb-14 text-center sm:px-6 sm:pb-16">
       <img
         src="/logo/mark.svg"
         alt="forges"

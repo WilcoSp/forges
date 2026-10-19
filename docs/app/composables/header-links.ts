@@ -14,12 +14,14 @@ export function useHeaderLinks() {
       'to': 'https://discord.gg/XCfTcxDsUE',
       'target': '_blank',
       'aria-label': 'forges on Discord',
+      'class': 'max-sm:hidden',
     },
     {
       'icon': 'i-custom-npmx',
       'to': 'https://npmx.dev/package/forges',
       'target': '_blank',
       'aria-label': 'forges on npmx',
+      'class': 'max-sm:hidden',
     },
   ])
 }
