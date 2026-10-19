@@ -1,9 +1,9 @@
 import type { ForgeEventInput } from '../model.ts'
-import type { SubscribeOptions } from '../provider.ts'
+import type { StreamOptions } from '../provider.ts'
 import type { JetstreamCommitEvent, JetstreamEvent } from './types.ts'
-import { SubscriptionClosedError } from '../errors.ts'
+import { StreamClosedError } from '../errors.ts'
 
-/** The subset of the WHATWG `WebSocket` the subscription uses. */
+/** The subset of the WHATWG `WebSocket` the stream uses. */
 export interface WebSocketLike {
   /** Registers a listener for a socket event. */
   addEventListener: (type: 'open' | 'message' | 'error' | 'close', listener: (event: { data?: unknown, code?: number, reason?: string }) => void) => void
@@ -14,7 +14,7 @@ export interface WebSocketLike {
 /** Opens a WebSocket for a URL, such as `url => new WebSocket(url)`. */
 export type WebSocketFactory = (url: string) => WebSocketLike
 
-export interface JetstreamSubscriptionOptions extends SubscribeOptions {
+export interface JetstreamSubscriptionOptions extends StreamOptions {
   url: string
   collections: readonly string[]
   createWebSocket: WebSocketFactory
@@ -33,19 +33,19 @@ export function jetstreamUrl(base: string, collections: readonly string[], curso
   return url.toString()
 }
 
-interface SubscriptionItem {
+interface StreamItem {
   event: ForgeEventInput
   cursor: string
 }
 
-type Settled = { done: false, value: SubscriptionItem } | { done: true } | { error: unknown }
+type Settled = { done: false, value: StreamItem } | { done: true } | { error: unknown }
 
 /**
  * Streams Jetstream commit events as normalised events. Messages are
  * translated strictly in arrival order, so a yielded cursor never skips an
  * earlier event.
  */
-export function subscribeJetstream(options: JetstreamSubscriptionOptions): AsyncIterable<SubscriptionItem> {
+export function subscribeJetstream(options: JetstreamSubscriptionOptions): AsyncIterable<StreamItem> {
   return {
     [Symbol.asyncIterator]() {
       const queue: Settled[] = []
@@ -101,23 +101,23 @@ export function subscribeJetstream(options: JetstreamSubscriptionOptions): Async
             settle({ done: false, value: { event, cursor } })
           }
         }).catch((error: unknown) => {
-          settle({ error: new SubscriptionClosedError('Failed to translate a subscription message', lastCursor, options.context, { cause: error }) })
+          settle({ error: new StreamClosedError('Failed to translate a stream message', lastCursor, options.context, { cause: error }) })
           socket.close(1011)
         })
       })
       socket.addEventListener('error', (event) => {
-        chain = chain.then(() => settle({ error: new SubscriptionClosedError('Subscription connection failed', lastCursor, options.context, { cause: event }) }))
+        chain = chain.then(() => settle({ error: new StreamClosedError('Stream connection failed', lastCursor, options.context, { cause: event }) }))
       })
       socket.addEventListener('close', ({ code, reason }) => {
         chain = chain.then(() => settle({
-          error: new SubscriptionClosedError(`Subscription closed (${code ?? 'no code'}${reason ? `: ${reason}` : ''})`, lastCursor, options.context),
+          error: new StreamClosedError(`Stream closed (${code ?? 'no code'}${reason ? `: ${reason}` : ''})`, lastCursor, options.context),
         }))
       })
 
       return {
-        next(): Promise<IteratorResult<SubscriptionItem>> {
+        next(): Promise<IteratorResult<StreamItem>> {
           const settled = queue.shift()
-          const resolve = (value: Settled): IteratorResult<SubscriptionItem> => {
+          const resolve = (value: Settled): IteratorResult<StreamItem> => {
             if ('error' in value) {
               throw value.error
             }
@@ -131,7 +131,7 @@ export function subscribeJetstream(options: JetstreamSubscriptionOptions): Async
           }
           return new Promise<Settled>(waiter => waiters.push(waiter)).then(resolve)
         },
-        return(): Promise<IteratorResult<SubscriptionItem>> {
+        return(): Promise<IteratorResult<StreamItem>> {
           options.signal?.removeEventListener('abort', stop)
           stop()
           queue.length = 0

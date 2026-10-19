@@ -19,8 +19,8 @@ import type {
   ReposApi,
   SearchApi,
   SecurityAlertsApi,
-  SubscribeOptions,
-  SubscriptionItem,
+  StreamItem,
+  StreamOptions,
   ThreadsApi,
   UsersApi,
   VerbScopes,
@@ -337,8 +337,8 @@ export interface ProviderSpec<TExtensions extends object = Record<never, never>>
   } & { [K in Exclude<keyof NotificationsApi, 'list'>]?: Verb<NonNullable<NotificationsApi[K]>> }
   /** The implementation of `provider.installations`, except for `list()` and `repos()`, which core derives. */
   installations?: Verb<InstallationsSpec>
-  sources?: { /** The implementation of `provider.sources.subscribe()`. */
-    subscribe: Verb<(options?: SubscribeOptions) => AsyncIterable<{ event: ForgeEventInput, cursor: string }>>
+  sources?: { /** The implementation of `provider.sources.stream()`. */
+    stream: Verb<(options?: StreamOptions) => AsyncIterable<{ event: ForgeEventInput, cursor: string }>>
   }
   /** Managing registered hooks. Listings are declared as pages; core derives the iterables. */
   webhooks: {
@@ -450,7 +450,7 @@ function kindOf(name: string, args: unknown[]): string | undefined {
   return first?.thread?.kind ?? first?.kind
 }
 
-async function* completeItems(items: AsyncIterable<{ event: ForgeEventInput, cursor: string }>): AsyncGenerator<SubscriptionItem> {
+async function* completeItems(items: AsyncIterable<{ event: ForgeEventInput, cursor: string }>): AsyncGenerator<StreamItem> {
   for await (const item of items) {
     yield { ...item, event: completeEvent(item.event) }
   }
@@ -604,7 +604,7 @@ function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extend
     support: createReview.support,
     ...createReview.run ? { run: (ref: ThreadRef, body?: string, options?: BaseOptions) => createReview.run(ref, { event: 'approve', body }, options) } : {},
   })
-  const declaredSubscribe = spec.sources?.subscribe
+  const declaredStream = spec.sources?.stream
   const alerts = spec.securityAlerts
   const declaredInstallations = spec.installations
   const installationsSupported = () => Boolean(declaredInstallations?.run && !isUnsupported(resolve(declaredInstallations.support, env)))
@@ -756,9 +756,9 @@ function createProvider<TOptions extends ForgeOptionsBase, TState, HasWeb extend
       }
       return (await handlers.translate(delivery)).map(completeEvent)
     },
-    'sources.subscribe': (subscribeOptions?: SubscribeOptions) => declaredSubscribe?.run && !isUnsupported(resolve(declaredSubscribe.support, env))
-      ? completeItems(declaredSubscribe.run(subscribeOptions))
-      : emptyIterable('sources.subscribe', resolve(declaredSubscribe?.support, env)),
+    'sources.stream': (streamOptions?: StreamOptions) => declaredStream?.run && !isUnsupported(resolve(declaredStream.support, env))
+      ? completeItems(declaredStream.run(streamOptions))
+      : emptyIterable('sources.stream', resolve(declaredStream?.support, env)),
     'securityAlerts.listPage': (repo: RepoRef, listOptions: SecurityAlertListOptions = {}) => {
       const supported = alerts?.listPage && (listOptions.kind ? !isUnsupported(resolve(alerts.kinds[listOptions.kind as AlertKind], env)) : ALERT_KINDS.some(kind => !isUnsupported(resolve(alerts.kinds[kind], env))))
       if (!supported) {

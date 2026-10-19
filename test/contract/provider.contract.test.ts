@@ -9,7 +9,7 @@ import {
   MergeConflictError,
   MergeMethodRequiredError,
   RateLimitedError,
-  SubscriptionClosedError,
+  StreamClosedError,
   TokenRevokedError,
   UnresolvedThreadError,
   UnsupportedOperationError,
@@ -613,13 +613,13 @@ describe.each(contracts)('contract: $name', (contract) => {
     })
   })
 
-  describe.runIf(contract.subscribe)('subscribe', () => {
+  describe.runIf(contract.stream)('stream', () => {
     function stream() {
       const { fetch } = fixtureFetch(contract.fixtures)
       const sockets: FakeWebSocket[] = []
       const instance = contract.create(fetch, {
         webSocket: (url) => {
-          const socket = new FakeWebSocket(url, contract.subscribe!.messages)
+          const socket = new FakeWebSocket(url, contract.stream!.messages)
           sockets.push(socket)
           return socket
         },
@@ -630,15 +630,15 @@ describe.each(contracts)('contract: $name', (contract) => {
     it('yields normalised events with a resumable cursor, skipping non-commit messages', async () => {
       const { instance, sockets } = stream()
       const items = []
-      for await (const item of instance.sources!.subscribe()) {
+      for await (const item of instance.sources!.stream()) {
         items.push(item)
-        if (items.length === contract.subscribe!.kinds.length) {
+        if (items.length === contract.stream!.kinds.length) {
           break
         }
       }
 
-      expect(items.map(item => item.event.kind)).toEqual(contract.subscribe!.kinds)
-      expect(items.every(item => item.event.source === 'subscribe')).toBe(true)
+      expect(items.map(item => item.event.kind)).toEqual(contract.stream!.kinds)
+      expect(items.every(item => item.event.source === 'stream')).toBe(true)
       expect(items[0]!.event.thread?.number).toBe(contract.thread.number)
       expect(items.map(item => item.cursor)).toEqual([...items.map(item => item.cursor)].sort())
       expect(sockets[0]!.closed).toBe(true)
@@ -646,7 +646,7 @@ describe.each(contracts)('contract: $name', (contract) => {
 
     it('resumes from a cursor', async () => {
       const { instance, sockets } = stream()
-      const iterator = instance.sources!.subscribe({ cursor: '1758000000000001' })[Symbol.asyncIterator]()
+      const iterator = instance.sources!.stream({ cursor: '1758000000000001' })[Symbol.asyncIterator]()
       await iterator.next()
       await iterator.return!()
 
@@ -657,7 +657,7 @@ describe.each(contracts)('contract: $name', (contract) => {
       const { instance, sockets } = stream()
       const controller = new AbortController()
       const items = []
-      for await (const item of instance.sources!.subscribe({ signal: controller.signal })) {
+      for await (const item of instance.sources!.stream({ signal: controller.signal })) {
         items.push(item)
         controller.abort()
       }
@@ -666,17 +666,17 @@ describe.each(contracts)('contract: $name', (contract) => {
       expect(sockets[0]!.closed).toBe(true)
     })
 
-    it('surfaces a dropped connection as SubscriptionClosedError with the last cursor', async () => {
+    it('surfaces a dropped connection as StreamClosedError with the last cursor', async () => {
       const { instance } = stream()
       const items = []
       const error = await (async () => {
-        for await (const item of instance.sources!.subscribe()) {
+        for await (const item of instance.sources!.stream()) {
           items.push(item)
         }
       })().catch((error: unknown) => error)
 
-      expect(error).toBeInstanceOf(SubscriptionClosedError)
-      expect((error as SubscriptionClosedError).cursor).toBe(contract.subscribe!.lastCursor)
+      expect(error).toBeInstanceOf(StreamClosedError)
+      expect((error as StreamClosedError).cursor).toBe(contract.stream!.lastCursor)
     })
   })
 

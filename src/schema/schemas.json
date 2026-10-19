@@ -1575,13 +1575,13 @@
       "sources": {
         "type": "object",
         "properties": {
-          "subscribe": {
+          "stream": {
             "$ref": "#/components/schemas/Support",
-            "description": "Support for `sources.subscribe()`, a long-lived push stream; see {@link SourcesApi}."
+            "description": "Support for `sources.stream()`, a long-lived push stream; see {@link SourcesApi}."
           }
         },
         "required": [
-          "subscribe"
+          "stream"
         ]
       },
       "repos": {
@@ -4291,7 +4291,7 @@
     "enum": [
       "poll",
       "webhook",
-      "subscribe"
+      "stream"
     ],
     "description": "How an event reached the caller.",
     "x-forges-type": "SourceKind"

@@ -57,11 +57,11 @@ import type {
   WebhookEventType,
   WebhookRef,
 } from '../model.ts'
-import type { BulkNotificationOptions, ForgeCapabilities, ForgeOptionsBase, ForgeProvider, ForgeVerb, HideCommentReason, SubscribeOptions } from '../provider.ts'
+import type { BulkNotificationOptions, ForgeCapabilities, ForgeOptionsBase, ForgeProvider, ForgeVerb, HideCommentReason, StreamOptions } from '../provider.ts'
 import { toFileContent } from '../contents.ts'
 import { bodyText, headerValue } from '../crypto.ts'
 import { defineForgeProvider, perKind, verb } from '../define.ts'
-import { BranchMovedError, ForbiddenError, ForgeApiError, ForgeNetworkError, ForgeTimeoutError, MergeBlockedError, MergeConflictError, NotFoundError, RateLimitedError, SubscriptionClosedError } from '../errors.ts'
+import { BranchMovedError, ForbiddenError, ForgeApiError, ForgeNetworkError, ForgeTimeoutError, MergeBlockedError, MergeConflictError, NotFoundError, RateLimitedError, StreamClosedError } from '../errors.ts'
 import { completeEvent } from '../events.ts'
 import { sleep } from '../fetch.ts'
 import { capabilityOf } from '../supports.ts'
@@ -339,7 +339,7 @@ export interface FakeStore {
   blocks: Map<string, Set<string>>
 }
 
-/** Every normalised kind the fake forge records, so a test can subscribe to any of them. */
+/** Every normalised kind the fake forge records, so a test can stream any of them. */
 const FAKE_WEBHOOK_EVENTS: WebhookEventType[] = [
   { kind: 'comment' },
   { kind: 'state_change' },
@@ -372,7 +372,7 @@ export interface FakeProvider extends ForgeProvider {
    * ```
    */
   failNext: (verb: ForgeVerb, error: Error | (() => Error), options?: FakeFailureOptions) => void
-  /** Rejects every request with `ForgeNetworkError` until `online()`, and closes open subscriptions with `SubscriptionClosedError`. */
+  /** Rejects every request with `ForgeNetworkError` until `online()`, and closes open subscriptions with `StreamClosedError`. */
   offline: () => void
   /** Ends `offline()`. */
   online: () => void
@@ -469,7 +469,7 @@ function splitFileKey(key: string): { ref: string, path: string } {
 /**
  * An in-memory forge implementing the whole provider surface, for testing
  * code that writes. Every write changes `store` and appends a `ForgeEvent`
- * that `threads.events()` and `sources.subscribe()` return. Webhook
+ * that `threads.events()` and `sources.stream()` return. Webhook
  * deliveries carry normalised events as JSON, signed as `signDelivery('fake', ...)`
  * from `forges/testing` signs them.
  * @param options The data the forge starts with, and the support of individual operations.
@@ -821,7 +821,7 @@ export function fake(options: FakeOptions = {}): FakeProvider {
       repo: subject.repo,
       ...'sha' in subject ? { commit: subject } : { thread: subject },
       detail,
-      source: 'subscribe',
+      source: 'stream',
       payload: { kind, action, detail },
     })
     store.events.push(event)
@@ -1919,7 +1919,7 @@ export function fake(options: FakeOptions = {}): FakeProvider {
         }) as (repo: RepoRef, options?: SecurityAlertListOptions) => Promise<Page<SecurityAlert>>,
       },
       sources: {
-        subscribe: verb(support('sources.subscribe', true), (subscribeOptions: SubscribeOptions = {}) => subscribeTo(subscribeOptions)),
+        stream: verb(support('sources.stream', true), (streamOptions: StreamOptions = {}) => streamFrom(streamOptions)),
       },
       webhooks: {
         listPage: verb(support('webhooks.list', true), async (target, listOptions = {}) => pageOf(
@@ -1983,16 +1983,16 @@ export function fake(options: FakeOptions = {}): FakeProvider {
     return spec
   }
 
-  async function* subscribeTo(subscribeOptions: SubscribeOptions): AsyncGenerator<{ event: ForgeEventInput, cursor: string }> {
+  async function* streamFrom(streamOptions: StreamOptions): AsyncGenerator<{ event: ForgeEventInput, cursor: string }> {
     if (!connected) {
-      throw disconnected('sources.subscribe')
+      throw disconnected('sources.stream')
     }
-    const failure = takeFailure('sources.subscribe')
+    const failure = takeFailure('sources.stream')
     if (failure) {
       throw failure.error
     }
-    const queue: ForgeEvent[] = store.events.slice(Number(subscribeOptions.cursor ?? store.events.length))
-    let cursor = subscribeOptions.cursor
+    const queue: ForgeEvent[] = store.events.slice(Number(streamOptions.cursor ?? store.events.length))
+    let cursor = streamOptions.cursor
     let dropped = false
     let wake: (() => void) | undefined
     const listener = (event: ForgeEvent) => {
@@ -2003,13 +2003,13 @@ export function fake(options: FakeOptions = {}): FakeProvider {
       dropped = true
       wake?.()
     }
-    const aborted = new Promise<void>(resolve => subscribeOptions.signal?.addEventListener('abort', () => resolve(), { once: true }))
+    const aborted = new Promise<void>(resolve => streamOptions.signal?.addEventListener('abort', () => resolve(), { once: true }))
     listeners.add(listener)
     disconnects.add(disconnect)
     try {
-      while (!subscribeOptions.signal?.aborted) {
+      while (!streamOptions.signal?.aborted) {
         if (dropped) {
-          throw new SubscriptionClosedError(`Subscription to ${instance} closed: ${instance} is offline`, cursor, origin)
+          throw new StreamClosedError(`Stream from ${instance} closed: ${instance} is offline`, cursor, origin)
         }
         const event = queue.shift()
         if (event) {
@@ -2031,7 +2031,7 @@ export function fake(options: FakeOptions = {}): FakeProvider {
   const provider = factory(options)
 
   function sendsRequest(key: string): boolean {
-    return key === 'sources.subscribe' || sent.has(key)
+    return key === 'sources.stream' || sent.has(key)
   }
 
   return Object.assign(provider, {

@@ -54,7 +54,7 @@ function forge(title: string, directory: string, names: RegExp[] = []) {
 const DATA_MODEL_SECTIONS: SectionConfig[] = [
   { title: 'Forges and refs', names: ['ForgeKind', 'KnownForgeKind', 'ForgeInstance', 'ForgeOrigin', 'ThreadKind', 'RepoRef', 'ThreadRef', 'ResolvedThreadRef', 'CommentRef', 'ResolvedCommentRef', 'CommitCommentRef', 'NotificationRef', 'repoKey', 'parseRepoKey', 'repoSlug', 'repoRef', 'threadKey', 'parseThreadKey', 'threadSlug', 'commentKey', 'parseCommentKey', 'commitKey', 'parseCommitKey', 'commitCommentKey', 'parseCommitCommentKey', 'releaseKey', 'parseReleaseKey', 'notificationKey', 'parseNotificationKey', 'notificationThread', 'affectedKeys', 'AffectedKeys', 'isNamespaceRef', 'isResolvedThread', 'normaliseRepoName', 'namesAreCaseInsensitive'] },
   { title: 'Accounts and repositories', names: [/^(?:Actor|User|Collaborator|Contributor|Repo|Installation|Team)/, 'OwnerRepoQuery', 'AddCollaboratorResult', 'TextLimits'] },
-  { title: 'Threads and comments', names: [/^(?:Thread|SubscriptionState|SubscribeOptions|SubscriptionItem|Close|Comment|Milestone|IssueType|Label|GetMany|Merge|UpdateBranch|Lock|HideComment)/, 'AuthorAssociation'] },
+  { title: 'Threads and comments', names: [/^(?:Thread|SubscriptionState|Close|Comment|Milestone|IssueType|Label|GetMany|Merge|UpdateBranch|Lock|HideComment)/, 'AuthorAssociation'] },
   { title: 'Reactions', names: [/^React/, 'REACTION_CONTENTS'] },
   { title: 'Reviews', names: [/^Review/, 'ResolvedReviewRef', 'PullBranches', 'PullStats', 'ThreadStack'] },
   { title: 'Checks and CI', names: [/^(?:Check|Ci)/] },
@@ -62,7 +62,7 @@ const DATA_MODEL_SECTIONS: SectionConfig[] = [
   { title: 'Releases', names: [/^Release/, 'DownloadAssetOptions'] },
   { title: 'Security alerts', names: [/^Security/] },
   { title: 'Webhooks', names: [/^Webhook/] },
-  { title: 'Notifications and events', names: [/^(?:Notification|BulkNotification|ForgeEvent|Event|PushCommit|SourceKind)/] },
+  { title: 'Notifications and events', names: [/^(?:Notification|BulkNotification|ForgeEvent|Event|PushCommit|SourceKind|StreamOptions|StreamItem)/] },
   { title: 'Dates', names: ['reviveDates', 'DATE_FIELDS'] },
 ]
 

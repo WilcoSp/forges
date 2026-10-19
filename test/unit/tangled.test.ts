@@ -2,7 +2,7 @@ import type { FetchLike } from '../../src/fetch.ts'
 import type { ResolvedThreadRef } from '../../src/model.ts'
 import { gzipSync } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
-import { InsufficientScopeError, SubscriptionClosedError, TokenRevokedError, UnresolvedThreadError, UnsupportedOperationError } from '../../src/errors.ts'
+import { InsufficientScopeError, StreamClosedError, TokenRevokedError, UnresolvedThreadError, UnsupportedOperationError } from '../../src/errors.ts'
 import { notificationThread, repoKey, threadKey } from '../../src/model.ts'
 import { parseAtUri } from '../../src/tangled/atproto.ts'
 import { tangled } from '../../src/tangled/index.ts'
@@ -459,7 +459,7 @@ describe('tangled notifications (experimental)', () => {
   })
 })
 
-describe('tangled subscribe', () => {
+describe('tangled stream', () => {
   it('requests only the collections it is given', () => {
     const url = new URL(jetstreamUrl('wss://jetstream.example/subscribe', ['sh.tangled.repo.issue', 'sh.tangled.feed.comment']))
 
@@ -483,7 +483,7 @@ describe('tangled subscribe', () => {
         },
       }]),
     })
-    const { value } = await instance.sources!.subscribe()[Symbol.asyncIterator]().next()
+    const { value } = await instance.sources!.stream()[Symbol.asyncIterator]().next()
 
     expect(value!.event).toMatchObject({
       kind: 'comment',
@@ -509,12 +509,12 @@ describe('tangled subscribe', () => {
         },
       }]),
     })
-    const iterator = instance.sources!.subscribe()[Symbol.asyncIterator]()
+    const iterator = instance.sources!.stream()[Symbol.asyncIterator]()
     const first = await iterator.next()
 
     expect(first.value).toMatchObject({ cursor: '1', event: { kind: 'reaction', id: `at://${ADA}/sh.tangled.feed.reaction/3mwqother2222` } })
     expect(first.value!.event.thread).toBeUndefined()
-    await expect(iterator.next()).rejects.toThrow(SubscriptionClosedError)
+    await expect(iterator.next()).rejects.toThrow(StreamClosedError)
   })
 })
 

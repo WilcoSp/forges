@@ -237,7 +237,7 @@ const TASKS: CredentialTask[] = [
   { id: 'inbox', group: 'Write', label: 'Triage notifications', capabilities: ['notifications.markRead', 'notifications.markDone', 'notifications.unsubscribe', 'notifications.markAllRead', 'notifications.markAllDone', 'threads.subscribe'] },
   { id: 'moderate', group: 'Write', label: 'Lock conversations and hide comments', capabilities: ['threads.lock', 'threads.hideComment', 'commits.hideComment'] },
   { id: 'receive', group: 'Events', label: 'Receive webhooks', capabilities: ['webhooks.ingest'], fields: ['WEBHOOK_SECRET'] },
-  { id: 'events', group: 'Events', label: 'Poll or stream events', capabilities: ['sources.subscribe', 'repos.events', 'users.events'] },
+  { id: 'events', group: 'Events', label: 'Poll or stream events', capabilities: ['sources.stream', 'repos.events', 'users.events'] },
   { id: 'webhooks', group: 'Administer', label: 'Manage webhooks', capabilities: ['webhooks.list', 'webhooks.create', 'webhooks.update', 'webhooks.delete', 'webhooks.rotateSecret', 'webhooks.deliveries', 'webhooks.redeliver'] },
   { id: 'collaborators', group: 'Administer', label: 'Add collaborators', capabilities: ['repos.addCollaborator'] },
   { id: 'block', group: 'Administer', label: 'Block accounts', capabilities: ['orgs.block', 'users.block'] },

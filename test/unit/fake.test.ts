@@ -116,7 +116,7 @@ describe('fake forge', () => {
   })
 
   it('distinguishes `not_applicable` from `false`, in the report and the message', async () => {
-    const forge = fake({ seed, support: { 'notifications.markDone': 'not_applicable', 'notifications.markRead': false, 'contents.commitFiles': 'not_applicable', 'sources.subscribe': 'not_applicable' } })
+    const forge = fake({ seed, support: { 'notifications.markDone': 'not_applicable', 'notifications.markRead': false, 'contents.commitFiles': 'not_applicable', 'sources.stream': 'not_applicable' } })
     const repo = { forge: 'fake', instance: 'fake.test', owner: 'acme', name: 'widgets' }
     const notification = { forge: 'fake', instance: 'fake.test', id: '1' }
 
@@ -127,7 +127,7 @@ describe('fake forge', () => {
     await expect(forge.notifications.markDone(notification)).rejects.toThrow('fake has no notifications.markDone')
     await expect(forge.notifications.markRead(notification)).rejects.toThrow('fake does not support notifications.markRead')
     await expect(forge.contents.commitFiles(repo, { branch: 'main', message: 'm', changes: [{ path: 'a', content: 'b' }] })).rejects.toThrow('fake has no contents.commitFiles')
-    await expect(Array.fromAsync(forge.sources.subscribe())).rejects.toThrow('fake has no sources.subscribe')
+    await expect(Array.fromAsync(forge.sources.stream())).rejects.toThrow('fake has no sources.stream')
   })
 
   it('carries `not_applicable` through per-kind support and composed verbs', async () => {
@@ -166,7 +166,7 @@ describe('fake forge', () => {
     const forge = fake({ seed })
     const controller = new AbortController()
     const issue = { forge: 'fake', instance: 'fake.test', repo: { forge: 'fake', instance: 'fake.test', owner: 'acme', name: 'widgets' }, kind: 'issue' as const, number: '1' }
-    const iterator = forge.sources.subscribe({ signal: controller.signal })[Symbol.asyncIterator]()
+    const iterator = forge.sources.stream({ signal: controller.signal })[Symbol.asyncIterator]()
     const received = iterator.next().then(result => result.value?.event)
     await forge.threads.close(issue)
 
@@ -578,7 +578,7 @@ describe('fake event sources', () => {
     const [feed] = (await forge.repos.events(issue.repo).page()).items
     const [pushed] = forge.store.events
 
-    expect([pushed!.source, timeline!.source, feed!.source]).toEqual(['subscribe', 'poll', 'poll'])
+    expect([pushed!.source, timeline!.source, feed!.source]).toEqual(['stream', 'poll', 'poll'])
     expect(new Set([pushed!.id, timeline!.id, feed!.id]).size).toBe(3)
     expect(timeline!.detail).toEqual(pushed!.detail)
   })

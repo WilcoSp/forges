@@ -100,7 +100,7 @@ Deliveries of `installation.*` events become `installation` events. You register
 | Capability | User token | App installation | App | Without credentials |
 | --- | --- | --- | --- | --- |
 | `experimental` | ✅ | ✅ | ✅ | ✅ |
-| `sources.subscribe` | ❌ | ❌ | ❌ | ❌ |
+| `sources.stream` | ❌ | ❌ | ❌ | ❌ |
 | `repos.get` | experimental | experimental | ❌ | ❌ |
 | `users.get` | ❌ | ❌ | ❌ | ❌ |
 | `users.me` | ❌ | ❌ | ❌ | ❌ |

@@ -1,17 +1,17 @@
 import { defineEventHandler, getRouterParam, setResponseStatus } from 'nuxt/server'
 import { errorBody, redactRaw, useForges } from '../../utils/forges'
 
-/** The `sources.subscribe` stream of the first provider of a forge, as server-sent events. */
+/** The `sources.stream` stream of the first provider of a forge, as server-sent events. */
 export default defineEventHandler((event) => {
   const forge = getRouterParam(event, 'forge')!
   const provider = useForges().get(forge)
-  if (!provider?.can('sources.subscribe')) {
+  if (!provider?.can('sources.stream')) {
     setResponseStatus(event, 404)
     return { error: { name: 'ProviderNotFound', message: `No ${forge} provider with a live feed is configured` } }
   }
   const encoder = new TextEncoder()
   const signal = event.req.signal
-  const items = provider.sources.subscribe({ cursor: event.req.headers.get('last-event-id') ?? undefined, signal })
+  const items = provider.sources.stream({ cursor: event.req.headers.get('last-event-id') ?? undefined, signal })
   const iterator = items[Symbol.asyncIterator]()
   const body = new ReadableStream<Uint8Array>({
     start(controller) {

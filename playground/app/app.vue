@@ -12,7 +12,7 @@ interface Summary {
     release?: { tag: string, name?: string, publishedAt?: string, url?: string, assets?: Array<{ name: string }> }
     alerts?: { items: Array<{ ref: { id: string }, kind: string, severity: string, title: string, url?: string }>, warnings: Array<{ code: string, message: string }> }
     webhooks: Array<{ kind: string, summary?: string, occurredAt: string, raw?: unknown }>
-    subscribe: boolean
+    stream: boolean
   }>
   skipped: Array<{ forge: string, suffix: string, reason: string }>
 }
@@ -25,7 +25,7 @@ const sources: EventSource[] = []
 
 onMounted(() => {
   for (const provider of data.value?.providers ?? []) {
-    if (!provider.subscribe) {
+    if (!provider.stream) {
       continue
     }
     const source = new EventSource(`/api/live/${provider.forge}`)
@@ -133,7 +133,7 @@ FORGES_TANGLED_DEMO_REPO=did:plc:.../repo   # threads to show where there are no
         </p>
       </template>
 
-      <template v-if="provider.subscribe">
+      <template v-if="provider.stream">
         <h3>Live feed</h3>
         <ul>
           <li v-for="item in live[provider.key]" :key="item.cursor">

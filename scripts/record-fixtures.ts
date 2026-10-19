@@ -409,7 +409,7 @@ function targetFor(credentials: Credentials, fetch: FetchLike): Target {
             setTimeout(() => controller.abort(), 8_000)
             const cursor = String((Date.now() - 3 * 3_600_000) * 1000)
             let events = 0
-            for await (const _ of provider.sources.subscribe({ cursor, signal: controller.signal })) {
+            for await (const _ of provider.sources.stream({ cursor, signal: controller.signal })) {
               if (++events >= 15) {
                 controller.abort()
               }

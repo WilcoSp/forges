@@ -130,10 +130,10 @@ A pull carries a patch rather than a branch. `threads.create()` with `kind: 'pul
 
 ## Live events
 
-`sources.subscribe()` streams events from Jetstream, and each item has a `cursor`. To resume a stream later, save the cursor and pass it back:
+`sources.stream()` streams events from Jetstream, and each item has a `cursor`. To resume a stream later, save the cursor and pass it back:
 
 ```ts
-for await (const { event, cursor } of reader.sources.subscribe({
+for await (const { event, cursor } of reader.sources.stream({
   cursor: saved,
   signal,
 })) {
@@ -142,11 +142,11 @@ for await (const { event, cursor } of reader.sources.subscribe({
 }
 ```
 
-To close the connection, abort the signal or break out of the loop. If the connection drops, the iterator throws `SubscriptionClosedError` with the last cursor. The provider doesn't reconnect by itself, so call `subscribe()` again with that cursor.
+To close the connection, abort the signal or break out of the loop. If the connection drops, the iterator throws `StreamClosedError` with the last cursor. The provider doesn't reconnect by itself, so call `stream()` again with that cursor.
 
 ## Activity feeds
 
-An account's issues, pull requests, comments, state changes, reactions and label changes are records in its own repository, so `users.events()` reads them from its PDS. It takes a handle or a DID. Each page lists every collection the account has records in, and merges them by record key, which orders them by when they were written. The events are the ones `sources.subscribe()` yields for the same records, with `source: 'poll'`.
+An account's issues, pull requests, comments, state changes, reactions and label changes are records in its own repository, so `users.events()` reads them from its PDS. It takes a handle or a DID. Each page lists every collection the account has records in, and merges them by record key, which orders them by when they were written. The events are the ones `sources.stream()` yields for the same records, with `source: 'poll'`.
 
 The first page's `etag` pairs the repository's revision with a digest of the records on that page. Pass it back as `cursor: { etag }`, with the same `perPage`, and you get a `notModified` page when nothing on it changed. An untouched revision takes a single request. A Bluesky post or a like moves the revision too, so the feed lists the records again, sees the same page and still answers `notModified` before it resolves a single thread. A chatty Bluesky account doesn't cost a full read on every poll. An edit to a record on the page does count as a change. The feed lists the records as they are now, so deleted records don't appear, and an edited record appears once.
 
@@ -185,7 +185,7 @@ A `push` delivery becomes a `push` or `ref` event. Tangled has no API to registe
 | Capability | Support | Without credentials |
 | --- | --- | --- |
 | `experimental` | ✅ | ✅ |
-| `sources.subscribe` | ✅ | ✅ |
+| `sources.stream` | ✅ | ✅ |
 | `repos.get` | ✅ | ✅ |
 | `users.get` | ✅ | ✅ |
 | `users.me` | ✅ | ❌ |

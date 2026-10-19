@@ -686,8 +686,8 @@ const TANGLED: ProviderDefinition<TangledOptions, undefined, true> = {
         setAssignees: perKind(signedIn, setAssignees),
       },
       sources: {
-        subscribe: verb(true, subscribeOptions => subscribeJetstream({
-          ...subscribeOptions,
+        stream: verb(true, streamOptions => subscribeJetstream({
+          ...streamOptions,
           url: options.jetstreamUrl ?? 'wss://jetstream2.us-east.bsky.network/subscribe',
           collections: THREAD_COLLECTIONS,
           createWebSocket,

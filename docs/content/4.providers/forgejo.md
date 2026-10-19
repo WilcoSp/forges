@@ -144,7 +144,7 @@ A label delivery doesn't say which labels were added or removed. When the set of
 | Capability | Support | Without credentials |
 | --- | --- | --- |
 | `experimental` | ❌ | ❌ |
-| `sources.subscribe` | ❌ | ❌ |
+| `sources.stream` | ❌ | ❌ |
 | `repos.get` | ✅ | ✅ |
 | `users.get` | ✅ | ✅ |
 | `users.me` | ✅ | ❌ |

@@ -15,7 +15,7 @@ const total = applicableTotal(provider)
 /** The bar shows what a forge does with the capabilities that apply to it, so it leaves out `not_applicable`. */
 const barLevels = supportLevels.filter(level => level !== 'not_applicable')
 const rows = new Map(groups.flatMap(group => group.rows).map(row => [row.capability, row]))
-const sources = Object.entries({ poll: 'notifications.list', webhook: 'webhooks.ingest', subscribe: 'sources.subscribe' }).map(([name, capability]) => {
+const sources = Object.entries({ poll: 'notifications.list', webhook: 'webhooks.ingest', stream: 'sources.stream' }).map(([name, capability]) => {
   const { level, credentials } = rows.get(capability)!.cells[index]!
   return { name, level, credentials }
 })

@@ -188,10 +188,10 @@ export class ForgeTimeoutError extends ForgeError {
   }
 }
 
-/** A subscription connection closed or failed. Resume from `cursor`. */
-export class SubscriptionClosedError extends ForgeError {
-  override name = 'SubscriptionClosedError'
-  /** The cursor of the last event received. Pass it to `subscribe()` to resume. */
+/** A `sources.stream()` connection closed or failed. Resume from `cursor`. */
+export class StreamClosedError extends ForgeError {
+  override name = 'StreamClosedError'
+  /** The cursor of the last event received. Pass it to `sources.stream()` to resume. */
   readonly cursor?: string
 
   constructor(message: string, cursor: string | undefined, context?: ForgeErrorContext, options?: ErrorOptions) {

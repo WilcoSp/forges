@@ -79,7 +79,7 @@ The API has no endpoints for hooks and no documented signature scheme. For this 
 | Capability | Support | Without credentials |
 | --- | --- | --- |
 | `experimental` | ✅ | ✅ |
-| `sources.subscribe` | ❌ | ❌ |
+| `sources.stream` | ❌ | ❌ |
 | `repos.get` | ✅ | ✅ |
 | `users.get` | ❌ | ❌ |
 | `users.me` | ✅ | ❌ |

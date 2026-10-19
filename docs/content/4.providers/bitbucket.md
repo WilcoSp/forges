@@ -108,7 +108,7 @@ Bitbucket doesn't keep a delivery log, so `webhooks.deliveries()` and `webhooks.
 | Capability | Support | Without credentials |
 | --- | --- | --- |
 | `experimental` | ❌ | ❌ |
-| `sources.subscribe` | ❌ | ❌ |
+| `sources.stream` | ❌ | ❌ |
 | `repos.get` | ✅ | ✅ |
 | `users.get` | ❌ | ❌ |
 | `users.me` | ✅ | ❌ |

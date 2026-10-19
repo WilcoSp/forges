@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
       alerts: alerts.value && { items: alerts.value.items.slice(0, LATEST), warnings: alerts.value.warnings ?? [] },
       errors: [listing.error, checkResult.error, release.error, alerts.error].filter(Boolean),
       webhooks: webhookEvents(key),
-      subscribe: provider.can('sources.subscribe'),
+      stream: provider.can('sources.stream'),
     }
   }))
   const body = { providers, skipped: skippedProviders() }

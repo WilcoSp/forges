@@ -78,7 +78,7 @@ Artifacts sends no webhooks. It publishes [events](https://developers.cloudflare
 | Capability | Support | Without credentials |
 | --- | --- | --- |
 | `experimental` | ✅ | ✅ |
-| `sources.subscribe` | ❌ | ❌ |
+| `sources.stream` | ❌ | ❌ |
 | `repos.get` | ✅ | ❌ |
 | `users.get` | ❌ | ❌ |
 | `users.me` | ❌ | ❌ |

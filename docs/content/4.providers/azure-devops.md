@@ -127,7 +127,7 @@ for await (const team of provider.orgs.teams(project)) {
 | Capability | Support | Without credentials |
 | --- | --- | --- |
 | `experimental` | ❌ | ❌ |
-| `sources.subscribe` | ❌ | ❌ |
+| `sources.stream` | ❌ | ❌ |
 | `repos.get` | ✅ | ✅ |
 | `users.get` | ❌ | ❌ |
 | `users.me` | ❌ | ❌ |

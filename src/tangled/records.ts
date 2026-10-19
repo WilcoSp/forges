@@ -481,7 +481,7 @@ export function createTangledRecords({ options, instance, webUrl, context, atpro
   function toStreamEvent(message: JetstreamCommitEvent): Promise<ForgeEventInput | undefined> {
     const { commit } = message
     const uri = atUri(message.did, commit.collection, commit.rkey)
-    return recordEvent({ uri, collection: commit.collection, record: commit.record, operation: commit.operation, rev: commit.rev }, 'subscribe', new Date(message.time_us / 1000))
+    return recordEvent({ uri, collection: commit.collection, record: commit.record, operation: commit.operation, rev: commit.rev }, 'stream', new Date(message.time_us / 1000))
   }
 
   const canonical = new Map<string, Promise<{ ref: RepoRef, record: RecordResponse<RepoRecord> }>>()

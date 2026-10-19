@@ -79,7 +79,7 @@ Because a Sourcehut webhook sends the result of a GraphQL query that you registe
 | Capability | Support | Without credentials |
 | --- | --- | --- |
 | `experimental` | ❌ | ❌ |
-| `sources.subscribe` | ❌ | ❌ |
+| `sources.stream` | ❌ | ❌ |
 | `repos.get` | ✅ | ❌ |
 | `users.get` | ✅ | ❌ |
 | `users.me` | ✅ | ❌ |

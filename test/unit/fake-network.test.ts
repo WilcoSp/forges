@@ -1,6 +1,6 @@
 import type { ForgeVerb } from '../../src/provider.ts'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ForgeApiError, ForgeNetworkError, ForgeTimeoutError, MergeBlockedError, MergeConflictError, RateLimitedError, SubscriptionClosedError } from '../../src/errors.ts'
+import { ForgeApiError, ForgeNetworkError, ForgeTimeoutError, MergeBlockedError, MergeConflictError, RateLimitedError, StreamClosedError } from '../../src/errors.ts'
 import { fake } from '../../src/fake/index.ts'
 import { upsertComment } from '../../src/helpers.ts'
 
@@ -59,7 +59,7 @@ describe('fake forge failure injection', () => {
 
     expect(() => forge.failNext('threads.transfer', new Error('boom'))).toThrow(new TypeError('threads.transfer is not implemented by the fake forge, so it sends no request to fail'))
     expect(() => forge.failNext('threads.comments', new Error('boom'))).not.toThrow()
-    expect(() => forge.failNext('sources.subscribe', new Error('boom'))).not.toThrow()
+    expect(() => forge.failNext('sources.stream', new Error('boom'))).not.toThrow()
   })
 })
 
@@ -72,7 +72,7 @@ describe('fake forge offline', () => {
     await expect(forge.threads.list(repo).page()).rejects.toThrow(ForgeNetworkError)
     await expect(Array.fromAsync(forge.notifications.list())).rejects.toThrow(ForgeNetworkError)
     await expect(forge.threads.createComment(issue, 'Hello')).rejects.toThrow(ForgeNetworkError)
-    await expect(forge.sources.subscribe()[Symbol.asyncIterator]().next()).rejects.toThrow(ForgeNetworkError)
+    await expect(forge.sources.stream()[Symbol.asyncIterator]().next()).rejects.toThrow(ForgeNetworkError)
 
     forge.online()
 
@@ -81,7 +81,7 @@ describe('fake forge offline', () => {
 
   it('closes an open subscription with the cursor of its last event', async () => {
     const forge = fake({ seed })
-    const iterator = forge.sources.subscribe()[Symbol.asyncIterator]()
+    const iterator = forge.sources.stream()[Symbol.asyncIterator]()
     const first = iterator.next()
     await forge.threads.close(issue)
     const { value } = await first
@@ -89,8 +89,8 @@ describe('fake forge offline', () => {
     forge.offline()
 
     const error = await closed.catch((error: unknown) => error)
-    expect(error).toBeInstanceOf(SubscriptionClosedError)
-    expect((error as SubscriptionClosedError).cursor).toBe(value!.cursor)
+    expect(error).toBeInstanceOf(StreamClosedError)
+    expect((error as StreamClosedError).cursor).toBe(value!.cursor)
   })
 })
 

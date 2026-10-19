@@ -103,7 +103,7 @@ function leave() {
           name="i-lucide-radio"
           class="size-3.5 text-toned"
         />
-        Also subscribes
+        Also streams
       </li>
     </ul>
 
@@ -238,7 +238,7 @@ function leave() {
                 class="pt-3 text-left text-xs font-normal max-lg:pb-1 lg:pb-4"
               >
                 <span class="block font-mono text-highlighted">Other sources</span>
-                <span class="block text-muted">Poll, subscribe</span>
+                <span class="block text-muted">Poll, stream</span>
               </th>
               <td
                 v-for="provider of columns"
@@ -257,16 +257,16 @@ function leave() {
                     class="sr-only"
                   >Poll</span>
                   <UIcon
-                    v-if="provider.subscribe"
+                    v-if="provider.stream"
                     name="i-lucide-radio"
                     class="size-3.5"
                   />
                   <span
-                    v-if="provider.subscribe"
+                    v-if="provider.stream"
                     class="sr-only"
-                  >Subscribe</span>
+                  >Stream</span>
                   <span
-                    v-if="!provider.poll && !provider.subscribe"
+                    v-if="!provider.poll && !provider.stream"
                     class="text-muted"
                   >
                     <span aria-hidden="true">·</span>

@@ -82,8 +82,8 @@ export interface ProviderContract {
   releases?: { count: number, get: { id: string, tag: string }, latest: string, writes?: true }
   /** Present when the forge reports security alerts. */
   securityAlerts?: { kinds: string[], severities: string[] }
-  /** Present when the forge supports `sources.subscribe`. */
-  subscribe?: { messages: unknown[], kinds: EventKind[], lastCursor: string }
+  /** Present when the forge supports `sources.stream`. */
+  stream?: { messages: unknown[], kinds: EventKind[], lastCursor: string }
 }
 
 /** Test-only Ed25519 keys; the public half of `ORIGIN_KEY` is served by `test/fixtures/cursor-origin/keys.json`. */
@@ -337,7 +337,7 @@ export const contracts: ProviderContract[] = [
       sign: hmac,
       expect: { kind: 'state_change', action: 'opened', threadKind: 'pull_request', displayNumber: '4', actor: 'did:plc:adaauthor222222222222222', detail: { type: 'state_change', state: 'open' }, title: 'Cache compiled templates' },
     },
-    subscribe: {
+    stream: {
       messages: (JSON.parse(fixture('tangled', 'jetstream/thread-activity')) as { messages: unknown[] }).messages,
       kinds: ['comment', 'label', 'other'],
       lastCursor: '1758000000000004',

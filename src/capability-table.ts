@@ -31,7 +31,7 @@ export interface CapabilityEntry {
  */
 const TABLE = [
   { capability: 'experimental', derived: 'experimental', verbs: [] },
-  { capability: 'sources.subscribe' },
+  { capability: 'sources.stream' },
   { capability: 'repos.get' },
   { capability: 'users.get' },
   { capability: 'users.me', account: true },

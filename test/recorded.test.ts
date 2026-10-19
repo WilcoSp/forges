@@ -358,8 +358,8 @@ for (const { name, create } of REPLAYED_PROVIDERS) {
         const instance = create(fixtureFetch(directory).fetch, manifest!, jetstream?.messages)
         const cursors: string[] = []
         const error = await (async () => {
-          for await (const { event, cursor } of instance.sources.subscribe({ cursor: jetstream!.cursor })) {
-            expect(event.source).toBe('subscribe')
+          for await (const { event, cursor } of instance.sources.stream({ cursor: jetstream!.cursor })) {
+            expect(event.source).toBe('stream')
             expect(event.occurredAt.getTime()).toBeGreaterThan(0)
             cursors.push(cursor)
           }
@@ -367,7 +367,7 @@ for (const { name, create } of REPLAYED_PROVIDERS) {
 
         expect(cursors.length).toBeGreaterThan(0)
         expect(cursors).toEqual([...cursors].sort())
-        expect((error as Error).name).toBe('SubscriptionClosedError')
+        expect((error as Error).name).toBe('StreamClosedError')
       })
 
       it.skipIf(!recorded.has('discussion'))('normalises a discussion and its first comments', () => {

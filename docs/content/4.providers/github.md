@@ -312,7 +312,7 @@ An organisation defines its issue types, and its repositories inherit them. `rep
 | Capability | Classic token | Fine-grained token | App installation | App | Without credentials |
 | --- | --- | --- | --- | --- | --- |
 | `experimental` | ❌ | ❌ | ❌ | ❌ | ❌ |
-| `sources.subscribe` | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `sources.stream` | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `repos.get` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `users.get` | ✅ | ✅ | ✅ | ❌ | ✅ |
 | `users.me` | ✅ | ✅ | ❌ | ❌ | ❌ |

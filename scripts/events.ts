@@ -25,7 +25,7 @@ export interface EventProvider {
   /** `heuristic` when some kinds are inferred from free text. */
   eventKinds: string
   poll: boolean
-  subscribe: boolean
+  stream: boolean
   /** Whether `webhooks.create()` translates normalised kinds into native event names. */
   subscriptions: boolean
 }
@@ -126,7 +126,7 @@ export function eventData(forges: typeof Forges): { providers: EventProvider[], 
       name,
       eventKinds: capabilities.eventKinds,
       poll: !isUnsupported(capabilities.notifications.list),
-      subscribe: !isUnsupported(capabilities.sources.subscribe),
+      stream: !isUnsupported(capabilities.sources.stream),
       subscriptions: !isUnsupported(capabilities.webhooks.create),
     })),
     kinds: kinds.map((kind) => {

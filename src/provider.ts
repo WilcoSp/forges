@@ -202,8 +202,8 @@ export interface ForgeCapabilities {
   /** The forge's API as a whole is unstable, so the provider can change with it. */
   experimental?: true
   sources: {
-    /** Support for `sources.subscribe()`, a long-lived push stream; see {@link SourcesApi}. */
-    subscribe: Support
+    /** Support for `sources.stream()`, a long-lived push stream; see {@link SourcesApi}. */
+    stream: Support
   }
   repos: {
     /** Support for `repos.get()`. */
@@ -1199,16 +1199,16 @@ export interface VerbScopes {
   note?: string
 }
 
-/** Options for `sources.subscribe()`. */
-export interface SubscribeOptions {
-  /** Resume after this cursor, as yielded by an earlier {@link SubscriptionItem}. */
+/** Options for `sources.stream()`. */
+export interface StreamOptions {
+  /** Resume after this cursor, as yielded by an earlier {@link StreamItem}. */
   cursor?: string
   /** Aborting closes the connection and ends iteration without an error. */
   signal?: AbortSignal
 }
 
-/** One item from a push subscription. */
-export interface SubscriptionItem {
+/** One item from `sources.stream()`. */
+export interface StreamItem {
   event: ForgeEvent
   /** Opaque position after `event`; persist it and pass it back to resume. */
   cursor: string
@@ -1254,15 +1254,15 @@ export interface UsersApi {
   unblock: (login: string, options?: BaseOptions) => Promise<void>
 }
 
-/** Ways to receive events: polling, webhooks and push subscriptions. */
+/** Long-lived push streams of events. */
 export interface SourcesApi {
   /**
    * Push delivery over a long-lived connection. Iteration ends when the signal
    * aborts or the consumer stops iterating; a dropped connection throws
-   * `SubscriptionClosedError` carrying the last cursor. There is no automatic
+   * `StreamClosedError` carrying the last cursor. There is no automatic
    * reconnection.
    */
-  subscribe: (options?: SubscribeOptions) => AsyncIterable<SubscriptionItem>
+  stream: (options?: StreamOptions) => AsyncIterable<StreamItem>
 }
 
 export type { ForgeVerb } from './supports.ts'

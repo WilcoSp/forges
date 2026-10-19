@@ -482,7 +482,7 @@ function byCapability(diffs: ProviderDiff[], rows: CapabilityDiff['rows']): stri
 /** Lists with more capabilities than this name only how many there are. */
 const MAX_LISTED = 12
 
-/** Capabilities across namespaces as one label, as `notifications` list, get, `sources.subscribe`. */
+/** Capabilities across namespaces as one label, as `notifications` list, get, `sources.stream`. */
 function listLabel(keys: string[]): string {
   const namespaces = new Map<string, string[]>()
   for (const key of keys) {

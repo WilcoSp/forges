@@ -1440,7 +1440,7 @@ export interface ForgeEvent extends ForgeOrigin {
 export type ForgeEventInput = Omit<ForgeEvent, 'action'> & { action?: EventAction }
 
 /** How an event reached the caller. */
-export type SourceKind = 'poll' | 'webhook' | 'subscribe'
+export type SourceKind = 'poll' | 'webhook' | 'stream'
 
 /**
  * Why a notification was delivered. `'unknown'` covers forges that report no

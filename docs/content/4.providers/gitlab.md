@@ -162,7 +162,7 @@ GitLab has no teams, so a subgroup stands in for one. `orgs.teams()` reads `GET 
 | Capability | Support | Without credentials |
 | --- | --- | --- |
 | `experimental` | ❌ | ❌ |
-| `sources.subscribe` | ❌ | ❌ |
+| `sources.stream` | ❌ | ❌ |
 | `repos.get` | ✅ | ✅ |
 | `users.get` | ✅ | ✅ |
 | `users.me` | ✅ | ❌ |
