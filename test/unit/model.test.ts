@@ -7,7 +7,7 @@ import { github } from '../../src/github/index.ts'
 import { upsertComment } from '../../src/helpers.ts'
 import * as root from '../../src/index.ts'
 import * as kit from '../../src/kit.ts'
-import { commentKey, isUnsupported, notificationKey, repoKey, repoRef, threadKey } from '../../src/model.ts'
+import { commentKey, isNamespaceRef, isUnsupported, namespaceRef, notificationKey, repoKey, repoRef, repoSlug, threadKey } from '../../src/model.ts'
 import { createForges } from '../../src/provider.ts'
 import { summariseChecks } from '../../src/utils.ts'
 import { sameRepo } from '../../src/web.ts'
@@ -96,6 +96,22 @@ describe('identity keys', () => {
     for (const slug of ['widgets', '/widgets', 'acme/']) {
       expect(() => repoRef(provider, slug)).toThrow(TypeError)
     }
+  })
+
+  it('builds a namespace ref from a provider and an owner', () => {
+    const provider = github({ baseUrl: 'https://ghe.example.com/api/v3' })
+    const org = namespaceRef(provider, 'acme')
+
+    expect(org).toEqual({ forge: 'github', instance: 'ghe.example.com', owner: 'acme', name: '', kind: 'namespace' })
+    expect(isNamespaceRef(org)).toBe(true)
+    expect(repoSlug(org)).toBe('acme')
+    expect(repoKey(org)).toBe('github:ghe.example.com/acme/')
+  })
+
+  it('treats a ref without `kind: \'namespace\'` as a repository, even without a name', () => {
+    const unnamed: RepoRef = { forge: 'tangled', instance: 'tangled.org', owner: 'did:plc:abc', name: '', externalId: 'did:plc:abc' }
+
+    expect(isNamespaceRef(unnamed)).toBe(false)
   })
 })
 

@@ -1034,7 +1034,7 @@ export interface ReposApi {
   list: (options?: RepoQuery) => ForgeListing<Repo>
   /**
    * The repositories of a user, organisation, group, workspace or project that the credential can see.
-   * @param owner A namespace ref, such as `{ forge, instance, owner: 'acme', name: '', kind: 'namespace' }`.
+   * @param owner A namespace ref, such as `namespaceRef(provider, 'acme')`.
    */
   byOwner: (owner: RepoRef, query?: OwnerRepoQuery) => ForgeListing<Repo>
   /** Every label defined on the repository, whether or not a thread carries it. */
@@ -1113,7 +1113,7 @@ export interface MilestoneListOptions extends PageOptions {
 export interface OrgsApi {
   /**
    * Lists the teams of an organisation.
-   * @param org A namespace ref, such as `{ forge, instance, owner: 'acme', name: '', kind: 'namespace' }`.
+   * @param org A namespace ref, such as `namespaceRef(provider, 'acme')`.
    */
   teams: (org: RepoRef, options?: PageOptions) => ForgeListing<Team>
   /**
@@ -1128,7 +1128,7 @@ export interface OrgsApi {
    * @param login The account to block.
    * @example
    * ```ts
-   * await provider.orgs.block({ forge, instance, owner: 'acme', name: '', kind: 'namespace' }, 'spammer')
+   * await provider.orgs.block(namespaceRef(provider, 'acme'), 'spammer')
    * ```
    */
   block: (org: RepoRef, login: string, options?: BaseOptions) => Promise<void>

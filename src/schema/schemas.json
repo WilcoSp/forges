@@ -3696,7 +3696,7 @@
           "repo",
           "namespace"
         ],
-        "description": "`'namespace'` for subjects that belong to a group rather than a repository (GitLab epics). Absent means a repository."
+        "description": "`'namespace'` for an organisation, group, workspace or project, and for subjects that belong to one rather than to a repository (GitLab epics). Absent means a repository. {@link namespaceRef} builds a namespace ref."
       },
       "externalId": {
         "type": "string",
@@ -4955,7 +4955,7 @@
       "instance",
       "target"
     ],
-    "description": "Reference to a registered webhook. `target` is the repository, or a namespace ref (`kind: 'namespace'`, empty `name`) for an organisation or workspace hook.",
+    "description": "Reference to a registered webhook. `target` is the repository, or a namespace ref ( {@link namespaceRef} ) for an organisation or workspace hook.",
     "x-forges-type": "WebhookRef"
   }
 }

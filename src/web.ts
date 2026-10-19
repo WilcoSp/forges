@@ -1,5 +1,5 @@
 import type { CommentRef, CommitRef, ForgeInstance, ForgeKind, ForgeOrigin, ReleaseRef, RepoRef, ResolvedCommentRef, ResolvedThreadRef, ThreadKind, ThreadRef } from './model.ts'
-import { isResolvedThread, normaliseRepoName } from './model.ts'
+import { isResolvedThread, namespaceRef, normaliseRepoName } from './model.ts'
 
 /** A repository's section, for linking to the section itself rather than one entry in it. */
 export type RepoSection = 'issues' | 'pullRequests' | 'compare' | 'releases' | 'stargazers' | 'forks' | 'watchers'
@@ -281,7 +281,7 @@ function rulesFor(syntax: ReferenceSyntax): ReferenceRule[] {
   const suffix = syntax.suffix ? `(?:${syntax.suffix})?` : ''
   for (const { prefix, kind, number = String.raw`[1-9]\d*`, sameRepo: local, namespace } of syntax.threads) {
     const thread = `${prefix.replace(/[$()*+.?[\\\]^{|}]/g, '\\$&')}(?<id>${number})${suffix}`
-    rule(thread, ({ id }, from, origin) => ({ ...origin, repo: namespace ? { ...origin, owner: from.owner, name: '', kind: 'namespace' } : from, kind, number: id! }))
+    rule(thread, ({ id }, from, origin) => ({ ...origin, repo: namespace ? namespaceRef(origin, from.owner) : from, kind, number: id! }))
     if (syntax.repo && !local) {
       rule(`(?<slug>${syntax.repo})${thread}`, ({ slug, id }, _, origin) => ({ ...origin, repo: repoIn(slug!, origin), kind, number: id! }))
     }

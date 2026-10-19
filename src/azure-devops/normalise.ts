@@ -1,6 +1,7 @@
 import type { Actor, Branch, ChangedFile, Check, CheckState, Comment, Commit, ForgeEventInput, Repo, RepoRef, ResolvedThreadRef, ReviewState, Tag, Team, Thread, ThreadRef, ThreadState, TreeEntry } from '../model.ts'
 import type { AzureChange, AzureComment, AzureCommit, AzureIdentity, AzureItem, AzurePolicyEvaluation, AzurePullRequest, AzureRef, AzureRepository, AzureReviewer, AzureStatus, AzureTeam, AzureThread, AzureWorkItem, AzureWorkItemComment, AzureWorkItemUpdate } from './types.ts'
 import { eventTime } from '../events.ts'
+import { namespaceRef } from '../model.ts'
 import { toDate } from '../utils.ts'
 
 export const FORGE = 'azure-devops' as const
@@ -29,7 +30,7 @@ export function toRepoRef(instance: string, organization: string, repo: AzureRep
 
 /** Work items belong to a project rather than a repository. */
 export function projectRef(instance: string, organization: string, project: string): RepoRef {
-  return { forge: FORGE, instance, owner: `${organization}/${project}`, name: '', kind: 'namespace' }
+  return namespaceRef({ forge: FORGE, instance }, `${organization}/${project}`)
 }
 
 /** A team belongs to a project, so its ref carries the project as a namespace. */

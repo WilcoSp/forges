@@ -33,6 +33,7 @@ import type { ShAcl, ShCommit, ShEmail, ShEvent, ShJob, ShLabel, ShPage, ShPatch
 import { fromBase64, toFileContent } from '../contents.ts'
 import { defineForgeProvider, perKind, verb } from '../define.ts'
 import { InsufficientScopeError, NotFoundError, UnsupportedOperationError } from '../errors.ts'
+import { namespaceRef } from '../model.ts'
 import { getManyConcurrently, isFirstPage, phased, requireThread, resolveToken, toDate } from '../utils.ts'
 import { webUrlFor } from '../web.ts'
 import { createSourcehutClient } from './client.ts'
@@ -563,7 +564,7 @@ function setupSourcehut(ctx: ProviderContext<SourcehutOptions, undefined>): Prov
         const { jobs } = await builds.query<{ jobs: ShPage<ShJob> }>(Q.Jobs, { cursor: query.cursor?.token }, query)
         // `jobs` lists the authenticated account's builds and never names a job's repository,
         // so the ref points at the account rather than at the queried repository.
-        const page = pageOf(jobs, job => toCiRun(origin, { ...origin, owner: job.owner.canonicalName, name: '', kind: 'namespace' }, job))
+        const page = pageOf(jobs, job => toCiRun(origin, namespaceRef(origin, job.owner.canonicalName), job))
         const warnings = isFirstPage(query.cursor)
           ? [
               { code: 'filter_unsupported' as const, message: 'Sourcehut lists the builds of the authenticated account, not of one repository' },

@@ -1,5 +1,6 @@
 import type { RepoRef, ThreadRef } from '../model.ts'
 import type { RepoSection, WebDefinition, WebLinks } from '../web.ts'
+import { namespaceRef } from '../model.ts'
 import { lineOf } from '../web.ts'
 
 const encode = (path: string) => path.split('/').map(encodeURIComponent).join('/')
@@ -46,11 +47,11 @@ function azureWeb(baseUrl: string): WebLinks {
       }
       const owner = `${org}/${project}`
       if (section === '_workitems' && rest[0] === 'edit' && rest[1]) {
-        const repo: RepoRef = { ...from, owner, name: '', kind: 'namespace' }
+        const repo = namespaceRef(from, owner)
         return { repo, thread: { ...from, repo, kind: 'issue', number: rest[1] } }
       }
       if (section !== '_git' || !rest[0]) {
-        return { repo: { ...from, owner, name: '', kind: 'namespace' } }
+        return { repo: namespaceRef(from, owner) }
       }
       const repo: RepoRef = { ...from, owner, name: rest[0] }
       const path = url.searchParams.get('path')?.replace(/^\//, '')

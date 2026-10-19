@@ -61,7 +61,7 @@ const repo = {
 } as const
 ```
 
-Work items belong to a project and not to a repository, so their refs use a namespace ref: `{ owner: 'acme/Widgets', name: '', kind: 'namespace' }`. `repos.byOwner()` takes the same namespace ref and lists the repositories of the project. Azure DevOps doesn't sort them, so if you pass `sort`, you get a `sort_unsupported` warning.
+Work items belong to a project and not to a repository, so their refs use a namespace ref, such as `namespaceRef(provider, 'acme/Widgets')`. `repos.byOwner()` takes the same namespace ref and lists the repositories of the project. Azure DevOps doesn't sort them, so if you pass `sort`, you get a `sort_unsupported` warning.
 
 `search.threads()` runs WIQL, which only ever looks inside one project. Name the project with `repo`, or with an `owner` such as `'acme/Widgets'`. Without either, it rejects with `UnsupportedOperationError`.
 
@@ -110,7 +110,9 @@ You manage service hook subscriptions at the level of the organization and not o
 Azure DevOps teams belong to a project rather than to the organization, so the organisation ref is a project namespace: `owner: 'organization/project'`. `orgs.teams()` reads the project's teams with `GET /{organization}/_apis/projects/{project}/teams`, and `orgs.teamMembers()` reads a team's members with `GET /{organization}/_apis/projects/{project}/teams/{team}/members`, addressing the team by `ref.id` when it is set and by its name otherwise. Both need a token with the `vso.project` scope, so `can('orgs.teams')` is `false` without a credential.
 
 ```ts
-const project = { forge: 'azure-devops', instance: 'dev.azure.com', owner: 'acme/Widgets', name: '', kind: 'namespace' } as const
+import { namespaceRef } from 'forges'
+
+const project = namespaceRef(provider, 'acme/Widgets')
 
 for await (const team of provider.orgs.teams(project)) {
   for await (const member of provider.orgs.teamMembers(team.ref)) {

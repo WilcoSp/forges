@@ -52,8 +52,8 @@ export interface RepoRef extends ForgeOrigin {
   /** Repository name. Empty for namespace-scoped refs. */
   name: string
   /**
-   * `'namespace'` for subjects that belong to a group rather than a repository
-   * (GitLab epics). Absent means a repository.
+   * `'namespace'` for an organisation, group, workspace or project, and for subjects that belong to one rather than
+   * to a repository (GitLab epics). Absent means a repository. {@link namespaceRef} builds a namespace ref.
    */
   kind?: 'repo' | 'namespace'
   /**
@@ -335,8 +335,7 @@ export interface ReleaseRef extends ForgeOrigin {
 
 /**
  * Reference to a registered webhook. `target` is the repository, or a
- * namespace ref (`kind: 'namespace'`, empty `name`) for an organisation or
- * workspace hook.
+ * namespace ref ({@link namespaceRef}) for an organisation or workspace hook.
  */
 export interface WebhookRef extends ForgeOrigin {
   /** The repository or namespace that the hook is registered on. */
@@ -1849,9 +1848,9 @@ export function normaliseRepoName(repo: RepoRef): RepoRef {
   return namesAreCaseInsensitive(repo.forge) ? { ...repo, owner: repo.owner.toLowerCase(), name: repo.name.toLowerCase() } : repo
 }
 
-/** Whether `ref` addresses an organisation, group or workspace rather than a repository. */
+/** Whether `ref` addresses an organisation, group or workspace rather than a repository, by its `kind`. */
 export function isNamespaceRef(ref: RepoRef): boolean {
-  return ref.kind === 'namespace' || !ref.name
+  return ref.kind === 'namespace'
 }
 
 /**
@@ -1862,10 +1861,10 @@ export function isNamespaceRef(ref: RepoRef): boolean {
  */
 export function repoKey(repo: RepoRef): string {
   if (repo.externalId) {
-    return `${repo.forge}:${repo.instance}/@${repo.kind === 'namespace' ? 'namespace:' : ''}${repo.externalId}`
+    return `${repo.forge}:${repo.instance}/@${isNamespaceRef(repo) ? 'namespace:' : ''}${repo.externalId}`
   }
   const { owner, name } = normaliseRepoName(repo)
-  return repo.kind === 'namespace'
+  return isNamespaceRef(repo)
     ? `${repo.forge}:${repo.instance}/${owner}/`
     : `${repo.forge}:${repo.instance}/${owner}/${name}`
 }
@@ -1885,10 +1884,10 @@ export function parseRepoKey(key: string): RepoRef | undefined {
   if (path.startsWith('@')) {
     const namespace = path.startsWith('@namespace:')
     const externalId = path.slice(namespace ? '@namespace:'.length : 1)
-    return externalId ? { ...origin, owner: '', name: '', externalId, ...namespace ? { kind: 'namespace' as const } : {} } : undefined
+    return externalId ? { ...namespace ? namespaceRef(origin, '') : { ...origin, owner: '', name: '' }, externalId } : undefined
   }
   if (path.endsWith('/')) {
-    return path.length > 1 ? { ...origin, owner: path.slice(0, -1), name: '', kind: 'namespace' } : undefined
+    return path.length > 1 ? namespaceRef(origin, path.slice(0, -1)) : undefined
   }
   const last = path.lastIndexOf('/')
   return last > 0 && last < path.length - 1 ? { ...origin, owner: path.slice(0, last), name: path.slice(last + 1) } : undefined
@@ -1896,7 +1895,7 @@ export function parseRepoKey(key: string): RepoRef | undefined {
 
 /** The `owner/name` people read and type; the owner alone for a namespace. */
 export function repoSlug(repo: RepoRef): string {
-  return repo.kind === 'namespace' ? repo.owner : `${repo.owner}/${repo.name}`
+  return isNamespaceRef(repo) ? repo.owner : `${repo.owner}/${repo.name}`
 }
 
 /**
@@ -1916,6 +1915,20 @@ export function repoRef(origin: ForgeOrigin, slug: string): RepoRef {
     throw new TypeError(`Repository ${JSON.stringify(slug)} is not in the form owner/name`)
   }
   return { forge: origin.forge, instance: origin.instance, owner: slug.slice(0, last), name: slug.slice(last + 1) }
+}
+
+/**
+ * The ref of an organisation, group, workspace or project on `origin`, as `orgs`, `repos.byOwner()` and
+ * namespace webhooks take it.
+ * @param origin The forge and instance, such as a provider.
+ * @param owner The namespace path, such as `acme`, `acme/platform` on GitLab or `acme/Widgets` on Azure DevOps.
+ * @example
+ * ```ts
+ * const teams = provider.orgs.teams(namespaceRef(provider, 'acme'))
+ * ```
+ */
+export function namespaceRef(origin: ForgeOrigin, owner: string): RepoRef {
+  return { forge: origin.forge, instance: origin.instance, owner, name: '', kind: 'namespace' }
 }
 
 /**
