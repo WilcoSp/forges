@@ -209,7 +209,7 @@ const PUSHIN: ProviderDefinition<PushinOptions, undefined, true> = {
   anonymous: true,
   baseUrl: 'https://pushin.eu',
   apiPath: '/api/v1',
-  headers: { accept: 'application/json' },
+  headers: { accept: 'application/vnd.github+json' },
   authHeaders: ({ options: { auth } }) => auth?.type === 'token' ? async () => ({ authorization: `Bearer ${await resolveToken(auth)}` }) : undefined,
   setup: setupPushin,
 }
