@@ -76,7 +76,6 @@ import type {
   ReviewEvent,
   ReviewInput,
   ReviewRef,
-  SearchQuery,
   SecurityAlert,
   SecurityAlertKind,
   SecurityAlertListOptions,
@@ -87,11 +86,12 @@ import type {
   TeamRef,
   TextLimits,
   Thread,
-  ThreadCreateInput,
+  ThreadInput,
   ThreadKind,
   ThreadQuery,
   ThreadRef,
-  ThreadUpdateInput,
+  ThreadSearchQuery,
+  ThreadUpdate,
   TreeEntry,
   TreeOptions,
   UpdateBranchOptions,
@@ -673,7 +673,7 @@ export interface ThreadsApi {
    * Creates an issue, pull request or discussion. A pull request needs `head` and `base`. A repeat creates a second
    * thread, though most forges reject a second open pull request from the same `head` to the same `base`.
    */
-  create: (repo: RepoRef, input: ThreadCreateInput, options?: BaseOptions) => Promise<Thread>
+  create: (repo: RepoRef, input: ThreadInput, options?: BaseOptions) => Promise<Thread>
   /**
    * Changes the title, body, state, labels or assignees of a thread. Fields left out stay as they are.
    * This is one request where the forge accepts every field together. Elsewhere it makes the same calls as
@@ -684,7 +684,7 @@ export interface ThreadsApi {
    * await provider.threads.update(ref, { state: 'closed', labels: ['wontfix'], assignees: [] })
    * ```
    */
-  update: (ref: ThreadRef, input: ThreadUpdateInput, options?: BaseOptions) => Promise<Thread>
+  update: (ref: ThreadRef, input: ThreadUpdate, options?: BaseOptions) => Promise<Thread>
   /**
    * Replaces the thread's labels.
    * @returns The labels the thread carries afterwards. GitLab and Azure DevOps report only their names.
@@ -997,7 +997,7 @@ export interface SearchApi {
    * Issues and pull requests across repositories. Fields the forge cannot
    * filter on come back as a `filter_unsupported` warning on the page.
    */
-  threads: (query: SearchQuery) => ForgeListing<Thread>
+  threads: (query: ThreadSearchQuery) => ForgeListing<Thread>
   /** Searches repositories. */
   repos: (query: RepoSearchQuery) => ForgeListing<Repo>
   /** Commits across repositories, where the forge indexes them. */
@@ -1437,7 +1437,7 @@ export interface Forges<Kind extends ForgeKind = never> {
    */
   search: {
     /** Searches issues and pull requests on every provider that supports search. */
-    threads: (query?: Omit<SearchQuery, 'cursor' | 'sort'> & { sort?: 'created' | 'updated' }) => ForgeIterable<Thread>
+    threads: (query?: Omit<ThreadSearchQuery, 'cursor' | 'sort'> & { sort?: 'created' | 'updated' }) => ForgeIterable<Thread>
     /** Searches repositories on every provider that supports search. */
     repos: (query?: Omit<RepoSearchQuery, 'cursor' | 'sort'> & { sort?: 'created' | 'updated' }) => ForgeIterable<Repo>
   }

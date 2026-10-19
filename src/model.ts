@@ -1647,7 +1647,7 @@ export interface ThreadQuery extends PageOptions {
  * field the forge cannot filter on becomes a `filter_unsupported` warning
  * on the page rather than a filter applied client-side.
  */
-export interface SearchQuery extends PageOptions {
+export interface ThreadSearchQuery extends PageOptions {
   /** Free text, matched against title and body. */
   text?: string
   /**
@@ -1683,7 +1683,7 @@ export interface SearchQuery extends PageOptions {
 export interface CommitSearchQuery extends PageOptions {
   /** Free text, matched against the commit message. */
   text?: string
-  /** Forge-native query syntax; see {@link SearchQuery.queryRaw}. */
+  /** Forge-native query syntax; see {@link ThreadSearchQuery.queryRaw}. */
   queryRaw?: string
   /** Limit to one repository. */
   repo?: RepoRef
@@ -1706,7 +1706,7 @@ export interface CommitSearchQuery extends PageOptions {
 /** A search for repositories. */
 export interface RepoSearchQuery extends PageOptions {
   text?: string
-  /** Forge-native query syntax; see {@link SearchQuery.queryRaw}. */
+  /** Forge-native query syntax; see {@link ThreadSearchQuery.queryRaw}. */
   queryRaw?: string
   /** Limit to one account or namespace. */
   owner?: string
@@ -1724,7 +1724,7 @@ export interface RepoSearchQuery extends PageOptions {
 export interface CodeSearchQuery extends PageOptions {
   /** Free text, matched against the contents of files. */
   text?: string
-  /** Forge-native query syntax; see {@link SearchQuery.queryRaw}. */
+  /** Forge-native query syntax; see {@link ThreadSearchQuery.queryRaw}. */
   queryRaw?: string
   /** Limit to one repository. */
   repo?: RepoRef
@@ -1786,7 +1786,7 @@ export interface OwnerRepoQuery extends PageOptions {
 }
 
 /** What `threads.create()` needs. */
-export interface ThreadCreateInput {
+export interface ThreadInput {
   kind: 'issue' | 'pull_request' | 'discussion'
   title: string
   body?: string
@@ -1805,7 +1805,7 @@ export interface ThreadCreateInput {
 }
 
 /** The fields that `threads.update()` changes. Fields left out stay as they are. */
-export interface ThreadUpdateInput {
+export interface ThreadUpdate {
   title?: string
   body?: string
   /** Closes or reopens the thread. To give a reason, use `threads.close()`. */

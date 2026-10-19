@@ -38,11 +38,11 @@ import type {
   Review,
   ReviewEvent,
   ReviewInput,
-  SearchQuery,
   SubscriptionState,
   Thread,
   ThreadQuery,
   ThreadRef,
+  ThreadSearchQuery,
   UpdateBranchOptions,
   UpdateBranchResult,
   User,
@@ -561,7 +561,7 @@ function setupForgejo({ options, origin, fetcher: baseFetcher, baseUrl }: Provid
     return isNamespaceRef(target) ? `/orgs/${encodeURIComponent(target.owner)}/hooks` : `${repoPath(target)}/hooks`
   }
 
-  async function searchThreadsPage(query: SearchQuery): Promise<Page<Thread>> {
+  async function searchThreadsPage(query: ThreadSearchQuery): Promise<Page<Thread>> {
     const warnings: ForgeWarning[] = []
     if (isFirstPage(query.cursor) && query.involves) {
       warnings.push({ code: 'filter_unsupported', message: `${profile.forge} has no involves filter; it was ignored` })

@@ -1,5 +1,5 @@
 import type { ProviderContext, ProviderDefinition, ProviderFactoryFunction, ProviderSpec } from '../define.ts'
-import type { Actor, BaseOptions, Check, Comment, Cursor, EventKind, ForgeEventInput, ForgeWarning, ListOptions, Notification, NotificationListOptions, OwnerRepoQuery, Page, PageOptions, Release, Repo, RepoRef, RepoSearchQuery, ResolvedThreadRef, Review, ReviewInput, SearchQuery, Thread, ThreadQuery, ThreadRef, User } from '../model.ts'
+import type { Actor, BaseOptions, Check, Comment, Cursor, EventKind, ForgeEventInput, ForgeWarning, ListOptions, Notification, NotificationListOptions, OwnerRepoQuery, Page, PageOptions, Release, Repo, RepoRef, RepoSearchQuery, ResolvedThreadRef, Review, ReviewInput, Thread, ThreadQuery, ThreadRef, ThreadSearchQuery, User } from '../model.ts'
 import type { AnonymousAuth, BulkNotificationOptions, ForgeOptionsBase, TokenAuth, VerbScopes } from '../provider.ts'
 import type { ForgeVerb } from '../supports.ts'
 import type { WebLinks } from '../web.ts'
@@ -241,7 +241,7 @@ function setupGitee({ options, instance, origin: context, fetcher, baseUrl }: Pr
   }
 
   /** Gitee searches issues only; its pull requests have no search endpoint. */
-  async function searchThreadsPage(query: SearchQuery): Promise<Page<Thread>> {
+  async function searchThreadsPage(query: ThreadSearchQuery): Promise<Page<Thread>> {
     if (query.kind === 'pull_request') {
       return { items: [], warnings: [{ code: 'kind_unsupported', message: 'Gitee has no pull request search' }] }
     }

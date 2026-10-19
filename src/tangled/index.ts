@@ -15,10 +15,10 @@ import type {
   RepoRef,
   ResolvedThreadRef,
   Thread,
-  ThreadCreateInput,
+  ThreadInput,
   ThreadKind,
   ThreadRef,
-  ThreadUpdateInput,
+  ThreadUpdate,
 } from '../model.ts'
 import type { AnonymousAuth, ForgeOptionsBase, ReposApi, ThreadsApi } from '../provider.ts'
 import type { TangledContents } from './knot.ts'
@@ -234,7 +234,7 @@ const TANGLED: ProviderDefinition<TangledOptions, undefined, true> = {
     const resolveActor = async (actor: string, signal?: AbortSignal) => actorFor(await didOf(actor, signal), signal)
 
     /** A pull from `head` to `base` in the same repo, carrying the knot's format-patch of `head` as its first round. */
-    async function pullRecord(repo: RepoRef, repoDid: string, input: ThreadCreateInput, signal?: AbortSignal): Promise<PullRecord> {
+    async function pullRecord(repo: RepoRef, repoDid: string, input: ThreadInput, signal?: AbortSignal): Promise<PullRecord> {
       if (!input.head) {
         throw new UnsupportedOperationError('A Tangled pull request needs a head branch', context)
       }
@@ -265,7 +265,7 @@ const TANGLED: ProviderDefinition<TangledOptions, undefined, true> = {
       }
     }
 
-    const editRecord = async (thread: ThreadRef, input: ThreadUpdateInput, signal?: AbortSignal) => {
+    const editRecord = async (thread: ThreadRef, input: ThreadUpdate, signal?: AbortSignal) => {
       const { ref, uri } = subjectUri(thread)
       const record = await putOwnRecord(atUri(uri.did, uri.collection, uri.rkey), current => ({
         ...current,

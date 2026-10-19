@@ -26,10 +26,10 @@ import type {
   ResolvedThreadRef,
   Review,
   ReviewInput,
-  SearchQuery,
   Thread,
   ThreadQuery,
   ThreadRef,
+  ThreadSearchQuery,
   Webhook,
   WebhookRef,
 } from '../model.ts'
@@ -400,7 +400,7 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
      * Bitbucket indexes issues and pull requests per repository, so search is
      * the same `q=` filter language scoped to one repository.
      */
-    async function searchThreadsPage(query: SearchQuery): Promise<Page<Thread>> {
+    async function searchThreadsPage(query: ThreadSearchQuery): Promise<Page<Thread>> {
       if (!query.repo) {
         throw new UnsupportedOperationError('Bitbucket has no cross-repository issue or pull request search; pass `repo`', context)
       }

@@ -55,14 +55,14 @@ import type {
   ReviewEvent,
   ReviewInput,
   ReviewRef,
-  SearchQuery,
   SecurityAlert,
   SecurityAlertListOptions,
   SubscriptionState,
   Thread,
-  ThreadCreateInput,
+  ThreadInput,
   ThreadQuery,
   ThreadRef,
+  ThreadSearchQuery,
   TreeEntry,
   TreeOptions,
   UpdateBranchOptions,
@@ -1206,7 +1206,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
   }
 
   /** GitHub search qualifiers, in the order the docs list them. */
-  function searchQualifiers(query: SearchQuery): string[] {
+  function searchQualifiers(query: ThreadSearchQuery): string[] {
     const qualifiers: string[] = []
     const advanced = !query.kind
     /** In advanced search a bare `OR` binds looser than the other qualifiers, so caller syntax is grouped. */
@@ -1247,14 +1247,14 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
    * GitHub Enterprise Server may predate it, and GitHub App user access tokens
    * can't search both kinds at once, so those read issues, then pull requests.
    */
-  async function searchThreadsPage(query: SearchQuery): Promise<Page<Thread>> {
+  async function searchThreadsPage(query: ThreadSearchQuery): Promise<Page<Thread>> {
     if (!query.kind && (enterprise || (auth.type === 'token' && tokenKindOf(auth, await resolveToken(auth)) === 'app-user'))) {
       return phased((['issue', 'pull_request'] as const).map(kind => (cursor?: Cursor) => searchIssuesPage({ ...query, kind, cursor })), query.cursor)
     }
     return searchIssuesPage(query)
   }
 
-  async function searchIssuesPage(query: SearchQuery): Promise<Page<Thread>> {
+  async function searchIssuesPage(query: ThreadSearchQuery): Promise<Page<Thread>> {
     const result = await fetcher.page<GitHubIssue>('/search/issues', {
       query: {
         q: searchQualifiers(query).join(' '),
@@ -2157,7 +2157,7 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
         }
         await fetcher.raw(commentPath(ref), { method: 'DELETE', signal: options?.signal })
       }),
-      create: perKind({ issue: true, pull_request: true }, async (repo, input: ThreadCreateInput, options) => {
+      create: perKind({ issue: true, pull_request: true }, async (repo, input: ThreadInput, options) => {
         const assignees = input.assignees?.map(actorLogin)
         if (input.kind === 'issue') {
           const { data } = await fetcher.json<GitHubIssue>(`${repoPath(repo)}/issues`, {

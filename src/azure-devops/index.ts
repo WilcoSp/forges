@@ -1,5 +1,5 @@
 import type { ProviderContext, ProviderDefinition, ProviderFactoryFunction, ProviderSpec } from '../define.ts'
-import type { Actor, BaseOptions, Check, CheckState, Comment, CommentRef, Commit, CommitFilesInput, Cursor, ForgeEventInput, ForgeWarning, Label, ListOptions, MergeMethod, MergeResult, Page, PageOptions, RepoRef, ResolvedThreadRef, Review, ReviewInput, SearchQuery, Thread, ThreadQuery, ThreadRef } from '../model.ts'
+import type { Actor, BaseOptions, Check, CheckState, Comment, CommentRef, Commit, CommitFilesInput, Cursor, ForgeEventInput, ForgeWarning, Label, ListOptions, MergeMethod, MergeResult, Page, PageOptions, RepoRef, ResolvedThreadRef, Review, ReviewInput, Thread, ThreadQuery, ThreadRef, ThreadSearchQuery } from '../model.ts'
 import type { AnonymousAuth, BasicAuth, ForgeOptionsBase, TokenAuth } from '../provider.ts'
 import type { WebLinks } from '../web.ts'
 import type { AzureCommit, AzureCommitDiffs, AzureIdentity, AzureItem, AzurePolicyEvaluation, AzurePullRequest, AzureRef, AzureRepository, AzureReviewer, AzureStatus, AzureTeam, AzureTeamMember, AzureThread, AzureWorkItem, AzureWorkItemComment, AzureWorkItemUpdate } from './types.ts'
@@ -437,7 +437,7 @@ function setupAzure({ options, instance, origin: context, fetcher, baseUrl }: Pr
   }
 
   /** WIQL runs against one project, named by `repo` or by `owner`, and reaches work items only: Azure DevOps has no pull request search. */
-  async function searchThreadsPage(query: SearchQuery): Promise<Page<Thread>> {
+  async function searchThreadsPage(query: ThreadSearchQuery): Promise<Page<Thread>> {
     const project = query.repo ?? (query.owner ? { forge: FORGE, instance, owner: query.owner, name: '', kind: 'namespace' as const } : undefined)
     if (!project) {
       throw new UnsupportedOperationError('Azure DevOps work item search is scoped to a project; pass `repo` or `owner`', context)

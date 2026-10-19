@@ -35,13 +35,13 @@ import type {
   RepoTemplateOptions,
   ResolvedThreadRef,
   Review,
-  SearchQuery,
   SecurityAlert,
   SecurityAlertListOptions,
   SubscriptionState,
   Thread,
   ThreadQuery,
   ThreadRef,
+  ThreadSearchQuery,
   UpdateBranchOptions,
   UpdateBranchResult,
   User,
@@ -502,7 +502,7 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
     }
 
     /** Cross-project search runs on the global issue and merge request listings, which take `search` and `in`. */
-    async function searchThreadsPage(query: SearchQuery): Promise<Page<Thread>> {
+    async function searchThreadsPage(query: ThreadSearchQuery): Promise<Page<Thread>> {
       const warnings: ForgeWarning[] = []
       if (isFirstPage(query.cursor) && query.involves) {
         warnings.push({ code: 'filter_unsupported', message: 'GitLab has no involves filter; it was ignored' })

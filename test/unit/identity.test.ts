@@ -1,4 +1,4 @@
-import type { ForgeIterable, ForgeListing, ForgeProvider, Page, RepoRef, RepoSection, SearchQuery, Thread, ThreadRef } from '../../src/index.ts'
+import type { ForgeIterable, ForgeListing, ForgeProvider, Page, RepoRef, RepoSection, Thread, ThreadRef, ThreadSearchQuery } from '../../src/index.ts'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { azureDevOps } from '../../src/azure-devops/index.ts'
 import { bitbucket } from '../../src/bitbucket/index.ts'
@@ -18,7 +18,7 @@ function unpaged<T>(iterable: ForgeIterable<T>): ForgeListing<T> {
   return Object.assign(iterable, { page: async () => ({ items: [] }) })
 }
 
-function stubSearch(provider: ForgeProvider, read: (query: SearchQuery) => Promise<Page<Thread>>) {
+function stubSearch(provider: ForgeProvider, read: (query: ThreadSearchQuery) => Promise<Page<Thread>>) {
   provider.search.threads = (query = {}) => Object.assign(forgeIterable<Thread>(async function* () {}), { page: () => read(query) })
 }
 
@@ -493,7 +493,7 @@ describe('cross-forge search paging', () => {
 
   function searchWith(pages: Record<string, Array<Page<Thread>>>) {
     const forges = createForges(Object.keys(pages).map(instance => fake({ instance })))
-    const queries: Array<SearchQuery & { instance: string }> = []
+    const queries: Array<ThreadSearchQuery & { instance: string }> = []
     for (const provider of forges.providers) {
       stubSearch(provider, async (query) => {
         queries.push({ ...query, instance: provider.instance })
