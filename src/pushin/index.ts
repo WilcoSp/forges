@@ -1,13 +1,14 @@
 import type { ProviderContext, ProviderDefinition, ProviderFactoryFunction, ProviderSpec } from '../define.ts'
-import type { BaseOptions, Comment, ForgeEventInput, ListOptions, Page, RepoRef, ResolvedThreadRef, Thread, ThreadQuery, ThreadRef } from '../model.ts'
+import type { BaseOptions, Comment, ForgeEventInput, ListOptions, Page, PageOptions, Release, ReleaseUpdate, RepoRef, ResolvedThreadRef, Thread, ThreadQuery, ThreadRef } from '../model.ts'
 import type { AnonymousAuth, ForgeOptionsBase, TokenAuth, VerbScopes } from '../provider.ts'
 import type { ForgeVerb } from '../supports.ts'
 import type { WebLinks } from '../web.ts'
-import type { PushinCollaborator, PushinComment, PushinLabel, PushinNotification, PushinRepository, PushinThread, PushinUser } from './types.ts'
+import type { PushinCollaborator, PushinComment, PushinLabel, PushinNotification, PushinRelease, PushinRepository, PushinThread, PushinUser } from './types.ts'
 import { defineForgeProvider, perKind, verb } from '../define.ts'
+import { NotFoundError } from '../errors.ts'
 import { eventTime } from '../events.ts'
 import { createListing, getManyConcurrently, requireIssueOrPull, resolveToken, toPage } from '../utils.ts'
-import { FORGE, toActor, toCollaborator, toComment, toLabel, toNotification, toRepo, toThread } from './normalise.ts'
+import { FORGE, toActor, toCollaborator, toComment, toLabel, toNotification, toRelease, toRepo, toThread } from './normalise.ts'
 import { PUSHIN_WEB } from './web.ts'
 
 /** A personal access token created in Settings (`pun_pat_…`), sent as `Authorization: Bearer`. */
@@ -91,6 +92,19 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
     }
   }
 
+  async function releasesPage(repo: RepoRef, listOptions: PageOptions = {}): Promise<Page<Release>> {
+    return list(`${repoPath(repo)}/releases`, listOptions, (raw: PushinRelease) => toRelease(repo, raw))
+  }
+
+  async function writeRelease(repo: RepoRef, path: string, method: 'POST' | 'PATCH', input: ReleaseUpdate, options?: BaseOptions): Promise<Release> {
+    const { data } = await fetcher.json<PushinRelease>(path, {
+      method,
+      json: { tag_name: input.tag, target_commitish: input.target, name: input.name, body: input.body, draft: input.draft, prerelease: input.prerelease },
+      signal: options?.signal,
+    })
+    return toRelease(repo, data)
+  }
+
   return {
     traits: {
       eventKinds: 'native',
@@ -163,6 +177,28 @@ function setupPushin({ options, instance, origin: context, fetcher, baseUrl }: P
     web: PUSHIN_WEB.links({ baseUrl, instance }),
     webhooks: {},
     scopes: pushinScopesFor,
+    releases: {
+      get: verb(true, async (ref, options) => toRelease(ref.repo, (await fetcher.json<PushinRelease>(`${repoPath(ref.repo)}/releases/${encodeURIComponent(ref.id)}`, { signal: options?.signal })).data)),
+      getByTag: verb(true, async (repo, tag, options) => toRelease(repo, (await fetcher.json<PushinRelease>(`${repoPath(repo)}/releases/tags/${encodeURIComponent(tag)}`, { signal: options?.signal })).data)),
+      latest: verb(true, async (repo, options) => {
+        try {
+          return toRelease(repo, (await fetcher.json<PushinRelease>(`${repoPath(repo)}/releases/latest`, { signal: options?.signal })).data)
+        }
+        catch (error) {
+          if (error instanceof NotFoundError) {
+            return undefined
+          }
+          throw error
+        }
+      }),
+      listPage: verb(true, releasesPage),
+      downloadAsset: verb(true, async (ref, downloadOptions = {}) => (await fetcher.stream(`${repoPath(ref.repo)}/releases/assets/${encodeURIComponent(ref.id)}`, {
+        headers: { accept: 'application/octet-stream' },
+        signal: downloadOptions.signal,
+      })).body),
+      create: verb('unverified', (repo, input, options) => writeRelease(repo, `${repoPath(repo)}/releases`, 'POST', input, options)),
+      update: verb('unverified', (ref, update, options) => writeRelease(ref.repo, `${repoPath(ref.repo)}/releases/${encodeURIComponent(ref.id)}`, 'PATCH', update, options)),
+    },
   }
 }
 
@@ -186,4 +222,4 @@ export function pushinScopesFor(_verb: ForgeVerb): VerbScopes {
   return { note: 'A personal access token created in Settings; Pushin.eu does not scope tokens per resource' }
 }
 
-export { toActor as toPushinActor, toComment as toPushinComment, toRepo as toPushinRepo }
+export { toActor as toPushinActor, toComment as toPushinComment, toRelease as toPushinRelease, toRepo as toPushinRepo }

@@ -7,8 +7,9 @@
     "status": 200,
     "headers": {
       "x-ratelimit-limit": "90",
-      "x-ratelimit-remaining": "86",
-      "x-ratelimit-reset": "1791723600"
+      "x-ratelimit-remaining": "76",
+      "x-ratelimit-reset": "1792436400",
+      "x-ratelimit-resource": "core"
     },
     "body": {
       "id": 6170,
@@ -27,10 +28,10 @@
         "sha": null,
         "ref": "test/pr"
       },
+      "body": "here we go",
       "base": {
         "ref": "main"
       },
-      "body": "here we go",
       "labels": [],
       "url": "https://pushin.eu/api/v1/repos/danielroe/roe.dev-test/pulls/1",
       "updated_at": "2026-10-11T12:35:03.554239Z",

@@ -47,9 +47,9 @@
       "reviewers": [],
       "labels": [],
       "url": "https://pushin.eu/danielroe/roe.dev-test/pulls/1",
-      "createdAt": "<now>",
-      "updatedAt": "<now>",
-      "lastActivityAt": "<now>",
+      "createdAt": "2026-10-11T12:35:03.554Z",
+      "updatedAt": "2026-10-11T12:35:03.554Z",
+      "lastActivityAt": "2026-10-11T12:35:03.554Z",
       "branches": {
         "head": {
           "ref": "test/pr"

@@ -89,3 +89,39 @@ export interface PushinNotification {
   unread: boolean
   updated_at: string
 }
+
+export interface PushinReleaseAsset {
+  id: number
+  name: string
+  label: string | null
+  state: string
+  url: string
+  browser_download_url: string | null
+  created_at: string
+  updated_at: string
+  content_type: string
+  download_count: number
+  size: number
+  digest: string | null
+  uploader: PushinUser | null
+  node_id: string
+}
+
+export interface PushinRelease {
+  id: number
+  name: string | null
+  body: string | null
+  tag_name: string
+  target_commitish: string
+  author: PushinUser | null
+  url: string
+  html_url: string
+  created_at: string
+  published_at: string | null
+  updated_at: string
+  prerelease: boolean
+  immutable: boolean
+  draft: boolean
+  node_id: string
+  assets: PushinReleaseAsset[]
+}
