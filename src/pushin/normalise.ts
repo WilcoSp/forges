@@ -182,8 +182,7 @@ export function toRelease(repo: RepoRef, raw: PushinRelease): Release {
   const ref: ReleaseRef = { forge: FORGE, instance: repo.instance, repo, id: String(raw.id), tag: raw.tag_name }
   return {
     ref,
-
-    name: raw.name,
+    name: raw.name ?? undefined,
     tag: raw.tag_name,
     author: toActor({ forge: FORGE, instance: ref.instance }, raw.author),
     body: raw.body ?? undefined,
@@ -191,16 +190,18 @@ export function toRelease(repo: RepoRef, raw: PushinRelease): Release {
     isDraft: raw.draft,
     isPrerelease: raw.prerelease,
     createdAt: toDate(raw.created_at),
-    publishedAt: raw.published_at ? toDate(raw.published_at) : undefined,
+    publishedAt: toDate(raw.published_at),
     immutable: raw.immutable,
-    assets: raw.assets?.map(asset => ({
-      ref: { forge: FORGE, instance: repo.instance, repo, release: ref, id: String(asset.id) },
-      name: asset.name,
-      url: asset.browser_download_url,
-      contentType: asset.content_type,
-      downloadCount: asset.download_count,
-      size: asset.size,
-    })) ?? undefined,
+    assets: raw.assets.flatMap(asset => asset.browser_download_url
+      ? [{
+          ref: { forge: FORGE, instance: repo.instance, repo, release: ref, id: String(asset.id) },
+          name: asset.name,
+          url: asset.browser_download_url,
+          contentType: asset.content_type,
+          downloadCount: asset.download_count,
+          size: asset.size,
+        }]
+      : []),
     raw,
   }
 }
