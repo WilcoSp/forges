@@ -1036,6 +1036,9 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
           return toCiJob(run, data)
         }),
         log: verb(!anonymous, async (ref, options) => (await fetcher.stream(`${projectPath(ref.repo)}/jobs/${encodeURIComponent(ref.id)}/trace`, { signal: options?.signal })).body),
+        rerunFailed: verb(true, async (ref, options) => {
+          await fetcher.raw(`${projectPath(ref.repo)}/pipelines/${encodeURIComponent(ref.id)}/retry`, { method: 'POST', signal: options?.signal })
+        }),
       },
       securityAlerts: {
         kinds: { dependency: !anonymous, code_scanning: !anonymous, secret: !anonymous },
@@ -1096,8 +1099,11 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
             return { items: [] }
           }
           const pipelineProject = data.head_pipeline.project_id
-          const project = pipelineProject === undefined || pipelineProject === data.target_project_id ? projectPath(ref.repo) : `/projects/${pipelineProject}`
-          return { items: await Array.fromAsync(fetcher.items<GitLabJob>(`${project}/pipelines/${data.head_pipeline.id}/jobs`, { query: { per_page: 100 }, signal: options?.signal }), job => toJobCheck(ref.repo, job)) }
+          const own = pipelineProject === undefined || pipelineProject === data.target_project_id
+          const project = own ? projectPath(ref.repo) : `/projects/${pipelineProject}`
+          const repo = own ? ref.repo : repoRefFromWebUrl(instance, data.head_pipeline.web_url, pipelineProject)
+          const run = repo && { forge: FORGE, instance, repo, id: String(data.head_pipeline.id) }
+          return { items: await Array.fromAsync(fetcher.items<GitLabJob>(`${project}/pipelines/${data.head_pipeline.id}/jobs`, { query: { per_page: 100 }, signal: options?.signal }), job => toJobCheck(repo ?? ref.repo, job, run)) }
         }),
         get: perKind({ issue: true, pull_request: true }, get),
         getMany: verb(true, (refs, options) => getManyConcurrently(refs, get, options)),

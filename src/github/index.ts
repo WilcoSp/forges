@@ -1829,6 +1829,9 @@ function setupGitHub({ options, baseUrl, instance, origin: context, fetcher, cre
       })),
       getJob: verb(true, getJob),
       log: verb(!anonymous, async (ref, options) => (await fetcher.stream(`${repoPath(ref.repo)}/actions/jobs/${encodeURIComponent(ref.id)}/logs`, { signal: options?.signal })).body),
+      rerunFailed: verb(true, async (ref, options) => {
+        await fetcher.raw(`${repoPath(ref.repo)}/actions/runs/${encodeURIComponent(ref.id)}/rerun-failed-jobs`, { method: 'POST', signal: options?.signal })
+      }),
     },
     contents: {
       getFile: verb(true, readFile),
@@ -2336,6 +2339,8 @@ const GITHUB: ProviderDefinition<GitHubOptions, AppCredentials | undefined, true
 /** Creates a GitHub provider for github.com or a GitHub Enterprise Server instance. */
 export const github: ProviderFactoryFunction<GitHubOptions, true, 'github', GitHubProvider> = /* @__PURE__ */ defineForgeProvider(GITHUB)
 
+const PULL_CHECK_READS = new Set<ForgeVerb>(['threads.get', 'threads.getMany', 'threads.list', 'threads.closingPullRequests'])
+
 /**
  * Token scopes and fine-grained permissions GitHub documents per endpoint
  * group. Classic scopes are the ones an OAuth consent screen asks for; the
@@ -2373,8 +2378,20 @@ export function githubScopesFor(verb: ForgeVerb): VerbScopes {
   if (group === 'orgs') {
     return { token: ['read:org'], permissions: { members: 'read' } }
   }
-  if (group === 'ci' || (group === 'checks' && name !== 'report')) {
-    return { token: ['repo'], permissions: { actions: 'read', checks: name === 'rerun' ? 'write' : 'read' } }
+  if (verb === 'threads.checks') {
+    return { token: ['repo'], permissions: { pull_requests: 'read', checks: 'read', statuses: 'read' } }
+  }
+  if (verb === 'checks.list') {
+    return { token: ['repo'], permissions: { checks: 'read', statuses: 'read' } }
+  }
+  if (verb === 'checks.get') {
+    return { token: ['repo'], permissions: { checks: 'read' } }
+  }
+  if (verb === 'checks.rerun') {
+    return { token: ['repo'], permissions: { checks: 'write', actions: 'write' }, note: 'A check run created by GitHub Actions is re-run as its job, which needs `actions: write`' }
+  }
+  if (group === 'ci') {
+    return { token: ['repo'], permissions: { actions: WRITE_VERBS.has(verb) ? 'write' : 'read' } }
   }
   if (verb === 'checks.report') {
     return { token: ['repo:status'], permissions: { checks: 'write', statuses: 'write' } }
@@ -2389,6 +2406,13 @@ export function githubScopesFor(verb: ForgeVerb): VerbScopes {
     return { token: ['repo', 'public_repo'], permissions: { issues: 'write' }, note: 'Needs push access: without it, GitHub leaves the type unchanged' }
   }
   const write = WRITE_VERBS.has(verb)
+  if (PULL_CHECK_READS.has(verb)) {
+    return {
+      token: ['repo', 'public_repo'],
+      permissions: { issues: 'read', pull_requests: 'read', checks: 'read', statuses: 'read' },
+      note: 'The `checks` of a pull request are read from its check runs and commit statuses',
+    }
+  }
   if (group === 'threads') {
     return { token: ['repo', 'public_repo'], permissions: { issues: write ? 'write' : 'read', pull_requests: write ? 'write' : 'read' } }
   }
