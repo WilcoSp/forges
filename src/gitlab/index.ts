@@ -1318,7 +1318,7 @@ const GITLAB: ProviderDefinition<GitLabOptions, undefined, true> = {
 export const gitlab: ProviderFactoryFunction<GitLabOptions, true, 'gitlab'> = /* @__PURE__ */ defineForgeProvider(GITLAB)
 
 /** GitLab tokens carry coarse scopes; `api` covers writes and `read_api` reads. */
-export function gitlabScopesFor(verb: ForgeVerb): VerbScopes {
+function gitlabScopesFor(verb: ForgeVerb): VerbScopes {
   const [group = '', name = ''] = verb.split('.')
   if (group === 'webhooks') {
     return name === 'verify' || name === 'ingest' ? {} : { token: ['api'], note: 'Maintainer on the project, or Owner on the group' }

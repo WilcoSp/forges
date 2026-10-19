@@ -660,7 +660,7 @@ const GITEE: ProviderDefinition<GiteeOptions, undefined, true> = {
 export const gitee: ProviderFactoryFunction<GiteeOptions, true, 'gitee'> = /* @__PURE__ */ defineForgeProvider(GITEE)
 
 /** Gitee OAuth scopes, one per resource group. */
-export function giteeScopesFor(verb: ForgeVerb): VerbScopes {
+function giteeScopesFor(verb: ForgeVerb): VerbScopes {
   const [group = '', name = ''] = verb.split('.')
   if (group === 'webhooks') {
     return name === 'verify' || name === 'ingest' ? {} : { token: ['hook'] }

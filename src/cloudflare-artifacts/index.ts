@@ -308,6 +308,6 @@ export const cloudflareArtifacts: ProviderFactoryFunction<CloudflareArtifactsOpt
   define({ ...options, instance: options.instance ?? `${options.accountId}.artifacts.cloudflare.net` })
 
 /** Scope requirements for a Cloudflare Artifacts operation. */
-export function cloudflareArtifactsScopesFor(_verb: ForgeVerb): VerbScopes {
+function cloudflareArtifactsScopesFor(_verb: ForgeVerb): VerbScopes {
   return { permissions: { Artifacts: 'read' }, note: 'A Cloudflare API token with Artifacts > Read, which covers every read' }
 }

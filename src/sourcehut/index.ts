@@ -682,7 +682,7 @@ const factory: ProviderFactoryFunction<SourcehutOptions, true, 'sourcehut'> = /*
 export const sourcehut: ProviderFactoryFunction<SourcehutOptions, true, 'sourcehut'> = options => factory({ ...options, readOnly: true })
 
 /** The OAuth grants each Sourcehut operation needs. */
-export function sourcehutScopesFor(verb: ForgeVerb): VerbScopes {
+function sourcehutScopesFor(verb: ForgeVerb): VerbScopes {
   const grant = (service: string, scope: string) => `${service}/${scope}:RO`
   // Each service enforces scopes per resolver, and a query with any out-of-scope
   // field fails as a whole, so a verb must list every grant its queries touch.

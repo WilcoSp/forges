@@ -2363,7 +2363,7 @@ const PULL_CHECK_READS = new Set<ForgeVerb>(['threads.get', 'threads.getMany', '
  * group. Classic scopes are the ones an OAuth consent screen asks for; the
  * permissions are the fine-grained token and app equivalents.
  */
-export function githubScopesFor(verb: ForgeVerb): VerbScopes {
+function githubScopesFor(verb: ForgeVerb): VerbScopes {
   const [group = '', name = ''] = verb.split('.')
   if (group === 'webhooks') {
     return name === 'verify' || name === 'ingest'

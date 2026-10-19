@@ -802,7 +802,7 @@ const BITBUCKET: ProviderDefinition<BitbucketOptions, undefined, true> = {
 export const bitbucket: ProviderFactoryFunction<BitbucketOptions, true, 'bitbucket'> = /* @__PURE__ */ defineForgeProvider(BITBUCKET)
 
 /** Bitbucket Cloud scopes, as an app password or OAuth consumer grants them. */
-export function bitbucketScopesFor(verb: ForgeVerb): VerbScopes {
+function bitbucketScopesFor(verb: ForgeVerb): VerbScopes {
   const [group = '', name = ''] = verb.split('.')
   if (group === 'webhooks') {
     return name === 'verify' || name === 'ingest' ? {} : { token: ['webhook'] }

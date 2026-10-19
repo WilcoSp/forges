@@ -1,6 +1,6 @@
 import type { WebhookHandlers } from '../define.ts'
 import type { WebhookDelivery } from '../provider.ts'
-import type { ForgejoOptions, ForgejoProfile } from './index.ts'
+import type { ForgejoOptions, ForgejoProfile } from './definition.ts'
 import type { WebhookHeaderNames } from './webhook-events.ts'
 import { verifyHmacSignature } from '../webhooks.ts'
 import { FORGEJO_HEADERS, FORGEJO_WEBHOOK_EVENTS } from './webhook-events.ts'

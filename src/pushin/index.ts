@@ -218,8 +218,6 @@ const PUSHIN: ProviderDefinition<PushinOptions, undefined, true> = {
 export const pushin: ProviderFactoryFunction<PushinOptions, true, 'pushin'> = /* @__PURE__ */ defineForgeProvider(PUSHIN)
 
 /** Scope requirements for a Pushin.eu operation. */
-export function pushinScopesFor(_verb: ForgeVerb): VerbScopes {
+function pushinScopesFor(_verb: ForgeVerb): VerbScopes {
   return { note: 'A personal access token created in Settings; Pushin.eu does not scope tokens per resource' }
 }
-
-export { toActor as toPushinActor, toComment as toPushinComment, toRelease as toPushinRelease, toRepo as toPushinRepo }

@@ -1,7 +1,7 @@
 import type { ProviderFactoryFunction } from '../define.ts'
-import type { ForgejoOptions, ForgejoProfile } from '../forgejo/index.ts'
+import type { ForgejoOptions, ForgejoProfile } from '../forgejo/definition.ts'
 import { defineForgeProvider } from '../define.ts'
-import { forgejoDefinition } from '../forgejo/index.ts'
+import { forgejoDefinition } from '../forgejo/definition.ts'
 import { GITEA_WEB } from '../forgejo/web.ts'
 import { GITEA_HEADERS } from '../forgejo/webhook-events.ts'
 
@@ -12,7 +12,7 @@ export type GiteaOptions = ForgejoOptions
  * Gitea shares Forgejo's REST API. It differs in its default instance, its
  * webhook headers (`X-Gitea-*` only) and its capability profile.
  */
-export const GITEA_PROFILE: ForgejoProfile = {
+const GITEA_PROFILE: ForgejoProfile = {
   forge: 'gitea',
   web: GITEA_WEB,
   headers: GITEA_HEADERS,
