@@ -1,5 +1,6 @@
-import type { Actor, Collaborator, Comment, ForgeOrigin, Label, Notification, NotificationReason, Release, ReleaseRef, Repo, RepoPermissions, RepoRef, RepoRole, ResolvedThreadRef, Thread } from '../model.ts'
-import type { PushinCollaborator, PushinComment, PushinLabel, PushinNotification, PushinRelease, PushinRepository, PushinThread, PushinUser } from './types.ts'
+import type { Actor, Collaborator, Comment, ForgeOrigin, Label, Notification, NotificationReason, Release, ReleaseRef, Repo, RepoPermissions, RepoRef, RepoRole, ResolvedThreadRef, Review, ReviewComment, Team, Thread } from '../model.ts'
+import type { PushinCollaborator, PushinComment, PushinLabel, PushinNotification, PushinRelease, PushinRepository, PushinReview, PushinReviewComment, PushinTeam, PushinThread, PushinUser } from './types.ts'
+import { reviewState } from '../events.ts'
 import { toDate } from '../utils.ts'
 
 export const FORGE = 'pushin'
@@ -90,6 +91,10 @@ export function toRole(raw: PushinCollaborator): RepoRole {
     return 'triage'
   }
   return permissions.pull ? 'read' : 'none'
+}
+
+export function toPermissionRole(raw: string): RepoRole {
+  return raw === 'admin' || raw === 'write' || raw === 'read' ? raw : 'none'
 }
 
 export function toCollaborator(origin: ForgeOrigin, raw: PushinCollaborator): Collaborator {
@@ -202,6 +207,44 @@ export function toRelease(repo: RepoRef, raw: PushinRelease): Release {
           size: asset.size,
         }]
       : []),
+    raw,
+  }
+}
+
+export function toTeam(org: RepoRef, raw: PushinTeam): Team {
+  return {
+    ref: { forge: FORGE, instance: org.instance, org, id: String(raw.id), slug: raw.slug },
+    name: raw.name,
+    raw,
+  }
+}
+
+export function toReviewComment(thread: ResolvedThreadRef, raw: PushinReviewComment): ReviewComment {
+  return {
+    ref: { forge: FORGE, instance: thread.instance, thread, id: String(raw.id) },
+    body: raw.body,
+    author: toActor({ forge: FORGE, instance: thread.instance }, raw.user),
+    path: raw.path ?? undefined,
+    line: raw.line ?? undefined,
+    side: raw.side === 'LEFT' ? 'left' : raw.side === 'RIGHT' ? 'right' : undefined,
+    inReplyTo: raw.in_reply_to_id === null ? undefined : String(raw.in_reply_to_id),
+    thread: { id: String(raw.in_reply_to_id ?? raw.id), resolved: raw.resolved },
+    createdAt: toDate(raw.created_at),
+    url: raw.html_url,
+    raw,
+  }
+}
+
+export function toReview(thread: ResolvedThreadRef, raw: PushinReview, comments: ReviewComment[]): Review {
+  return {
+    ref: { forge: FORGE, instance: thread.instance, thread, id: String(raw.id) },
+    author: toActor({ forge: FORGE, instance: thread.instance }, raw.user),
+    state: reviewState(raw.state),
+    stateRaw: raw.state,
+    body: raw.body || undefined,
+    submittedAt: toDate(raw.submitted_at),
+    comments,
+    url: raw.html_url,
     raw,
   }
 }

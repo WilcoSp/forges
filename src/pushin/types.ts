@@ -125,3 +125,43 @@ export interface PushinRelease {
   node_id: string
   assets: PushinReleaseAsset[]
 }
+
+export interface PushinTeam {
+  id: number
+  name: string
+  slug: string
+  node_id: string
+  organization: PushinUser | null
+}
+
+export interface PushinReview {
+  id: number
+  node_id: string
+  body: string | null
+  commit_id: string | null
+  state: string
+  submitted_at: string | null
+  created_at: string
+  html_url: string
+  user: PushinUser | null
+}
+
+export interface PushinReviewComment {
+  id: number
+  node_id: string
+  body: string
+  path: string | null
+  line: number | null
+  side: string | null
+  start_line: number | null
+  start_side: string | null
+  commit_id: string | null
+  diff_hunk: string | null
+  in_reply_to_id: number | null
+  pull_request_review_id: number | null
+  resolved: boolean
+  created_at: string
+  updated_at: string
+  html_url: string
+  user: PushinUser | null
+}

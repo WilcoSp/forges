@@ -1,0 +1,7 @@
+{
+  "name": "update release",
+  "recordedAt": "2026-10-19T20:48:05.352Z",
+  "needs": [
+    "create release"
+  ]
+}

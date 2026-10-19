@@ -1,0 +1,7 @@
+{
+  "name": "publish release",
+  "recordedAt": "2026-10-19T20:48:03.385Z",
+  "needs": [
+    "create draft release"
+  ]
+}
