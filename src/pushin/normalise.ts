@@ -187,7 +187,7 @@ export function toRelease(repo: RepoRef, raw: PushinRelease): Release {
     tag: raw.tag_name,
     author: toActor({ forge: FORGE, instance: ref.instance }, raw.author),
     body: raw.body ?? undefined,
-    url: raw.url,
+    url: raw.html_url,
     isDraft: raw.draft,
     isPrerelease: raw.prerelease,
     createdAt: toDate(raw.created_at),

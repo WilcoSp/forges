@@ -26,7 +26,7 @@
         "isBotHint": false
       },
       "body": "\n### Added\n\n- `pun release` commands to list, view, create, edit, and delete releases, upload\n  assets, and download assets with size and SHA-256 verification.\n- Automatic publication of platform archives, checksums, and changelog notes\n  from `scripts/release`, with resumable uploads through `scripts/publish-release`.\n\n",
-      "url": "https://pushin.eu/api/v1/repos/pjullrich/pushin-cli/releases/4",
+      "url": "https://pushin.eu/pjullrich/pushin-cli/releases/tag/v0.3.2",
       "isDraft": false,
       "isPrerelease": false,
       "createdAt": "2026-10-13T18:21:13.398Z",
@@ -211,7 +211,7 @@
         "isBotHint": false
       },
       "body": "### Removed\n\n- The post-import origin picker and import's `--move-origin`, `--move-all`,\n  `--select`, `--directory`, `--keep-both`, and `--revert` flags. Run\n  `pun move-origin --bulk` separately to select local checkouts and update origins.",
-      "url": "https://pushin.eu/api/v1/repos/pjullrich/pushin-cli/releases/3",
+      "url": "https://pushin.eu/pjullrich/pushin-cli/releases/tag/v0.3.1",
       "isDraft": false,
       "isPrerelease": false,
       "createdAt": "2026-10-13T15:27:11.496Z",
@@ -396,7 +396,7 @@
         "isBotHint": false
       },
       "body": "### Breaking changes\n\n- Review and comment commands take integer API IDs only. Responses retain the\n  internal string primary key as `node_id`; rendered tables and confirmations\n  show the integer ID used by subsequent commands.\n  Migration: IDs printed by `pun` <= 0.2.8 were `node_id` strings and are now\n  rejected. Get the integer ID from `pun pr reviews` / `pun pr comments`.\n\n### Added\n\n- Bulk `move-origin` scans the chosen directory and its direct subfolders,\n  with a repository picker, explicit\n  path selection, non-interactive updates, and a read-only preview.\n- `move-origin --keep-both` preserves the previous origin as `github`;\n  `--revert` restores saved fetch and push URLs for any Git origin.\n- Imports offer a matching local-checkout picker after completion, with\n  `--move-all`, `--select`, `--directory`, `--keep-both`, and `--revert` options.\n- GitHub imports accept `GH_TOKEN`, taking precedence over `GITHUB_TOKEN`.\n  Empty token variables are skipped before falling back to `gh auth token`.\n\n### Changed\n\n- Remote configuration changes are staged on a temporary copy and published\n  under a brief Git config lock so a failed write leaves the config intact.\n- The origin backup keeps the last source outside Pushin through ordinary\n  Pushin retargets and reverts. Credentialed origins still replace the backup;\n  new Pushin URLs have no credentials and need no credential-specific prompt.\n- Import failures take priority over errors in the local-origin post-step,\n  with the import summary and retry hint printed last.\n- GitHub repository lookup and clone errors suggest `gh auth status` and\n  `gh repo view owner/repo` to diagnose authentication and repository access.",
-      "url": "https://pushin.eu/api/v1/repos/pjullrich/pushin-cli/releases/2",
+      "url": "https://pushin.eu/pjullrich/pushin-cli/releases/tag/v0.3.0",
       "isDraft": false,
       "isPrerelease": false,
       "createdAt": "2026-10-13T15:27:03.089Z",

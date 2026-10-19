@@ -97,6 +97,7 @@ export interface PushinRelease {
   tag_name: string
   author: PushinUser
   url: string
+  html_url: string
   created_at: string
   published_at: string | null
   updated_at: string

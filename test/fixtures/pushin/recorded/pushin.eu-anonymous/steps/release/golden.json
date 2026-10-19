@@ -24,7 +24,7 @@
     "isBotHint": false
   },
   "body": "\n### Added\n\n- `pun release` commands to list, view, create, edit, and delete releases, upload\n  assets, and download assets with size and SHA-256 verification.\n- Automatic publication of platform archives, checksums, and changelog notes\n  from `scripts/release`, with resumable uploads through `scripts/publish-release`.\n\n",
-  "url": "https://pushin.eu/api/v1/repos/pjullrich/pushin-cli/releases/4",
+  "url": "https://pushin.eu/pjullrich/pushin-cli/releases/tag/v0.3.2",
   "isDraft": false,
   "isPrerelease": false,
   "createdAt": "2026-10-13T18:21:13.398Z",
