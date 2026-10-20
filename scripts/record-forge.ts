@@ -49,7 +49,7 @@ export const PLANS: Record<string, { reads: Recording[], writes: Recording[] }> 
   'gitea': { reads: [{ label: 'gitea.com', args: [] }, { label: 'anonymous', args: ['--anonymous'] }], writes: [{ label: 'writes', args: ['--writes'] }] },
   'gitee': { reads: [{ label: 'gitee.com', args: [] }, { label: 'anonymous', args: ['--anonymous'] }], writes: [] },
   'azure-devops': { reads: [{ label: 'dev.azure.com', args: [] }, { label: 'anonymous', args: ['--anonymous'] }], writes: [{ label: 'writes', args: ['--writes'] }] },
-  'pushin': { reads: [{ label: 'pushin.eu', args: [] }, { label: 'anonymous', args: ['--anonymous'] }], writes: [] },
+  'pushin': { reads: [{ label: 'pushin.eu', args: [] }, { label: 'anonymous', args: ['--anonymous'] }], writes: [{ label: 'writes', args: ['--writes'] }] },
   'cloudflare-artifacts': { reads: [{ label: 'artifacts.cloudflare.net', args: [] }], writes: [] },
   'sourcehut': { reads: [{ label: 'sr.ht', args: [] }], writes: [] },
   'tangled': {
