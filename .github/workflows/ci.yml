@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -36,7 +36,7 @@ jobs:
         run: pnpm test:knip
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -69,7 +69,10 @@ jobs:
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
 
   docs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
+    env:
+      # The docs tests don't need a deployable build.
+      DOCS_TEST_ONLY_BUILD: '1'
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -90,8 +93,10 @@ jobs:
         run: pnpm test:docs
 
   links:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     env:
+      # The link check doesn't need a deployable build.
+      DOCS_TEST_ONLY_BUILD: '1'
       LYCHEE_ARGS: --config lychee.toml --cache --cache-exclude-status '429, 500..' --remap 'https://github\.com/danielroe/forges/(?:blob|tree)/main/(.*) file://${{ github.workspace }}/$1' --include-fragments docs/.output/public README.md CONTRIBUTING.md CODE_OF_CONDUCT.md docs/README.md docs/content examples test/fixtures
 
     steps:
@@ -111,6 +116,15 @@ jobs:
 
       - name: 🛠 Build docs
         run: pnpm build:docs
+
+      # Persist lychee's `.lycheecache` so each run only re-checks stale links.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .lycheecache
+          key: lychee-${{ github.ref }}-${{ github.run_id }}
+          restore-keys: |
+            lychee-${{ github.ref }}-
+            lychee-
 
       - name: 🔗 Check links
         id: lychee
@@ -137,7 +151,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   zizmor:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       security-events: write
