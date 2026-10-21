@@ -16,7 +16,7 @@ export default defineNuxtConfig({
   nitro: isTestBuild
     ? { sourceMap: false, externals: { trace: false } }
     : {},
-  modules: ['@nuxt/fonts', '@nuxtjs/critters'],
+  modules: ['@nuxt/fonts', '@nuxtjs/critters', '@vercel/analytics'],
   content: {
     build: {
       markdown: {
