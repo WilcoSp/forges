@@ -13,9 +13,22 @@ const isTestBuild = process.env.DOCS_TEST_ONLY_BUILD === '1'
 
 export default defineNuxtConfig({
   extends: ['docus'],
-  nitro: isTestBuild
-    ? { sourceMap: false, externals: { trace: false } }
-    : {},
+  nitro: {
+    ...isTestBuild && { sourceMap: false, externals: { trace: false } },
+    vercel: {
+      config: {
+        routes: [
+          // nitropack's route type omits `has`, `status` and arbitrary headers.
+          {
+            src: '/(.*)',
+            has: [{ type: 'host', value: 'chat.forges.link' }],
+            status: 307,
+            headers: { Location: 'https://discord.gg/XCfTcxDsUE' },
+          } as { src: string },
+        ],
+      },
+    },
+  },
   modules: ['@nuxt/fonts', '@nuxtjs/critters', '@vercel/analytics'],
   content: {
     build: {
