@@ -692,6 +692,54 @@ describe('github repository and thread metadata', () => {
     expect(await provider.repos.permissionFor(repo, 'octocat')).toBe('maintain')
   })
 
+  it('merges the rulesets of a branch with its classic protection', async () => {
+    const { provider } = tokenProvider()
+    const rules = await provider.repos.branchRules(repo, 'main')
+
+    expect(rules.requiredChecks).toEqual([
+      { name: 'test', appId: '15368' },
+      { name: 'lint', appId: '15368' },
+      { name: 'CLA Signing' },
+    ])
+    expect(rules.requiredApprovals).toBe(2)
+    expect(rules.warnings).toBeUndefined()
+  })
+
+  it('keeps the ruleset approvals and warns when classic protection is out of reach', async () => {
+    const { provider } = tokenProvider({ 'GET https://api.github.com/repos/acme/widgets/branches/main/protection': { status: 404, body: { message: 'Not Found' } } })
+    const rules = await provider.repos.branchRules(repo, 'main')
+
+    expect(rules.requiredApprovals).toBe(1)
+    expect(rules.warnings?.map(warning => warning.code)).toEqual(['insufficient_scope'])
+  })
+
+  it('lists a check once when a ruleset names its app and classic protection accepts any app', async () => {
+    const { provider } = tokenProvider({
+      'GET https://api.github.com/repos/acme/widgets/branches/main': { status: 200, body: { name: 'main', commit: { sha: 'a'.repeat(40) }, protected: true, protection: { enabled: true, required_status_checks: { enforcement_level: 'everyone', contexts: ['test'], checks: [{ context: 'test', app_id: null }] } } } },
+    })
+
+    expect((await provider.repos.branchRules(repo, 'main')).requiredChecks.filter(check => check.name === 'test')).toEqual([{ name: 'test', appId: '15368' }])
+  })
+
+  it('falls back to the contexts of classic protection when it lists no checks', async () => {
+    const { provider } = tokenProvider({
+      'GET https://api.github.com/repos/acme/widgets/branches/main': { status: 200, body: { name: 'main', commit: { sha: 'a'.repeat(40) }, protected: true, protection: { enabled: true, required_status_checks: { enforcement_level: 'everyone', contexts: ['ci/jenkins'], checks: [] } } } },
+    })
+
+    expect((await provider.repos.branchRules(repo, 'main')).requiredChecks).toContainEqual({ name: 'ci/jenkins' })
+  })
+
+  it('reads no protection for a branch that classic protection leaves alone', async () => {
+    const { provider, calls } = tokenProvider({
+      'GET https://api.github.com/repos/acme/widgets/branches/release/v1': { status: 200, body: { name: 'release/v1', commit: { sha: 'a'.repeat(40) }, protected: false, protection: { enabled: false, required_status_checks: { enforcement_level: 'off', contexts: [], checks: [] } } } },
+      'GET https://api.github.com/repos/acme/widgets/rules/branches/release/v1?per_page=100': { status: 200, body: [] },
+    })
+    const rules = await provider.repos.branchRules(repo, 'release/v1')
+
+    expect(rules).toMatchObject({ branch: 'release/v1', requiredChecks: [], requiredApprovals: 0 })
+    expect(calls.map(call => call.url)).not.toContain('https://api.github.com/repos/acme/widgets/branches/release/v1/protection')
+  })
+
   it('adds collaborators with the permission names GitHub accepts', async () => {
     const url = 'https://api.github.com/repos/acme/widgets/collaborators/octocat'
     const { fetch, calls } = fixtureFetch('github', { [`PUT ${url}`]: { status: 204 } })
