@@ -8,7 +8,8 @@ export const PUSHIN_WEB: WebDefinition<'pushin'> = {
   links: ({ baseUrl }) => githubShapedWeb(baseUrl.replace(/\/api\/v1$/, ''), {
     pull: 'pulls',
     commit: 'commits',
-    raw: false,
+    raw: true,
+    rawOrigin: 'https://raw.pushin.eu',
     sections: { forks: null, watchers: null },
     commentFragment: 'comment-',
     file: at => `/blob/${encodeURIComponent(at)}`,
